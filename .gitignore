@@ -55,3 +55,7 @@ Thumbs.db
 # SASS #
 ##########
 .sass-cache
+
+wp-config.php
+wp-content/themes/ca-design-system
+.htaccess
