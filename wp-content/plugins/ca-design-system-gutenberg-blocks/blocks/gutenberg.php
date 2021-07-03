@@ -284,7 +284,7 @@ function cagov_gb_get_custom_fields($object, $field_name, $request)
     $template_name = "page"; // Default template for any post.
     try {
         $current_page_template = get_page_template_slug();
-        $split_template_path = preg_split("/\//", $current_page_template);
+        $split_template_path = isset($current_page_template) ? preg_split("/\//", $current_page_template) : "page";
         $template_file = $split_template_path[count($split_template_path) - 1];
         // echo $template_file;
         $template_name = preg_split("/\./", $template_file);
