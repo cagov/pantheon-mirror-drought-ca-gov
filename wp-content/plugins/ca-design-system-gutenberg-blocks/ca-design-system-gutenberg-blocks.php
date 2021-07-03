@@ -53,7 +53,8 @@ require_once CA_DESIGN_SYSTEM_GUTENBERG_BLOCKS__BLOCKS_DIR_PATH . '/blocks/guten
  * It runs on admin-ajax.php and admin-post.php as well.
  *
  * @category add_action( 'init', 'cagov_init' );
- * @link https://codex.wordpress.org/Plugin_API/Action_Reference/admin_init
+ * @link https://codex.wordpress.org/Plugin_API/Action_Reference/admin_initgst
+ * 
  * @return void
  */
 function cagov_init()
@@ -65,6 +66,7 @@ function cagov_init()
 
 	/* Add content menu navigation */
 	register_nav_menu('content-menu', 'Content Menu');
+	register_nav_menu('social-media-links', 'Social Media Links');
 }
 
 /**
