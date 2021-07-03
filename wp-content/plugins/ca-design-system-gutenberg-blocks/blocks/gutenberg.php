@@ -212,6 +212,57 @@ function cagov_gb_register_rest_field()
             'schema'          => null, // @TODO look up what our options are here
         )
     );
+
+    register_rest_field(
+        'post',
+        'site_settings',
+        array(
+            'get_callback'    => 'cagov_site_settings',
+            'update_callback' => null,
+            'schema'          => null, // @TODO look up what our options are here
+        )
+    );
+
+    register_rest_field(
+        'post',
+        'og_meta',
+        array(
+            'get_callback'    => 'cagov_og_meta',
+            'update_callback' => null,
+            'schema'          => null, // @TODO look up what our options are here
+        )
+    );
+
+
+    register_rest_field(
+        'page',
+        'design_system_fields',
+        array(
+            'get_callback'    => 'cagov_gb_get_custom_fields',
+            'update_callback' => null,
+            'schema'          => null, // @TODO look up what our options are here
+        )
+    );
+
+    register_rest_field(
+        'page',
+        'site_settings',
+        array(
+            'get_callback'    => 'cagov_site_settings',
+            'update_callback' => null,
+            'schema'          => null, // @TODO look up what our options are here
+        )
+    );
+
+    register_rest_field(
+        'page',
+        'og_meta',
+        array(
+            'get_callback'    => 'cagov_og_meta',
+            'update_callback' => null,
+            'schema'          => null, // @TODO look up what our options are here
+        )
+    );
 }
 
 /**
@@ -230,6 +281,35 @@ function cagov_gb_get_custom_fields($object, $field_name, $request)
     $caweb_custom_post_title_display = get_post_meta($post->ID, '_ca_custom_post_title_display', true);
     // $caweb_default_post_date_display = get_post_meta($post->ID, '_ca_default_post_date_display', true);
 
+    $template_name = "page"; // Default template for any post.
+    try {
+        $current_page_template = get_page_template_slug();
+        $split_template_path = preg_split("/\//", $current_page_template);
+        $template_file = $split_template_path[count($split_template_path) - 1];
+        // echo $template_file;
+        $template_name = preg_split("/\./", $template_file);
+        $current_template = $template_name[0];
+    } catch (Exception $e) {
+    } finally {
+    }
+
+    return array(
+        'display_title' => $caweb_custom_post_title_display === "on" ? true : false,
+        'template' => $current_template,
+    );
+}
+
+function cagov_site_settings($object, $field_name, $request) {
+    return array(
+        'site_name' => get_bloginfo('name'),
+        'site_description' => get_bloginfo('description'),
+    );
+}
+
+function cagov_og_meta($object, $field_name, $request) {
+    global $post;
+    $post_meta = get_post_meta($post->ID);
+    
     // Get events fields
 
     // $caweb_custom_css = wp_unslash(get_option('ca_custom_css'));
@@ -246,14 +326,52 @@ function cagov_gb_get_custom_fields($object, $field_name, $request)
     // featured_media: 841,
     // template name
 
+    //     _genesis_title	The custom SEO title. Also affects Open Graph and Twitter titles when they’re undefined.
+    // _tsf_title_no_blogname	Removes blogname from title. Also affects Open Graph and Twitter titles when they’re undefined.
+    // _genesis_description	The custom SEO description. Also affects Open Graph and Twitter descriptions when they’re undefined.
+    // _genesis_canonical_uri	The custom canonical URL. Also affects the Open Graph URL.
+    // redirect	The 301 redirect location.
+    // _social_image_url	The social image URL. Also affects Schema.org structured data, Open Graph, and Twitter image URLs.
+    // _social_image_id	The social image ID. Used to obtain extra image metadata for Open Graph and Schema.org structured data. Only populates when using the image editor modal.
+    // _genesis_noindex	Whether the noindex directive should be automatically determined, enabled, or disabled.
+    // _genesis_nofollow	Whether the nofollow directive should be automatically determined, enabled, or disabled.
+    // _genesis_noarchive	Whether the noarchive directive should be automatically determined, enabled, or disabled.
+    // exclude_local_search	Removes post from local on-site search results.
+    // exclude_from_archive	Removes post from local on-site archive listings.
+    // _open_graph_title	The custom Open Graph title. Also affects Twitter title when it’s undefined.
+    // _open_graph_description	The custom Open Graph description. Also affects Twitter description when it’s undefined.
+    // _twitter_title	The custom Twitter title.
+    // _twitter_description	The custom Twitter description.
+    // _primary_term_{$taxonomy}	The post’s primary term ID for the {$taxonomy}.
+    $seo_framework_output = "";
+    try {
+        $tsf = \the_seo_framework();
 
-    // $term_meta = get_option('autodescription-term-meta');
 
+		$seo_framework_output = $tsf->get_html_output();
+       
+
+    } catch (Exception $e) {
+    } finally {
+    }
+ 
     return array(
-        'display_title' => $caweb_custom_post_title_display === "on" ? true : false,
-        // 'term' => $term_meta
+        "_genesis_title" => isset($post_meta["_genesis_title"]) ? $post_meta["_genesis_title"] : "",
+        "_genesis_description" => isset($post_meta["_genesis_description"]) ? $post_meta["_genesis_description"] : "",
+        "_genesis_canonical_uri" => isset($post_meta["_genesis_canonical_uri"]) ? $post_meta["_genesis_canonical_uri"] : "",
+        "_social_image_url" => isset($post_meta["_social_image_url"]) ? $post_meta["_social_image_url"] : "",
+        "_open_graph_title" => isset($post_meta["_open_graph_title"]) ? $post_meta["_open_graph_title"] : "",
+        "_open_graph_description" => isset($post_meta["_open_graph_description"]) ? $post_meta["_open_graph_description"] : "",
+        "_twitter_title" => isset($post_meta["_twitter_title"]) ? $post_meta["_twitter_title"] : "",
+        " _tsf_title_no_blogname" => isset($post_meta[" _tsf_title_no_blogname"]) ? $post_meta[" _tsf_title_no_blogname"] : "",
+        "og_rendered" => $seo_framework_output
+
     );
 }
+
+
+
+
 
 function cagov_gb_excerpt($excerpt)
 {
