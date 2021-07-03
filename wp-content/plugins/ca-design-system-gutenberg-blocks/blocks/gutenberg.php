@@ -346,11 +346,35 @@ function cagov_og_meta($object, $field_name, $request) {
     $seo_framework_output = "";
     try {
         $tsf = \the_seo_framework();
-
-
-		$seo_framework_output = $tsf->get_html_output();
-       
-
+        $seo_framework_output = $tsf->the_description()
+        . $tsf->og_image()
+        . $tsf->og_locale()
+        . $tsf->og_type()
+        . $tsf->og_title()
+        . $tsf->og_description()
+        . $tsf->og_url()
+        . $tsf->og_sitename()
+        . $tsf->facebook_publisher()
+        . $tsf->facebook_author()
+        . $tsf->facebook_app_id()
+        . $tsf->article_published_time()
+        . $tsf->article_modified_time()
+        . $tsf->twitter_card()
+        . $tsf->twitter_site()
+        . $tsf->twitter_creator()
+        . $tsf->twitter_title()
+        . $tsf->twitter_description()
+        . $tsf->twitter_image()
+        . $tsf->theme_color()
+        . $tsf->shortlink()
+        . $tsf->canonical()
+        . $tsf->paged_urls()
+        . $tsf->ld_json()
+        . $tsf->google_site_output()
+        . $tsf->bing_site_output()
+        . $tsf->yandex_site_output()
+        . $tsf->baidu_site_output()
+        . $tsf->pint_site_output();
     } catch (Exception $e) {
     } finally {
     }
