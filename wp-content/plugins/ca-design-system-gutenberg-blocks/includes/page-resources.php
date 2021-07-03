@@ -81,7 +81,7 @@ function cagov_breadcrumb()
 }
 function cagov_footer_scripts() {
 	/* Register cagov scripts */
-	wp_register_script( 'twitter-timeline', 'https://platform.twitter.com/widgets.js', array(), CAWEB_VERSION, false );
+	wp_register_script( 'twitter-timeline', 'https://platform.twitter.com/widgets.js', array(), CA_DESIGN_SYSTEM_GUTENBERG_BLOCKS__VERSION, false );
 
 	wp_enqueue_script( 'twitter-timeline' );
 }
