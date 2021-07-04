@@ -17,11 +17,13 @@ add_action('wp_enqueue_style', 'cagov_enqueue_styles');
 // add_action('wp_head', 'cagov_header_scripts');
 add_action('cagov_breadcrumb', 'cagov_breadcrumb');
 add_action('cagov_content_menu', 'cagov_content_menu');
+add_action('cagov_social_media_menu', 'cagov_social_media_menu');
+add_action('cagov_statewide_footer_menu', 'cagov_statewide_footer_menu');
 
 function cagov_enqueue_scripts()
-{ 
-    $critical_css = file_get_contents( get_stylesheet_directory_uri() . 'page.css');
-    echo '<style>' . $critical_css . '</style>';
+{
+    // $critical_css = file_get_contents( get_stylesheet_directory_uri() . 'page.css');
+    // echo '<style>' . $critical_css . '</style>';
 }
 
 /**
@@ -44,55 +46,55 @@ function cagov_breadcrumb()
 
     if ($items !== "undefined" && isset($items)) {
         if (is_array($items) || is_object($items)) {
-        _wp_menu_item_classes_by_context($items); // Set up the class variables, including current-classes
+            _wp_menu_item_classes_by_context($items); // Set up the class variables, including current-classes
 
-        $crumbs = array(
-            "<a class=\"crumb\" href=\"https:\/\/ca.gov\" title=\"CA.GOV\">CA.GOV</a>",
-            "<a class=\"crumb\" href=\"/\" title=\"" . get_bloginfo('name') . "\">" . get_bloginfo('name') . "</a>"
-        );
+            $crumbs = array(
+                "<a class=\"crumb\" href=\"https:\/\/ca.gov\" title=\"CA.GOV\">CA.GOV</a>",
+                "<a class=\"crumb\" href=\"/\" title=\"" . get_bloginfo('name') . "\">" . get_bloginfo('name') . "</a>"
+            );
 
-        foreach ($items as $item) {
-            if ($item->current_item_ancestor) {
-                if ($linkOff == true) {
-                    $crumbs[] = "<span class=\"crumb\">{$item->title}</span>";
-                } else {
-                    $crumbs[] = "<a class=\"crumb\" href=\"{$item->url}\" title=\"{$item->title}\">{$item->title}</a>";
+            foreach ($items as $item) {
+                if ($item->current_item_ancestor) {
+                    if ($linkOff == true) {
+                        $crumbs[] = "<span class=\"crumb\">{$item->title}</span>";
+                    } else {
+                        $crumbs[] = "<a class=\"crumb\" href=\"{$item->url}\" title=\"{$item->title}\">{$item->title}</a>";
+                    }
+                } else if ($item->current) {
+                    $crumbs[] = "<span class=\"crumb current\">{$item->title}</span>";
                 }
-            } else if ($item->current) {
-                $crumbs[] = "<span class=\"crumb current\">{$item->title}</span>";
             }
-        }
 
-        if (is_category()) {
-            global $wp_query;
-            $category = get_category(get_query_var('cat'), false);
-            $crumbs[] = "<span class=\"crumb current\">{$category->name}</span>";
-        }
+            if (is_category()) {
+                global $wp_query;
+                $category = get_category(get_query_var('cat'), false);
+                $crumbs[] = "<span class=\"crumb current\">{$category->name}</span>";
+            }
 
-        // Configuration note: requires that a menu item link to a category page.
-        if (count($crumbs) == 2 && !is_category()) {
-            $category = get_the_category($post->ID);
+            // Configuration note: requires that a menu item link to a category page.
+            if (count($crumbs) == 2 && !is_category()) {
+                $category = get_the_category($post->ID);
 
-            // Get category menu item from original menu item
-            $category_menu_item_found = false;
+                // Get category menu item from original menu item
+                $category_menu_item_found = false;
 
-            foreach ($items as $category_item) {
-                if (isset($category_item->type_label) && $category_item->type_label === "Category") { // or ->type == "taxonomy"
-                    if (isset($category[0]->name) && $category[0]->name == $category_item->title) {
-                        $crumbs[] = "<span class=\"crumb current\">" . $category_item->title . "</span>";
-                        $category_menu_item_found = true;
+                foreach ($items as $category_item) {
+                    if (isset($category_item->type_label) && $category_item->type_label === "Category") { // or ->type == "taxonomy"
+                        if (isset($category[0]->name) && $category[0]->name == $category_item->title) {
+                            $crumbs[] = "<span class=\"crumb current\">" . $category_item->title . "</span>";
+                            $category_menu_item_found = true;
+                        }
                     }
                 }
+
+                // If not found, just use the category name
+                if (isset($category[0]) && $category[0] && $category_menu_item_found == false) {
+                    $crumbs[] = "<span class=\"crumb current\">" . $category[0]->name . "</span>";
+                }
             }
 
-            // If not found, just use the category name
-            if (isset($category[0]) && $category[0] && $category_menu_item_found == false) {
-                $crumbs[] = "<span class=\"crumb current\">" . $category[0]->name . "</span>";
-            }
+            echo '<div class="breadcrumb" aria-label="Breadcrumb" role="region">' . implode($separator, $crumbs) . '</div>';
         }
-
-        echo '<div class="breadcrumb" aria-label="Breadcrumb" role="region">' . implode($separator, $crumbs) . '</div>';
-    }
     }
 }
 
@@ -148,27 +150,6 @@ function cagov_content_menu()
     if (!isset($nav_menus['content-menu'])) {
         return;
     }
-
-    // // Organization Footer Logo Image
-    // $org_footer_logo = get_option('header_ca_footer_logo', '');
-
-    // $org_footer_logo_filename = !empty($org_footer_logo) ? substr($org_footer_logo, strrpos($org_footer_logo, '/') + 1) : '';
-
-    // // Organization Footer Logo Alt Text
-    // $org_footer_logo_alt_text = '';
-    // if (!empty($org_footer_logo)) {
-    //     $org_footer_logo_alt_text = !empty(get_option('header_ca_footer_logo_alt_text', '')) ? get_option('header_ca_footer_logo_alt_text') : caweb_get_attachment_post_meta($org_footer_logo, '_wp_attachment_image_alt');
-
-    //     $image_meta = caweb_get_attachment_post_meta($org_footer_logo, '_wp_attachment_metadata');
-
-    //     $image = wp_get_attachment_image_src($org_footer_logo_filename, 'full');
-    //     $uploads = wp_upload_dir(); 
-
-    //     $image_url = esc_url( $uploads['baseurl'] . "/" . $image_meta['file'] );
-    //     $image_width = $image_meta['width'];
-    //     $image_height = $image_meta['height'];
-    // }
-    // <a href="/"><img src="$image_url" alt="echo $org_footer_logo_alt_text" /></a>
 ?>
     <div class="per-page-feedback-container">
         <cagov-feedback data-endpoint-url="https://fa-go-feedback-001.azurewebsites.net/sendfeedback"></cagov-feedback>
@@ -216,45 +197,37 @@ function cagov_content_menu()
  */
 function cagov_content_social_menu()
 {
-    // Based on CAWeb createFooterSocialMenu.
-    if (!function_exists('caweb_get_site_options')) {
+
+
+    /* loop thru and create a link (parent nav item only) */
+    $nav_menus = get_nav_menu_locations();
+
+    if (!isset($nav_menus['social-media-links'])) {
         return;
     }
 
-    $social_share = caweb_get_site_options('social');
-    $social_links = '';
-
 ?>
     <ul class="social-links-container">
-        <?php
-        foreach ($social_share as $opt) {
-            $share_email = 'ca_social_email' === $opt ? true : false;
-            $sub         = rawurlencode(sprintf('%1$s | %2$s', get_the_title(), get_bloginfo('name')));
-            $body        = rawurlencode(get_permalink());
-            $mailto      = $share_email ? sprintf('mailto:?subject=%1$s&body=%2$s', $sub, $body) : '';
 
-            // Removed named menu option.
-            if (($share_email || '' !== get_option($opt))) {
-                $share         = substr($opt, 10);
-                $share         = str_replace('_', '-', $share);
-                $title         = get_option("${opt}_hover_text", 'Share via ' . ucwords($share));
-                $social_url    = $share_email ? $mailto : esc_url(get_option($opt));
-                $social_target = get_option($opt . '_new_window', true) ? '_blank' : '_self';
-                $social_icon   = !empty($share) ? '' : '';
+        <?php
+        $menuitems = wp_get_nav_menu_items($nav_menus['social-media-links']);
+
+        foreach ($menuitems as $item) {
+            if (!$item->menu_item_parent) {
+                $class  = !empty($item->classes) ? implode(' ', $item->classes) : '';
+                $rel    = !empty($item->xfn) ? $item->xfn : '';
+                $target = !empty($item->target) ? $item->target : '_blank';
         ?>
-                <li>
-                    <a href="<?php echo esc_url($social_url); ?>" title="<?php echo esc_attr($title); ?>" target="<?php echo esc_attr($social_target); ?>" rel="noopener">
-                        <?php if (!empty($share)) : ?>
-                            <span class="ca-gov-icon-<?php echo esc_attr($share); ?>"></span>
-                        <?php endif; ?>
-                        <span class="sr-only"><?php echo esc_attr($share); ?></span>
-                    </a>
+                <li class="<?php echo esc_attr($class); ?>" title="<?php echo esc_attr($item->attr_title); ?>" rel="<?php echo esc_attr($rel); ?>">
+                    <a href="<?php echo esc_url($item->url); ?>" target="<?php echo esc_attr($target); ?>"><?php echo esc_attr($item->title); ?></a>
                 </li>
         <?php
             }
         }
-
         ?>
     </ul>
+
+
+
 <?php
 }

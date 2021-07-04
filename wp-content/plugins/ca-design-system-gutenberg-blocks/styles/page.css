@@ -2,6 +2,11 @@
  CA Design System Page CSS
 */
 
+.page-date time {
+    font-weight: 400;
+    
+}
+
 header {
     margin-bottom: 32px;
 }
