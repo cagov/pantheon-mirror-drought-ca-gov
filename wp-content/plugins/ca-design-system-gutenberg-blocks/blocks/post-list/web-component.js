@@ -126,6 +126,7 @@ class CAGovPostList extends window.HTMLElement {
     if (posts !== undefined && posts !== null && posts.length > 0) {
       if (type === "wordpress") {
         let renderedPosts = posts.map((post) => {
+          console.log(post);
           return this.renderWordpressPostTitleDate(post)
           }
         );
@@ -150,11 +151,13 @@ class CAGovPostList extends window.HTMLElement {
     title = null,
     link = null,
     date = null, // "2021-05-23T18:19:58"
-    // content = null,
+    content = null,
     excerpt = null, // @TODO shorten / optional
     // author = null, // 1
     // featured_media = null, // 0
     categories = null,
+    format = "standard",
+    design_system_fields = null,
   }) {
 
     let dateFormatted;
@@ -162,8 +165,26 @@ class CAGovPostList extends window.HTMLElement {
       dateFormatted = moment(date).format("MMMM DD, YYYY");
     }
 
+    if (format === "link" && design_system_fields !== null) {
+      console.log(design_system_fields.post.post_link);
+      if (design_system_fields.post !== undefined) {
+        if (
+          design_system_fields.post.post_link !== undefined && 
+          design_system_fields.post.post_link !== null &&
+          design_system_fields.post.post_link !== "") {
+            link = design_system_fields.post.post_link;
+          }
+      }
+
+    }
+
+
     let getExcerpt = this.showExcerpt === "true" ? `<div class="excerpt"><p>${excerpt.rendered}</p></div>` : ``;
     let getDate = this.showPublishedDate === "true" ? `<div class="date">${dateFormatted}</div>` : ``;
+
+    if (format === "status" && this.showExcerpt === "true") {
+      getExcerpt = `<div class="excerpt"><p>${content.rendered}</p></div>`;
+    }
 
     let category_type = "";
     let showCategoryType = false;

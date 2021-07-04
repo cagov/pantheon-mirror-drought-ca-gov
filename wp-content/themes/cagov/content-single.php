@@ -47,8 +47,4 @@ if (file_exists(get_stylesheet_directory() . '/header.php')) {
     </div>
 </div>
 
-<?php
-do_action("cagov_content_menu");
-?>
-
 <?php get_footer(); ?>

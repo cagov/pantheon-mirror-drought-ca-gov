@@ -51,12 +51,17 @@ function cagov_add_meta_boxes()
  */
 function cagov_page_identifier_metabox_callback($post)
 {
+    $custom_post_link = get_post_meta($post->ID, '_ca_custom_post_link', true);
     $custom_post_date = get_post_meta($post->ID, '_ca_custom_post_date', true);
     $custom_post_location = get_post_meta($post->ID, '_ca_custom_post_location', true);
     $custom_event_date = get_post_meta($post->ID, '_ca_custom_event_date', true);
     $custom_event_end_date = get_post_meta($post->ID, '_ca_custom_event_end_date', true);
     $custom_event_start_time = get_post_meta($post->ID, '_ca_custom_event_start_time', true);
     $custom_event_end_time = get_post_meta($post->ID, '_ca_custom_event_end_time', true);
+
+    if ('' === get_post_meta($post->ID, '_ca_custom_post_link', true)) {
+        update_post_meta($post->ID, '_ca_custom_post_link', get_option('_ca_custom_post_link'));
+    }
 
     if ('' === get_post_meta($post->ID, '_ca_custom_post_date', true)) {
         update_post_meta($post->ID, '_ca_custom_post_date', get_option('_ca_custom_post_date'));
@@ -87,9 +92,12 @@ function cagov_page_identifier_metabox_callback($post)
 
     <p>Data for posts can be set here or in block pattern.</p> 
 
+
+    <label for="ca_custom_post_link">Post redirects to URL</label><br />
+    <input type="text" id="ca_custom_post_link" name="ca_custom_post_link" value="<?php print $custom_post_link; ?>" /><br />
+
     <label for="ca_custom_post_date">Date posted</label><br />
     <input type="text" id="ca_custom_post_date" name="ca_custom_post_date" value="<?php print $custom_post_date; ?>" /><br />
-    
 
     <label for="ca_custom_post_location">Post location</label><br />
     <input type="text" id="ca_custom_post_location" name="ca_custom_post_location" value="<?php print $custom_post_location; ?>" /><br />
@@ -136,6 +144,12 @@ function cagov_save_post($post_id, $post)
         return $post_id;
     }
 
+
+    $ca_custom_post_link = isset($_POST['ca_custom_post_link']) ? sanitize_text_field(wp_unslash($_POST['ca_custom_post_link'])) : '';
+
+    update_post_meta($post->ID, '_ca_custom_post_link', $ca_custom_post_link);
+
+    
     $ca_custom_post_date = isset($_POST['ca_custom_post_date']) ? sanitize_text_field(wp_unslash($_POST['ca_custom_post_date'])) : '';
 
     update_post_meta($post->ID, '_ca_custom_post_date', $ca_custom_post_date);

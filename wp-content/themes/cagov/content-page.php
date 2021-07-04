@@ -45,3 +45,5 @@ if (file_exists(get_stylesheet_directory() . '/header.php')) {
         </div>
     </div>
 </div>
+
+<?php get_footer(); ?>
