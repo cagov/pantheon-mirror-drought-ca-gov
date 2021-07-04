@@ -246,6 +246,16 @@ function cagov_gb_register_rest_field()
 
     register_rest_field(
         'page',
+        'og_meta',
+        array(
+            'get_callback'    => 'cagov_og_meta',
+            'update_callback' => null,
+            'schema'          => null, // @TODO look up what our options are here
+        )
+    );
+
+    register_rest_field(
+        'page',
         'site_settings',
         array(
             'get_callback'    => 'cagov_site_settings',
@@ -254,15 +264,13 @@ function cagov_gb_register_rest_field()
         )
     );
 
-    register_rest_field(
-        'page',
-        'og_meta',
-        array(
-            'get_callback'    => 'cagov_og_meta',
-            'update_callback' => null,
-            'schema'          => null, // @TODO look up what our options are here
-        )
-    );
+    // $meta_args = array(
+    //     'type'         => 'string',
+    //     'description'  => 'A meta key associated with a string meta value.',
+    //     'single'       => true,
+    //     'show_in_rest' => true,
+    // );
+    // register_post_meta( 'page', 'my_meta_key', $meta_args );
 }
 
 /**
@@ -311,7 +319,7 @@ function cagov_gb_get_custom_fields($object, $field_name, $request)
     if ($post->post_type === "post") {
         $post_settings = cagov_post_fields($post);
         return array(
-            'display_title' => $caweb_custom_post_title_display === "on" ? true : false,
+            'display_title' => true, // $caweb_custom_post_title_display === "on" ? true : false,
             'template' => $current_template,
             'post' => $post_settings,
         );
@@ -322,11 +330,10 @@ function cagov_gb_get_custom_fields($object, $field_name, $request)
             
         );
     }
-
-
 }
 
 function cagov_post_fields($post) {
+    $custom_post_link = get_post_meta($post->ID, '_ca_custom_post_link', true);
     $custom_post_date = get_post_meta($post->ID, '_ca_custom_post_date', true);
     $custom_post_location = get_post_meta($post->ID, '_ca_custom_post_location', true);
     $custom_event_date = get_post_meta($post->ID, '_ca_custom_event_date', true);
@@ -334,6 +341,7 @@ function cagov_post_fields($post) {
     $custom_event_start_time = get_post_meta($post->ID, '_ca_custom_event_start_time', true);
     $custom_event_end_time = get_post_meta($post->ID, '_ca_custom_event_end_time', true);
     return array(
+        'post_link' => $custom_post_link,
         'post_date' => $custom_post_date,
         'post_location' => $custom_post_location,
         'event_date' => $custom_event_date,
