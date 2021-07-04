@@ -2,7 +2,16 @@
  CA Design System Page CSS
 */
 
+header {
+    margin-bottom: 32px;
+}
+
 .page-container-ds {
+    margin-top: 32px;
+}
+
+.page-container-ds {
+    
     max-width: 1147px;
 }
 

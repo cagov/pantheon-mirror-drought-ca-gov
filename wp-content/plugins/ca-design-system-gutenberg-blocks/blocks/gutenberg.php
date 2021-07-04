@@ -276,26 +276,70 @@ function cagov_gb_register_rest_field()
 function cagov_gb_get_custom_fields($object, $field_name, $request)
 {
     global $post;
-    // print_r($post);
-    // $cagov_gb_content_menu_sidebar = get_post_meta($post->ID, '_cagov_gb_content_menu_sidebar', true);
+    
     $caweb_custom_post_title_display = get_post_meta($post->ID, '_ca_custom_post_title_display', true);
-    // $caweb_default_post_date_display = get_post_meta($post->ID, '_ca_default_post_date_display', true);
 
     $template_name = "page"; // Default template for any post.
     try {
         $current_page_template = get_page_template_slug();
-        $split_template_path = isset($current_page_template) ? preg_split("/\//", $current_page_template) : "page";
-        $template_file = $split_template_path[count($split_template_path) - 1];
-        // echo $template_file;
-        $template_name = preg_split("/\./", $template_file);
-        $current_template = $template_name[0];
+        
+        if (isset($current_page_template) && "" === $current_page_template) {
+            if ($post->post_type === "post") {
+                $current_template = "post";
+            } else if  ($post->post_type === "page") {
+                $current_template = "page";
+            }
+        } else {
+            $split_template_path = isset($current_page_template) ? preg_split("/\//", $current_page_template) : "page";
+            $template_file = $split_template_path[count($split_template_path) - 1];
+            
+            $template_name = preg_split("/\./", $template_file);
+            $current_template = $template_name[0];
+
+            if ($current_template === "cagov-content-page") {
+                $current_template = "page";
+            } else if ($current_template === "cagov-content-single") {
+                $current_template = "post";
+            } else if ($current_template === "template-page-landing") {
+                $current_template = "landing";
+            }
+        }
     } catch (Exception $e) {
     } finally {
     }
 
+    if ($post->post_type === "post") {
+        $post_settings = cagov_post_fields($post);
+        return array(
+            'display_title' => $caweb_custom_post_title_display === "on" ? true : false,
+            'template' => $current_template,
+            'post' => $post_settings,
+        );
+    } else {
+        return array(
+            'display_title' => $caweb_custom_post_title_display === "on" ? true : false,
+            'template' => $current_template,
+            
+        );
+    }
+
+
+}
+
+function cagov_post_fields($post) {
+    $custom_post_date = get_post_meta($post->ID, '_ca_custom_post_date', true);
+    $custom_post_location = get_post_meta($post->ID, '_ca_custom_post_location', true);
+    $custom_event_date = get_post_meta($post->ID, '_ca_custom_event_date', true);
+    $custom_event_end_date = get_post_meta($post->ID, '_ca_custom_event_end_date', true);
+    $custom_event_start_time = get_post_meta($post->ID, '_ca_custom_event_start_time', true);
+    $custom_event_end_time = get_post_meta($post->ID, '_ca_custom_event_end_time', true);
     return array(
-        'display_title' => $caweb_custom_post_title_display === "on" ? true : false,
-        'template' => $current_template,
+        'post_date' => $custom_post_date,
+        'post_location' => $custom_post_location,
+        'event_date' => $custom_event_date,
+        'event_end_date' => $custom_event_end_date,
+        'event_start_time' => $custom_event_start_time,
+        'event_start_time' => $custom_event_end_time
     );
 }
 
@@ -309,41 +353,7 @@ function cagov_site_settings($object, $field_name, $request) {
 function cagov_og_meta($object, $field_name, $request) {
     global $post;
     $post_meta = get_post_meta($post->ID);
-    
-    // Get events fields
-
-    // $caweb_custom_css = wp_unslash(get_option('ca_custom_css'));
-    // $meta_display_title = array(
-    //     'type'         => 'string',
-    //     'description'  => 'If the title should be visible.',
-    //     'single'       => true,
-    //     'show_in_rest' => true,
-    // );
-    // register_post_meta( 'page', 'my_meta_key', $meta_args );
-    // register_post_meta( 'post', 'my_meta_key', $meta_args );
-    // register_post_meta( 'post', 'display_title', $meta_display_title );
-
-    // featured_media: 841,
-    // template name
-
-    //     _genesis_title	The custom SEO title. Also affects Open Graph and Twitter titles when they’re undefined.
-    // _tsf_title_no_blogname	Removes blogname from title. Also affects Open Graph and Twitter titles when they’re undefined.
-    // _genesis_description	The custom SEO description. Also affects Open Graph and Twitter descriptions when they’re undefined.
-    // _genesis_canonical_uri	The custom canonical URL. Also affects the Open Graph URL.
-    // redirect	The 301 redirect location.
-    // _social_image_url	The social image URL. Also affects Schema.org structured data, Open Graph, and Twitter image URLs.
-    // _social_image_id	The social image ID. Used to obtain extra image metadata for Open Graph and Schema.org structured data. Only populates when using the image editor modal.
-    // _genesis_noindex	Whether the noindex directive should be automatically determined, enabled, or disabled.
-    // _genesis_nofollow	Whether the nofollow directive should be automatically determined, enabled, or disabled.
-    // _genesis_noarchive	Whether the noarchive directive should be automatically determined, enabled, or disabled.
-    // exclude_local_search	Removes post from local on-site search results.
-    // exclude_from_archive	Removes post from local on-site archive listings.
-    // _open_graph_title	The custom Open Graph title. Also affects Twitter title when it’s undefined.
-    // _open_graph_description	The custom Open Graph description. Also affects Twitter description when it’s undefined.
-    // _twitter_title	The custom Twitter title.
-    // _twitter_description	The custom Twitter description.
-    // _primary_term_{$taxonomy}	The post’s primary term ID for the {$taxonomy}.
-    $seo_framework_output = "";
+        $seo_framework_output = "";
     try {
         $tsf = \the_seo_framework();
         $seo_framework_output = $tsf->the_description()

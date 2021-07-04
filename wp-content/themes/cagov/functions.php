@@ -13,31 +13,14 @@ if (!defined('ABSPATH')) {
 // Set our theme version.
 define('CAGOV_THEME_VERSION', '1.0.0');
 
-add_action('wp_enqueue_scripts', 'cagov_enqueue_scripts');
-add_action('wp_head', 'cagov_header_scripts');
+add_action('wp_enqueue_style', 'cagov_enqueue_styles');
+// add_action('wp_head', 'cagov_header_scripts');
 add_action('cagov_breadcrumb', 'cagov_breadcrumb');
 add_action('cagov_content_menu', 'cagov_content_menu');
 
 function cagov_enqueue_scripts()
-{
-    echo "hihi";
-    $parenthandle = 'generatepress'; // This is 'twentyfifteen-style' for the Twenty Fifteen theme.
-    $theme = wp_get_theme();
-    wp_enqueue_style(
-        $parenthandle,
-        get_template_directory_uri() . '/style.css',
-        array(),  // if the parent theme code has a dependency, copy it to here
-        $theme->parent()->get('Version')
-    );
-    wp_enqueue_style(
-        'child-style',
-        get_stylesheet_uri(),
-        array($parenthandle),
-        $theme->get('Version') // this only works if you have Version in the style header
-    );
-
- 
-    $critical_css = file_get_contents( get_template_directory_uri() . 'page.css');
+{ 
+    $critical_css = file_get_contents( get_stylesheet_directory_uri() . 'page.css');
     echo '<style>' . $critical_css . '</style>';
 }
 
@@ -59,7 +42,8 @@ function cagov_breadcrumb()
 
     $items = wp_get_nav_menu_items('header-menu');
 
-    if (isset($items) && count($items) > 0) {
+    if ($items !== "undefined" && isset($items)) {
+        if (is_array($items) || is_object($items)) {
         _wp_menu_item_classes_by_context($items); // Set up the class variables, including current-classes
 
         $crumbs = array(
@@ -108,6 +92,7 @@ function cagov_breadcrumb()
         }
 
         echo '<div class="breadcrumb" aria-label="Breadcrumb" role="region">' . implode($separator, $crumbs) . '</div>';
+    }
     }
 }
 
