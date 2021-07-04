@@ -1,6 +1,6 @@
 <?php
 /*
- * Template Name: Landing
+ * Template Name: Landing Page
  * Template Post Type: page
  */
 ?>
@@ -59,9 +59,5 @@ if (file_exists(get_stylesheet_directory() . '/partials/header.php')) {
     </div> <!-- #main-content -->
 
 </div>
-
-<?php
-    do_action("cagov_content_menu");
-?>
-
+s
 <?php get_footer(); ?>
