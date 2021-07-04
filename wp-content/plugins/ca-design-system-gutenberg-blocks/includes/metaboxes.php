@@ -9,6 +9,19 @@
 add_action('add_meta_boxes', 'cagov_add_meta_boxes');
 add_action('save_post', 'cagov_save_post', 10, 2);
 
+// add_filter( 'preview_post_link', 'cagov_headless_preview' );
+
+function cagov_headless_preview() {
+    global $post;
+    $post_ID = $post->post_parent;
+    $post_slug = get_post_field( 'post_name', $post_ID );
+    // This needs to be a variable
+    return 'https://cagov.github.io/drought.ca.gov/'
+        . 'preview?slug='
+        . $post_slug . '&wpnonce='
+        . wp_create_nonce('wp_rest');
+}
+
 /**
  * Add CADesignSystem Metaboxes
  *
