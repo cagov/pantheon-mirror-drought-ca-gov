@@ -84,11 +84,11 @@
         // @TODO since we have the media ID to render, could load large or small size
         // Caching tools from WP (like WP Fastest Cache) can do lazy loading automatically
         return props.setAttributes({
-          mediaURL: media.sizes.large.url,
+          mediaURL: media.sizes.large ? media.sizes.large.url : media.sizes.url,
           mediaID: media.id,
           mediaAlt: media.description,
-          mediaWidth: media.sizes.large.width,
-          mediaHeight: media.sizes.large.height
+          mediaWidth: media.sizes.large ? media.sizes.large.width : media.sizes.width,
+          mediaHeight: media.sizes.large ? media.sizes.large.height : media.sizes.height
         });
       };
       return el('div', { className: 'cagov-with-sidebar cagov-with-sidebar-left cagov-featured-section cagov-bkgrd-gry' },
