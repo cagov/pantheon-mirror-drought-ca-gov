@@ -319,20 +319,20 @@ function cagov_gb_get_custom_fields($object, $field_name, $request)
     if ($post->post_type === "post") {
         $post_settings = cagov_post_fields($post);
         return array(
-            'display_title' => true, // $caweb_custom_post_title_display === "on" ? true : false,
+            // 'display_title' => true, // $caweb_custom_post_title_display === "on" ? true : false,
             'template' => $current_template,
             'post' => $post_settings,
         );
     } else {
         return array(
-            'display_title' => $caweb_custom_post_title_display === "on" ? true : false,
+            // 'display_title' => true, // $caweb_custom_post_title_display === "on" ? true : false,
             'template' => $current_template,
-            
         );
     }
 }
 
 function cagov_post_fields($post) {
+    // print_r($post);
     $custom_post_link = get_post_meta($post->ID, '_ca_custom_post_link', true);
     $custom_post_date = get_post_meta($post->ID, '_ca_custom_post_date', true);
     $custom_post_location = get_post_meta($post->ID, '_ca_custom_post_location', true);
@@ -340,14 +340,31 @@ function cagov_post_fields($post) {
     $custom_event_end_date = get_post_meta($post->ID, '_ca_custom_event_end_date', true);
     $custom_event_start_time = get_post_meta($post->ID, '_ca_custom_event_start_time', true);
     $custom_event_end_time = get_post_meta($post->ID, '_ca_custom_event_end_time', true);
+
     return array(
         'post_link' => $custom_post_link,
         'post_date' => $custom_post_date,
+        'locale' => get_locale(),
+        'gmt_offset' => get_option('gmt_offset'),
+        'timezone' => get_option('timezone_string'),
+        'post_published_date_display' => array(
+            'i18n_locale_date' => date_i18n('F j, Y',  strtotime( $post->post_date ) , false ),
+            'i18n_locale_date_gmt' => date_i18n('F j, Y', strtotime( $post->post_date_gmt ) , true ),
+            'i18n_locale_date_time' => date_i18n('F j, Y g:i a',  strtotime( $post->post_date ) , false ),
+            'i18n_locale_date_time_gmt' => date_i18n('F j, Y g:i a', strtotime( $post->post_date_gmt ) , true ),
+        ),
+        'post_modified_date_display' => array(
+            'i18n_locale_date' => date_i18n('F j, Y',  strtotime( $post->post_modified ) , false ),
+            'i18n_locale_date_gmt' => date_i18n('F j, Y', strtotime( $post->post_modified_gmt ) , true ),
+            'i18n_locale_date_time' => date_i18n('F j, Y g:i a',  strtotime( $post->post_modified ) , false ),
+            'i18n_locale_date_time_gmt' => date_i18n('F j, Y g:i a', strtotime( $post->post_modified_gmt ) , true ),
+            
+        ),
         'post_location' => $custom_post_location,
         'event_date' => $custom_event_date,
         'event_end_date' => $custom_event_end_date,
         'event_start_time' => $custom_event_start_time,
-        'event_start_time' => $custom_event_end_time
+        'event_end_time' => $custom_event_end_time
     );
 }
 
@@ -355,6 +372,8 @@ function cagov_site_settings($object, $field_name, $request) {
     return array(
         'site_name' => get_bloginfo('name'),
         'site_description' => get_bloginfo('description'),
+        'url' => get_bloginfo('url'),
+        'wpurl' => get_bloginfo('wpurl'),
     );
 }
 

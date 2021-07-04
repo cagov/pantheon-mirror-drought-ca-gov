@@ -16,7 +16,10 @@ function cagov_headless_preview() {
     $post_ID = $post->post_parent;
     $post_slug = get_post_field( 'post_name', $post_ID );
     // This needs to be a variable
-    return 'https://cagov.github.io/drought.ca.gov/'
+    $site_url = get_bloginfo('url');
+    $wp_url = get_bloginfo('wpurl');
+    
+    return $site_url
         . 'preview?slug='
         . $post_slug . '&wpnonce='
         . wp_create_nonce('wp_rest');
@@ -149,7 +152,7 @@ function cagov_save_post($post_id, $post)
 
     update_post_meta($post->ID, '_ca_custom_post_link', $ca_custom_post_link);
 
-    
+
     $ca_custom_post_date = isset($_POST['ca_custom_post_date']) ? sanitize_text_field(wp_unslash($_POST['ca_custom_post_date'])) : '';
 
     update_post_meta($post->ID, '_ca_custom_post_date', $ca_custom_post_date);
