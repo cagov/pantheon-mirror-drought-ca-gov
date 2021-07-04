@@ -81,13 +81,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 			?>
 		</div>
 
-		<?php
-		/**
-		 * generate_after_content hook.
-		 *
-		 * @since 0.1
-		 */
-		do_action( 'generate_after_content' );
-		?>
+
 	</div>
 </article>

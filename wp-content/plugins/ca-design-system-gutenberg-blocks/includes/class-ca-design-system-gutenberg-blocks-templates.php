@@ -51,24 +51,22 @@ class CADesignSystemGutenbergBlocks_Plugin_Templates_Loader
     {
         $this->template_dir = plugin_dir_path(__FILE__) . 'templates/'; // @TODO this saves with absolute file path which requires resetting the path in each WP instance.
         // $this->template_dir = WP_CONTENT_DIR .  'ca-design-system-gutenberg-blocks/includes/templates/';
-        $this->templates = $this->_load_default_page_templates();
-        $this->_add_page_templates_to_metaboxes();
 
         add_filter('theme_page_templates', array($this, 'register_plugin_templates_page'));
         add_filter('theme_post_templates', array($this, 'register_plugin_templates_post'));
         add_filter('template_include', array($this, 'add_template_filter'));
-        
     }
 
     /**
      * Load templates located in the plugin templates folder.
      */
-    private function _load_default_page_templates()
+    private function _load_default_page_templates($type)
     {
+        $templates = array();
         $template_dir = $this->template_dir;
-
         // Reads all templates from the folder
         if (is_dir($template_dir)) {
+
             if ($dh = opendir($template_dir)) {
                 while (($file = readdir($dh)) !== false) {
 
@@ -81,11 +79,15 @@ class CADesignSystemGutenbergBlocks_Plugin_Templates_Loader
                     // Gets Template Name from the file
                     $filedata = get_file_data($full_path, array(
                         'Template Name' => 'Template Name',
+                        'Template Post Type' => 'Template Post Type',
                     ));
 
-                    $template_name = $filedata['Template Name'];
-
-                    $templates[$full_path] = $template_name;
+                    // Filter templates by post type
+                    if ($type === $filedata['Template Post Type']) {
+                        $template_name = $filedata['Template Name'];   
+                        $templates[$full_path] = $template_name;        
+                    }
+                
                 }
                 closedir($dh);
             }
@@ -133,6 +135,10 @@ class CADesignSystemGutenbergBlocks_Plugin_Templates_Loader
     {
         // Merging the WP templates with this plugin's active templates
 
+        $this->templates = $this->_load_default_page_templates("post");
+
+        $this->_add_page_templates_to_metaboxes();
+
         // @TODO filter array by type
         $theme_templates = array_merge($theme_templates, $this->templates);
 
@@ -143,9 +149,11 @@ class CADesignSystemGutenbergBlocks_Plugin_Templates_Loader
     {
         // Merging the WP templates with this plugin's active templates
 
+        $this->templates = $this->_load_default_page_templates("page");
+
+        $this->_add_page_templates_to_metaboxes();
         // @TODO filter array by type
         $theme_templates = array_merge($theme_templates, $this->templates);
-
         return $theme_templates;
     }
 
@@ -160,6 +168,7 @@ class CADesignSystemGutenbergBlocks_Plugin_Templates_Loader
     public function add_template_filter($template)
     {
         global $post;
+
         if (isset($post->ID)) {
             $user_selected_template = get_page_template_slug($post->ID);
             $file_name = pathinfo($user_selected_template, PATHINFO_BASENAME);
