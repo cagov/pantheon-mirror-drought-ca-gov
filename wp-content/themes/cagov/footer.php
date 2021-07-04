@@ -24,7 +24,7 @@ do_action( 'generate_before_footer' );
 <?php do_action( 'cagov_content_menu' ); ?>
 
 <div>
-	<?php /// do_action( 'cagov_statewide_footer_menu' ); ?>
+	<?php do_action( 'cagov_statewide_footer_menu' ); ?>
 </div>
 
 <?php
