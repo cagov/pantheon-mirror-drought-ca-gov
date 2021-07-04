@@ -19,11 +19,6 @@ if (file_exists(get_stylesheet_directory() . '/header.php')) {
         <div class="ds-content-layout">
             <main class="main-primary">
                 <div>
-                    <?php
-                    while (have_posts()) :
-                        the_post();
-                    ?>
-
                         <?php
                         $category = get_the_category();
                         ?>
@@ -35,8 +30,8 @@ if (file_exists(get_stylesheet_directory() . '/header.php')) {
 
                             esc_html(the_title(sprintf('<h1 class="page-title">', ), '</h1>'));
 
-                            printf('<p class="page-date published"><time datetime="%1$s">%1$s</time></p>', get_the_date('M d, Y'));
-
+                            printf('<p class="page-date published"><time datetime="%1$s">%1$s</time></p>', get_the_date('F j, Y g:i a'));
+                            
                             print '<div class="entry-content">';
 
                             the_content();
@@ -46,14 +41,11 @@ if (file_exists(get_stylesheet_directory() . '/header.php')) {
                             ?>
 
                         </article>
-
-                    <?php endwhile; ?>
                     <span class="return-top hidden-print"></span>
             </main>
         </div>
     </div>
 </div>
-
 
 <?php
 do_action("cagov_content_menu");
