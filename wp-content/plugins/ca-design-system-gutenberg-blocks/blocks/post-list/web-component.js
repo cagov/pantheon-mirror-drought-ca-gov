@@ -168,13 +168,10 @@ class CAGovPostList extends window.HTMLElement {
     format = "standard",
     design_system_fields = null,
   }) {
-    let dateFormatted;
-    if (date !== null && window.moment !== undefined) {
-      dateFormatted = moment(date).format("MMMM DD, YYYY");
-    }
+
 
     if (format === "link" && design_system_fields !== null) {
-      console.log(design_system_fields.post.post_link);
+
       if (design_system_fields.post !== undefined) {
         if (
           design_system_fields.post.post_link !== undefined &&
@@ -184,6 +181,25 @@ class CAGovPostList extends window.HTMLElement {
           link = design_system_fields.post.post_link;
         }
       }
+    }
+
+    let dateFormatted;
+    if (date !== null && window.moment !== undefined) {
+      // if (moment !== undefined) {
+      //   dateFormatted = moment(date).format("MMMM DD, YYYY");
+      // } 
+
+      if (design_system_fields.post !== undefined) {
+          try {
+          dateFormatted = design_system_fields.post.post_published_date_display.i18n_locale_date;
+          } catch (error) {
+            console.error(error)
+          }
+
+
+ 
+      }
+      
     }
 
     let getExcerpt =
@@ -214,11 +230,11 @@ class CAGovPostList extends window.HTMLElement {
     }
 
     if (format === "status") {
-      return `<div class="post-list-item">
+      return `<div class="post-list-item post-status">
           ${category_type}
-          <div class="link-title"><a href="${link}">
+          <div class="link-title">
             ${getDate}
-          </a></div>
+          </div>
           ${getExcerpt}
           
       </div>

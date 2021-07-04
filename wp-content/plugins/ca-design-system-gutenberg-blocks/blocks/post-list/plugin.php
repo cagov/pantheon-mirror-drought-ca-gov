@@ -89,7 +89,7 @@ function cagov_post_list_dynamic_render_callback($block_attributes, $content)
     <div class="wp-block-ca-design-system-post-list cagov-post-list cagov-stack">
         <div>
         
-            <h3>$title</h3>
+            <h2>$title</h2>
             <cagov-post-list 
                 class="post-list" 
                 data-category="$category"
