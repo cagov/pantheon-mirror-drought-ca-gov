@@ -55,6 +55,10 @@ cagov-post-list .post-list-item {
     color: #000;
 }
 
+.cagov-post-list .post-list-item.post-status .link-title {
+    font-weight: 700;
+}
+
 @media only screen and (max-width: 580px) {
 
     .cagov-post-list h3 {
