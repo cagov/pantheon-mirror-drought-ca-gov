@@ -134,6 +134,44 @@ function cagov_pre_main_primary()
 <?php
 }
 
+function cagov_statewide_footer_menu() {
+    $nav_links = '';
+
+    /* loop thru and create a link (parent nav item only) */
+    $nav_menus = get_nav_menu_locations();
+
+    if (!isset($nav_menus['statewide-footer-menu'])) {
+        return;
+    }
+?>
+
+    <div class="statewide-footer-container">
+        <div class="statewide-footer">
+            <div class="menu-section">
+                <ul class="statewide-footer-menu-links">
+                    <?php
+                    $menuitems = wp_get_nav_menu_items($nav_menus['statewide-footer-menu']);
+
+                    foreach ($menuitems as $item) {
+                        if (!$item->menu_item_parent) {
+                            $class  = !empty($item->classes) ? implode(' ', $item->classes) : '';
+                            $rel    = !empty($item->xfn) ? $item->xfn : '';
+                            $target = !empty($item->target) ? $item->target : '_blank';
+                    ?>
+                            <li class="<?php echo esc_attr($class); ?>" title="<?php echo esc_attr($item->attr_title); ?>" rel="<?php echo esc_attr($rel); ?>">
+                                <a href="<?php echo esc_url($item->url); ?>" target="<?php echo esc_attr($target); ?>"><?php echo esc_attr($item->title); ?></a>
+                            </li>
+                    <?php
+                        }
+                    }
+                    ?>
+                </ul>
+            </div>
+        </div>
+    </div>
+<?php
+}
+
 /**
  * CADesignSystem Content Menu
  *
