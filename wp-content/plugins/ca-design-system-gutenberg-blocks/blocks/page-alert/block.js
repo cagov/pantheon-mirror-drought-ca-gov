@@ -43,11 +43,11 @@
             let iconOptions = [
                 { label: 'None', value: '' },
                 { label: 'Bell', value: 'ca-gov-icon-bell'},
-                { label: 'Cannabis', value: 'ca-gov-icon-cannabis'},
+                // { label: 'Cannabis', value: 'ca-gov-icon-cannabis'},
                 { label: 'Warning', value: 'ca-gov-icon-warning-triangle'},
                 { label: 'Question', value: 'ca-gov-icon-question-line'},
-                { label: 'Flag', value: 'dashicons dashicons-flag'}, // ca-gov doesn't have a flag icon
-                { label: 'Star', value: 'dashicons dashicons-star-filled'}, // ca-gov doesn't have a star icon
+                // { label: 'Flag', value: 'dashicons dashicons-flag'}, // ca-gov doesn't have a flag icon
+                // { label: 'Star', value: 'dashicons dashicons-star-filled'}, // ca-gov doesn't have a star icon
             ];
 
             return el(
