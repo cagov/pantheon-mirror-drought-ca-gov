@@ -49,7 +49,7 @@
                             <div class="input" style="margin:5px 0px;">
                                 <input type="hidden" name="allow_client_mode" value="0"/>
                                 <input type="checkbox" disabled="disabled" id="allow_client_mode" name="allow_client_mode"
-                                       value="1" <?php echo $post['allow_client_mode'] ? 'checked="checked"' : '' ?> />
+                                       value="1" <?php echo (isset($post['allow_client_mode']) && $post['allow_client_mode']) ? 'checked="checked"' : '' ?> />
                                 <label for="allow_client_mode"><?php _e('Allow non-admins to run this export in Client Mode', 'wp_all_export_plugin') ?></label>
                                 <span>
                                     <a href="#help" class="wpallexport-help" style="position: relative; top: 0;" title="<?php _e('When enabled, users with access to Client Mode will be able to run this export and download the export file. Go to All Export > Settings to give users access to Client Mode. <br><br><strong>Upgrade to the Pro edition of WP All Export to use this option.</strong>'); ?>">?</a>
@@ -60,7 +60,7 @@
 							<p style="text-align:right;">
 								<div class="input">
 									<label for="save_import_as" style="width: 103px;"><?php _e('Friendly Name:','wp_all_export_plugin');?></label> 
-									<input type="text" name="friendly_name" title="<?php _e('Save friendly name...', 'pmxi_plugin') ?>" style="vertical-align:middle; background:#fff !important;" value="<?php echo esc_attr($post['friendly_name']) ?>" />
+									<input type="text" name="friendly_name" title="<?php _e('Save friendly name...', 'pmxi_plugin') ?>" style="vertical-align:middle; background:#fff !important;" value="<?php echo wp_all_export_clear_xss(esc_attr($post['friendly_name'])); ?>" />
 								</div>
 							</p>
 						</td>

@@ -49,6 +49,8 @@ if ( ! class_exists('PMXI_Upload')){
 
 			$bundleFiles = array();
 
+			$csv_path = '';
+
 			if (empty($this->file)) {
 				$this->errors->add('form-validation', __('Please specify a file to import.<br/><br/>If you are uploading the file from your computer, please wait for it to finish uploading (progress bar at 100%), before trying to continue.', 'wp_all_import_plugin'));				
 			} elseif (!is_file($this->file)) {
@@ -137,8 +139,8 @@ if ( ! class_exists('PMXI_Upload')){
 					);
 					$fileFormats = $this->get_xml_file( $filePath );
 					$filePath = $fileFormats['xml'];
+				    $csv_path = $fileFormats['csv'];
 				}
-
 			} elseif ( preg_match('%\W(csv|txt|dat|psv|tsv)$%i', trim($this->file))) { // If CSV file uploaded
 					
 				if ( $this->uploadsPath === false ){
@@ -154,7 +156,8 @@ if ( ! class_exists('PMXI_Upload')){
 				include_once(PMXI_Plugin::ROOT_DIR.'/libraries/XmlImportCsvParse.php');	
 
 				$csv = new PMXI_CsvParser( array( 'filename' => $this->file, 'targetDir' => $this->uploadsPath ) );	
-				//@unlink($filePath);				
+				//@unlink($filePath);
+				$csv_path = $filePath;
 				$filePath = $csv->xml_path;								
 				$this->is_csv = $csv->is_csv;
 				$this->root_element = 'node';				
@@ -175,6 +178,7 @@ if ( ! class_exists('PMXI_Upload')){
 						include_once(PMXI_Plugin::ROOT_DIR.'/libraries/XmlImportCsvParse.php');					
 						$csv = new PMXI_CsvParser( array( 'filename' => $filePath, 'targeDir' => $this->uploadsPath ) ); // create chunks
 						//@unlink($filePath);
+						$csv_path = $filePath;
 						$filePath = $csv->xml_path;
 						$this->is_csv = $csv->is_csv;
 						$this->root_element = 'node';
@@ -258,6 +262,7 @@ if ( ! class_exists('PMXI_Upload')){
 				'source'        => $source,
 				'root_element'  => $this->root_element,
 				'is_csv'        => $this->is_csv,
+				'csv_path'      => $csv_path,
 				'template'      => empty($templateOptions) ? "" : json_encode($templateOptions),
 				'templates'     => $templates,
 				'post_type'     => (!empty($options)) ? $options['custom_type'] : false,

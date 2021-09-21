@@ -8,7 +8,7 @@ namespace The_SEO_Framework\Bridges;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2019 - 2020 Sybre Waaijer, CyberWire (https://cyberwire.nl/)
+ * Copyright (C) 2019 - 2021 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -71,7 +71,7 @@ final class PostSettings {
 				$title  = sprintf(
 					$schema,
 					\esc_html__( 'Homepage SEO Settings', 'autodescription' ),
-					$tsf->make_info(
+					\The_SEO_Framework\Interpreters\HTML::make_info(
 						\__( 'The SEO Settings may take precedence over these settings.', 'autodescription' ),
 						$tsf->seo_settings_page_url(),
 						false

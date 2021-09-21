@@ -2,9 +2,6 @@
 
 if ( ! class_exists('XmlExportEngine') ){
 
-	require_once dirname(__FILE__) . '/XmlExportACF.php';
-	require_once dirname(__FILE__) . '/XmlExportWooCommerce.php';
-	require_once dirname(__FILE__) . '/XmlExportWooCommerceOrder.php';
 	require_once dirname(__FILE__) . '/XmlExportComment.php';
 	require_once dirname(__FILE__) . '/XmlExportTaxonomy.php';
 
@@ -35,10 +32,11 @@ if ( ! class_exists('XmlExportEngine') ){
 		const EXPORT_TYPE_CSV = 'csv';
 
 		public static $acf_export;
-		public static $woo_export;	
+		public static $woo_export = false;
 		public static $woo_order_export;
 		public static $woo_coupon_export;
 		public static $woo_refund_export;
+		public static $woo_review_export;
 		public static $user_export = false;
 		public static $comment_export;
 		public static $taxonomy_export;
@@ -51,7 +49,9 @@ if ( ! class_exists('XmlExportEngine') ){
 		private $_existing_meta_keys = array();
 		private $_existing_taxonomies = array();
 
-		private $init_fields = array(			
+		private static $addons_service = false;
+
+		private $init_fields = array(
 			array(
 				'label' => 'id',
 				'name'  => 'ID',
@@ -342,15 +342,15 @@ if ( ! class_exists('XmlExportEngine') ){
 				), 
 				'cats' => array(
 					'title'   => __("Taxonomies", "wp_all_export_plugin"),
-					'content' => 'existing_taxonomies'					
+					'content' => 'existing_taxonomies'
 				),
 				'cf' => array(
 					'title'   => __("Custom Fields", "wp_all_export_plugin"), 
-					'content' => 'existing_meta_keys'					
+					'content' => 'existing_meta_keys'
 				),
 				'other' => array(
 					'title'   => __("Other", "wp_all_export_plugin"), 
-					'content' => 'other_fields'					
+					'content' => 'other_fields'
 				)
 			);
 
@@ -440,13 +440,8 @@ if ( ! class_exists('XmlExportEngine') ){
 
             if ( !empty(self::$exportOptions['xml_template_type']) && in_array(self::$exportOptions['xml_template_type'], array('custom', 'XmlGoogleMerchants')) ) self::$implode = '#delimiter#';
 
-			self::$acf_export  		 = new XmlExportACF();
-			self::$woo_export  		 = new XmlExportWooCommerce();
 			self::$comment_export    = new XmlExportComment();
 			self::$taxonomy_export   = new XmlExportTaxonomy();
-			self::$woo_order_export  = new XmlExportWooCommerceOrder(); 
-			self::$woo_coupon_export = new XmlExportWooCommerceCoupon();
-
             do_action('pmxe_init_addons');
         }
 
@@ -472,9 +467,18 @@ if ( ! class_exists('XmlExportEngine') ){
 
 			if ('advanced' == $this->post['export_type']) {
 
-				if( "" == $this->post['wp_query'] ){
-					$this->errors->add('form-validation', __('WP Query field is required', 'pmxe_plugin'));
-				}
+                if( "" == $this->post['wp_query'] ){
+                    $this->errors->add('form-validation', __('WP Query field is required', 'pmxe_plugin'));
+                }
+                else if(!XmlExportEngine::get_addons_service()->isWooCommerceAddonActive() && strpos($this->post['wp_query'], 'product') !== false) {
+                    $this->errors->add('form-validation', __('The WooCommerce Export Add-On Pro is required to Export WooCommerce Products', 'pmxe_plugin'));
+                }
+                else if(!XmlExportEngine::get_addons_service()->isWooCommerceAddonActive() && strpos($this->post['wp_query'], 'shop_order') !== false) {
+                    $this->errors->add('form-validation', __('The WooCommerce Export Add-On Pro is required to Export WooCommerce Orders', 'pmxe_plugin'));
+                }
+                else if(!XmlExportEngine::get_addons_service()->isWooCommerceAddonActive() && strpos($this->post['wp_query'], 'shop_coupon') !== false) {
+                    $this->errors->add('form-validation', __('The WooCommerce Export Add-On Pro is required to Export WooCommerce Coupons', 'pmxe_plugin'));
+                }
 				else 
 				{
 					$this->filters->parse();
@@ -501,9 +505,10 @@ if ( ! class_exists('XmlExportEngine') ){
 
 		public function init_additional_data(){
 
-			self::$woo_order_export->init_additional_data();
-			self::$woo_export->init_additional_data();
-
+		    if(self::$woo_export) {
+                self::$woo_order_export->init_additional_data();
+                self::$woo_export->init_additional_data();
+            }
 		}
 
 		public function init_available_data(){
@@ -542,17 +547,21 @@ if ( ! class_exists('XmlExportEngine') ){
 				}
 			}							
 
-			// Prepare existing ACF groups & fields
-			self::$acf_export->init($this->_existing_meta_keys);
-			
-			// Prepare existing WooCommerce data
-			self::$woo_export->init($this->_existing_meta_keys);
+			if(self::$acf_export) {
+                // Prepare existing ACF groups & fields
+                self::$acf_export->init($this->_existing_meta_keys);
+            }
 
-			// Prepare existing WooCommerce Order data
-			self::$woo_order_export->init($this->_existing_meta_keys);
+			if(XmlExportEngine::$woo_export) {
+                // Prepare existing WooCommerce data
+                self::$woo_export->init($this->_existing_meta_keys);
 
-			// Prepare existing WooCommerce Coupon data
-			self::$woo_coupon_export->init($this->_existing_meta_keys);
+                // Prepare existing WooCommerce Order data
+                self::$woo_order_export->init($this->_existing_meta_keys);
+
+                // Prepare existing WooCommerce Coupon data
+                self::$woo_coupon_export->init($this->_existing_meta_keys);
+            }
 
             if(XmlExportEngine::$user_export) {
                 // Prepare existing Users data
@@ -570,8 +579,11 @@ if ( ! class_exists('XmlExportEngine') ){
 
 		public function get_available_data(){			
 
-			$this->available_data['acf_groups'] 			= self::$acf_export->get('_acf_groups');
-			$this->available_data['existing_acf_meta_keys'] = self::$acf_export->get('_existing_acf_meta_keys');
+		    if(self::$acf_export) {
+                $this->available_data['acf_groups'] = self::$acf_export->get('_acf_groups');
+                $this->available_data['existing_acf_meta_keys'] = self::$acf_export->get('_existing_acf_meta_keys');
+            }
+
 			$this->available_data['existing_meta_keys'] 	= $this->_existing_meta_keys;
 			$this->available_data['existing_taxonomies']    = $this->_existing_taxonomies;
 
@@ -660,8 +672,10 @@ if ( ! class_exists('XmlExportEngine') ){
 			}
 
 			if ( ! self::$is_comment_export )
-			{							
-				self::$acf_export->get_fields_options( $fields, $field_keys );
+			{
+			    if(self::$acf_export) {
+				    self::$acf_export->get_fields_options( $fields, $field_keys );
+			    }
 			}
 
 			$sort_fields = array();
@@ -696,8 +710,10 @@ if ( ! class_exists('XmlExportEngine') ){
 			$available_sections = apply_filters("wp_all_export_available_sections", $this->available_sections);
 			self::$globalAvailableSections = $available_sections;
 
-			// Render Available WooCommerce Orders Data
-			self::$woo_order_export->render($i);
+			if(self::$woo_export) {
+                // Render Available WooCommerce Orders Data
+                self::$woo_order_export->render($i);
+            }
 
 			foreach ($available_sections as $slug => $section)
 			{
@@ -819,9 +835,25 @@ if ( ! class_exists('XmlExportEngine') ){
 			}
 
 			if ( ! self::$is_comment_export )
-			{			
-				// Render Available ACF
-				self::$acf_export->render($i);		
+			{
+			    if(self::$acf_export) {
+                    // Render Available ACF
+                    self::$acf_export->render($i);
+                } else {
+			        if(!self::get_addons_service()->isAcfAddonActive()) {
+                        ?>
+                        <p class="wpae-available-fields-group">ACF<span class="wpae-expander">+</span></p>
+                        <div class="wpae-custom-field">
+
+                            <div class="wpallexport-free-edition-notice">
+                                <a class="upgrade_link" target="_blank"
+                                   href="https://www.wpallimport.com/checkout/?edd_action=add_to_cart&download_id=4206907&edd_options%5Bprice_id%5D=1&utm_source=export-plugin-free&utm_medium=upgrade-notice&utm_campaign=export-advanced-custom-fields">Upgrade to the ACF Export Package to Export Advanced Custom Fields</a>
+                            </div>
+                        </div>
+                        <?php
+                    }
+
+                }
 			}
 
 			return ob_get_clean();
@@ -832,8 +864,10 @@ if ( ! class_exists('XmlExportEngine') ){
 
 			$available_sections = apply_filters("wp_all_export_available_sections", apply_filters('wp_all_export_filters', $this->available_sections) );			
 
-			// Render Filters for WooCommerce Orders
-			self::$woo_order_export->render_filters();
+			if(self::$woo_export) {
+                // Render Filters for WooCommerce Orders
+                self::$woo_order_export->render_filters();
+            }
 
 			if ( ! empty($available_sections) )
 			{
@@ -998,9 +1032,11 @@ if ( ! class_exists('XmlExportEngine') ){
 			}
 
 			if ( ! self::$is_comment_export )
-			{	
-				// Render Available ACF
-				self::$acf_export->render_filters();	
+			{
+			    if(self::$acf_export) {
+                    // Render Available ACF
+                    self::$acf_export->render_filters();
+                }
 			}
 
 		}		
@@ -1011,8 +1047,10 @@ if ( ! class_exists('XmlExportEngine') ){
 
 			$available_sections = apply_filters("wp_all_export_available_sections", $this->available_sections);
 
+			if(self::$woo_export) {
 			// Render Available WooCommerce Orders Data
-			self::$woo_order_export->render_new_field();
+			    self::$woo_order_export->render_new_field();
+			}
 
 			if ( ! empty($available_sections) ):?>
 				
@@ -1085,9 +1123,11 @@ if ( ! class_exists('XmlExportEngine') ){
 					}
 
 					if ( ! self::$is_comment_export )
-					{	
-						// Render Available ACF
-						self::$acf_export->render_new_field();	
+					{
+					    if(self::$acf_export) {
+                            // Render Available ACF
+                            self::$acf_export->render_new_field();
+                        }
 					}
 
 					?>
@@ -1224,6 +1264,15 @@ if ( ! class_exists('XmlExportEngine') ){
 			}
 
 			return $fieldName;
+		}
+
+		public static function get_addons_service()
+		{
+			if(!self::$addons_service) {
+				self::$addons_service = new Wpae\App\Service\Addons\AddonService();
+			}
+
+			return self::$addons_service;
 		}
 	}
 

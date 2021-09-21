@@ -161,6 +161,22 @@
 	font-size: 1.3em !important;
 	margin-bottom: 0;
 }
+
+.wpallexport-plugin .wpallexport-free-edition-notice.wpallexport-user-export-notice p,
+.wpallexport-plugin .wpallexport-free-edition-notice.wpallexport-shop_customer-export-notice p,
+.wpallexport-plugin .wpallexport-free-edition-notice.wpallexport-shop_order-export-notice p,
+.wpallexport-plugin .wpallexport-free-edition-notice.wpallexport-shop_coupon-export-notice p,
+.wpallexport-plugin .wpallexport-free-edition-notice.wpallexport-shop_review-export-notice p,
+.wpallexport-plugin .wpallexport-free-edition-notice.wpallexport-comments-export-notice p,
+.wpallexport-plugin .wpallexport-free-edition-notice.wpallexport-taxonomies-export-notice p,
+.wpallexport-plugin .wpallexport-free-edition-notice.wpallexport-product-export-notice p
+
+{
+	margin-bottom: 1em;
+	margin-top: 0;
+}
+
+
 .wpallexport-plugin .upgrade_link{
 	color: #000 !important;
 	font-size: 1.3em;
@@ -168,8 +184,13 @@
 }
 .wpallexport-plugin .wpallexport-user-export-notice,
 .wpallexport-plugin .wpallexport-shop_customer-export-notice,
+.wpallexport-plugin .wpallexport-shop_review-export-notice,
+.wpallexport-plugin .wpallexport-shop_order-export-notice,
+.wpallexport-plugin .wpallexport-shop_coupon-export-notice,
+.wpallexport-plugin .wpallexport-reviews-export-notice,
 .wpallexport-plugin .wpallexport-comments-export-notice,
-.wpallexport-plugin .wpallexport-taxonomies-export-notice{
+.wpallexport-plugin .wpallexport-taxonomies-export-notice,
+.wpallexport-plugin .wpallexport-product-export-notice {
 	padding: 20px;
 	display: none;
 	width: 558px;
@@ -614,11 +635,14 @@
 
 /*@+ header */
 .wpallexport-plugin .wpallexport-logo{
-	background: url('../img/logo.png');
-	width: 60px;
-	height: 53px;
-	float: left;
-	margin-right: 10px;
+  background: url(../img/logo.svg) no-repeat;
+  background-size: 55px 55px;
+  width: 55px;
+  height: 55px;
+  margin-top: 8px;
+  margin-bottom: 8px;
+  float: left;
+  margin-right: 8px;
 }
 .wpallexport-plugin .wpallexport-title{
 	float: left;
@@ -639,9 +663,19 @@
 		padding-right: 0;
 		margin-left: 2px;
 	}	
+	.wpallexport-plugin .wpallexport-title h2,
 	.wpallexport-plugin .wpallexport-title h3{
-		margin: 5px 0;
+		margin: 8px 0 !important;
 	}
+.wpallexport-plugin .wpallexport-title > h2:before,
+.wpallexport-plugin .wpallexport-title > h3:before {
+	content: '';
+  background: url(../img/wpallexport.svg) no-repeat;
+  background-size: 134px 14px;
+  width: 134px;
+  height: 25px;
+  display: block;
+}
 .wpallexport-plugin .wpallexport-links{
 	float: right;
 	margin-right: 3px;
@@ -905,7 +939,7 @@ a.wpallexport-import-to-format span.wpallexport-import-to-title {
 	font-size: 12px;
 	/*height: 25px;*/
 	width: auto;
-	padding: 4px 25px 4px 6px;
+	padding: 4px 25px 4px 12px;
 	color: #000;
 }
 .wpallexport-plugin .wpallexport-template input[type="text"],
@@ -925,7 +959,7 @@ a.wpallexport-import-to-format span.wpallexport-import-to-title {
 	-khtml-border-radius: 4px;
 	-webkit-border-radius: 4px;	
 	color: #777;
-	font-size: 15px !important;
+	font-size: 15px;
 	width: 100%;
 	position: relative;
 	top: 0;
@@ -1164,14 +1198,14 @@ a.wpallexport-import-to-format span.wpallexport-import-to-title {
 .wpallexport-plugin .right fieldset{
 	padding: 15px;
 }
-	.wpallexport-plugin .right fieldset input{
-		max-width:none;
-		padding:6px;
-		margin:0px
-	}
-	.wpallexport-plugin .right a{
-		text-decoration: underline;
-	}
+.wpallexport-plugin .right fieldset input{
+	max-width:none;
+	padding:6px;
+	margin:0px
+}
+.wpallexport-plugin .right a{
+	text-decoration: underline;
+}
 .wpallexport-plugin fieldset legend{
 	padding: 0px 5px;
 	font-weight: bold;
@@ -1227,7 +1261,7 @@ a.wpallexport-import-to-format span.wpallexport-import-to-title {
 	font-size: 12px;
 }
 .wpallexport-plugin .wpallexport-created-by span{
-	background: url('../img/soflyy-logo.png') no-repeat;
+	background: url('../img/soflyy-logo.svg') no-repeat;
 	display: block;
 	float: right;
 	width: 72px;
@@ -1738,7 +1772,7 @@ a.wpallexport-import-to-format span.wpallexport-import-to-title {
 	font-weight: normal;
 	font-size: 18px;	
 	padding: 0;
-	padding: 0 10px;
+	padding: 0 12px;
 	line-height: 24px;
 }
 .wpallexport-plugin .change_file #file_selector .dd-select,
@@ -2052,7 +2086,6 @@ a.wpallexport-import-to-format span.wpallexport-import-to-title {
 
 .wpallexport-plugin .chosen-container-single .chosen-single span {
 	margin-top: 5px;
-	margin-left: 10px;
 	color: #777;
 }
 
@@ -2310,10 +2343,17 @@ a.wpallexport-import-to-format span.wpallexport-import-to-title {
 		font-size: 12px;		
 	}
 
+	.wpallexport-plugin .load-template-container {
+		display: flex;
+		align-items: center;
+	}
+
 	.wpallexport-plugin form.wpallexport-template .load-template select {
 		width: auto;
-		height: 40px;
-		padding: 4px 25px 4px 6px;
+		padding: 4px 25px 4px 12px;
+		font-size: 12px;
+		height: 34px;
+		background-size: 14px 14px;
 	}
 
 	.wpallexport-plugin form.wpallexport-step-3 .wpallexport-section .wpallexport-content-section{
@@ -2810,6 +2850,8 @@ a.wpallexport-import-to-format span.wpallexport-import-to-title {
 
 .wpallexport-plugin .product_variations .sub-options {
 	margin-left: 20px;
+	margin-top: 8px;
+	margin-bottom: 8px;
 }
 
 .sub-options {
@@ -3459,6 +3501,18 @@ a.wpallexport-import-to-format span.wpallexport-import-to-title {
 .product_variations {
 	display: none;
 }
+
+.wpallexport-plugin .product_variations input {
+	margin-bottom: 0;
+}
+
+.wpallexport-plugin .wpallexport-custom-xml-template .cdata label {
+	vertical-align: 0px;
+}
+
+.wpallexport-plugin .wpallexport-custom-xml-template .cdata input {
+	vertical-align: -2px;
+}
 /*@*/
 
 /*--------------------------------------------------------------------------
@@ -3532,7 +3586,7 @@ a.wpallexport-import-to-format span.wpallexport-import-to-title {
 }
 .wpallexport-plugin form.settings .wpallexport-header{
 	overflow: hidden;
-	height: 60px;
+	height: 70px;
 	padding-top: 10px;
 }
 
@@ -4303,6 +4357,7 @@ input label {
 	background: none;
 	box-shadow: none;
 	color: #555 !important;
+	padding: 0 0 0 12px;
 }
 
 .wpallexport-plugin .chosen-container-single .chosen-single div {
@@ -4340,3 +4395,36 @@ input label {
 .category-mapper .mask {
 	display: none;
 }
+
+.wpallexport-plugin .wpallexport-xml-advanced-options .simple_xml_template_options {
+	margin-top: 30px;
+}
+
+.wpallexport-plugin .switcher-target-simple_custom_xml_cdata_logic_never {
+	padding-left: 26px;
+}
+
+.wpallexport-plugin .switcher-target-simple_custom_xml_cdata_logic_never p {
+	font-style: normal;
+}
+.wpallexport-xml-advanced-options .product_variations input[type="radio"] {
+	margin-bottom: -3px;
+}
+
+.wpallexport-xml-advanced-options #custom_xml_cdata_logic_auto,
+.wpallexport-xml-advanced-options #custom_custom_xml_cdata_logic_all,
+.wpallexport-xml-advanced-options #custom_custom_xml_cdata_logic_never {
+	margin-bottom: -4px;
+}
+
+/*
+ * Download Import Templates
+ */
+
+.wpallexport-plugin .download-import-templates p {
+	font-size: 14px;
+}
+
+.wpallexport-plugin .download-import-templates h2 {
+	margin-bottom: 10px;
+} 

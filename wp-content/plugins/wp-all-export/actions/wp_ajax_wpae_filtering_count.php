@@ -78,7 +78,7 @@ function pmxe_wp_ajax_wpae_filtering_count(){
 	if ($post['export_type'] == 'advanced') 
 	{
 		if (XmlExportEngine::$is_user_export)
-		{			
+		{
 			// get total users
 			$totalQuery = eval('return new WP_User_Query(array(' . PMXE_Plugin::$session->get('wp_query') . ', \'offset\' => 0, \'number\' => 10 ));');
 			if ( ! empty($totalQuery->results)){
@@ -110,7 +110,7 @@ function pmxe_wp_ajax_wpae_filtering_count(){
 			ob_get_clean();
 		}
 		else
-		{			
+		{
 			remove_all_actions('parse_query');
 			remove_all_actions('pre_get_posts');
 			remove_all_filters('posts_clauses');			

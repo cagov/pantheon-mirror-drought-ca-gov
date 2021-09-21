@@ -7,6 +7,9 @@
 // phpcs:disable, VariableAnalysis.CodeAnalysis.VariableAnalysis.UndefinedVariable -- includes.
 // phpcs:disable, WordPress.WP.GlobalVariablesOverride -- This isn't the global scope.
 
+use The_SEO_Framework\Interpreters\HTML,
+	The_SEO_Framework\Interpreters\Form;
+
 defined( 'THE_SEO_FRAMEWORK_PRESENT' ) and the_seo_framework()->_verify_include_secret( $_secret ) or die;
 
 $_ays_reset = esc_js( __( 'Are you sure you want to reset all SEO settings to their defaults?', 'autodescription' ) );
@@ -21,7 +24,7 @@ $_save_button  = get_submit_button(
 $_reset_button = get_submit_button(
 	__( 'Reset Settings', 'autodescription' ),
 	'secondary',
-	$this->get_field_name( 'tsf-settings-reset' ),
+	Form::get_field_name( 'tsf-settings-reset' ),
 	false,
 	[
 		'id'      => '', // we ouput this twice, don't set ID.
@@ -31,14 +34,14 @@ $_reset_button = get_submit_button(
 
 ?>
 <div class="wrap tsf-metaboxes">
-	<form method="post" action="options.php">
+	<form method=post action=options.php autocomplete=off data-form-type=other>
 		<?php wp_nonce_field( 'closedpostboxes', 'closedpostboxesnonce', false ); ?>
 		<?php wp_nonce_field( 'meta-box-order', 'meta-box-order-nonce', false ); ?>
 		<?php settings_fields( THE_SEO_FRAMEWORK_SITE_OPTIONS ); ?>
 
-		<div class="tsf-top-wrap">
+		<div class=tsf-top-wrap>
 			<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
-			<p class="tsf-top-buttons">
+			<p class=tsf-top-buttons>
 				<?php
 				// phpcs:ignore, WordPress.Security.EscapeOutput.OutputNotEscaped -- submit_button() escapes (mostly...)
 				echo $_save_button, $_reset_button;
@@ -46,9 +49,9 @@ $_reset_button = get_submit_button(
 			</p>
 		</div>
 
-		<hr class="wp-header-end">
+		<hr class=wp-header-end>
 
-		<div class="tsf-notice-wrap">
+		<div class=tsf-notice-wrap>
 			<?php
 			do_action( 'the_seo_framework_setting_notices' );
 			?>
@@ -58,7 +61,7 @@ $_reset_button = get_submit_button(
 		do_action( "{$this->seo_settings_page_hook}_settings_page_boxes", $this->seo_settings_page_hook );
 		?>
 
-		<div class="tsf-bottom-buttons">
+		<div class=tsf-bottom-buttons>
 			<?php
 			// phpcs:ignore, WordPress.Security.EscapeOutput.OutputNotEscaped -- submit_button() escapes (mostly...)
 			echo $_save_button, $_reset_button;

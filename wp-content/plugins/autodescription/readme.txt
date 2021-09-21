@@ -1,11 +1,11 @@
 === The SEO Framework ===
 Contributors: Cybr
 Donate link: https://github.com/sponsors/sybrew
-Tags: seo, xml sitemap, google search, open graph, schema.org, twitter card, performance
+Tags: seo, xml sitemap, google search, open graph, schema.org, twitter card, performance, headless
 Requires at least: 5.1.0
-Tested up to: 5.6
+Tested up to: 5.8
 Requires PHP: 5.6.0
-Stable tag: 4.1.3
+Stable tag: 4.1.5.1
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -126,6 +126,7 @@ The SEO Framework works on many things without notifying you, because the best s
 * Translation plugins like WPML, Polylang, WPGlobus, and MultilingualPress.
 * E-commerce plugins, like WooCommerce and Easy Digital Downloads.
 * Editing posts and terms via WordPress's native bulk-and-quick-edit interfaces.
+* Headless mode via a single [constant definition](https://kb.theseoframework.com/?p=136).
 
 = Copyright legislation notice =
 
@@ -226,7 +227,7 @@ In the meantime, you can disable SEO for the unwanted entries via the "General S
 
 = Why aren't focus keywords included? =
 
-[Google warns](https://support.google.com/webmasters/answer/66358) about the keyword stuffing approach implemented by some other SEO plugins. It forces users to write unnatural content, and it can have adverse effects on your site's ranking.
+[Google warns](https://developers.google.com/search/docs/advanced/guidelines/irrelevant-keywords) about the keyword stuffing approach implemented by some other SEO plugins. It forces users to write unnatural content, and it can have adverse effects on your site's ranking.
 
 Modern search engines use AI to understand the context of your articles. This means that as long as you write relevant content, you shouldn't have to worry about keywords.
 
@@ -246,11 +247,23 @@ If you wish to display breadcrumbs, then your theme should provide this. Alterna
 
 == Changelog ==
 
+= 4.1.5.1 =
+
+This patch addresses an oversight whence primary terms could no longer get fetched.
+
+= 4.1.5 =
+
+This minor update adds support for Gutenberg 11.3.0 and [fixes a few bugs](https://theseoframework.com/?p=3756#detailed).
+
+= 4.1.4 =
+
+This minor update packs a major punch. TSF now supports [headless mode](https://kb.theseoframework.com/?p=136), cementing itself as a turnkey solution. We defenestrated the pernicious object caching mechanism, and we updated some options' defaults effective only on new sites. We improved performance iterably, fixed about 12 bugs, and enjoyed the weather. Lastly, we introduced a new API for user meta handling, among other things --- developers that wrote software interfacing with TSF are employed well reading the [detailed changelog](https://theseoframework.com/?p=3727#detailed).
+
 = 4.1.3 =
 
 Before heading into 2021, we wanted to [set free four bugs](https://theseoframework.com/?p=3660#detailed).
 
-Pro tip: If you can no longer switch TSF's settings tabs, try hitting 'CMD+SHIFT+R' (Mac) or 'CTRL+SHIFT+R' (Windows); these keyboard shortcuts will force-fetch the latest scripts from your server.
+Pro tip: If you can no longer switch TSF's settings tabs, try hitting 'CMD+OPTION+R' (Safari Mac), 'CMD+SHIFT+R' (Chrome/Firefox Mac), or 'CTRL+SHIFT+R' (Windows); these keyboard shortcuts will force-fetch the latest scripts from your server.
 
 = 4.1.2 =
 

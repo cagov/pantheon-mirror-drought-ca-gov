@@ -5,8 +5,7 @@
 	<div class="wpallimport-header">
 		<div class="wpallimport-logo"></div>
 		<div class="wpallimport-title">
-			<p><?php _e('WP All Import', 'wp_all_import_plugin'); ?></p>
-			<h2><?php _e('Import XML / CSV', 'wp_all_import_plugin'); ?></h2>					
+			<h2><?php _e('Confirm & Run', 'wp_all_import_plugin'); ?></h2>
 		</div>
 		<div class="wpallimport-links">
 			<a href="http://www.wpallimport.com/support/?utm_source=import-plugin-free&utm_medium=help&utm_campaign=premium-support" target="_blank"><?php _e('Support', 'wp_all_import_plugin'); ?></a> | <a href="http://www.wpallimport.com/documentation/?utm_source=import-plugin-free&utm_medium=help&utm_campaign=docs" target="_blank"><?php _e('Documentation', 'wp_all_import_plugin'); ?></a>

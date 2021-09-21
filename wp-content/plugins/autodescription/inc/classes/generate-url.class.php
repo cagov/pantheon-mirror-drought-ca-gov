@@ -10,7 +10,7 @@ namespace The_SEO_Framework;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2015 - 2020 Sybre Waaijer, CyberWire (https://cyberwire.nl/)
+ * Copyright (C) 2015 - 2021 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -705,7 +705,7 @@ class Generate_Url extends Generate_Title {
 			}
 
 			if ( $_query )
-				$url = $this->append_php_query( $url, $_query );
+				$url = $this->append_url_query( $url, $_query );
 		} else {
 			if ( $_use_base ) {
 				$url = \add_query_arg( 'paged', $_page, $url );
@@ -775,7 +775,7 @@ class Generate_Url extends Generate_Title {
 
 					// Add back the query.
 					if ( $_query )
-						$_url = $this->append_php_query( $_url, $_query );
+						$_url = $this->append_url_query( $_url, $_query );
 				}
 
 				$url = $_url;
@@ -801,9 +801,8 @@ class Generate_Url extends Generate_Title {
 	 */
 	public function _adjust_post_link_category( $term, $terms = null, $post = null ) {
 
-		if ( null === $post ) {
+		if ( null === $post )
 			$post = \get_post( $this->get_the_real_ID() );
-		}
 
 		return $this->get_primary_term( $post->ID, $term->taxonomy ) ?: $term;
 	}
@@ -874,7 +873,7 @@ class Generate_Url extends Generate_Title {
 
 		//? Append queries other plugins might've filtered.
 		if ( $this->is_singular() ) {
-			$url = $this->append_php_query(
+			$url = $this->append_url_query(
 				$url,
 				parse_url( \get_permalink( $id ), PHP_URL_QUERY )
 			);
@@ -976,8 +975,8 @@ class Generate_Url extends Generate_Title {
 	 * Memoizes the return value.
 	 *
 	 * @since 2.7.0
-	 * @since 2.9.2 : Now considers port too.
-	 *              : Now uses get_home_url(), rather than get_option('home').
+	 * @since 2.9.2 : 1. Now considers port too.
+	 *                2. Now uses get_home_url(), rather than get_option('home').
 	 *
 	 * @return string The home URL host.
 	 */
@@ -1068,14 +1067,13 @@ class Generate_Url extends Generate_Title {
 	/**
 	 * Appends given query to given URL.
 	 *
-	 * @since 3.0.0
-	 * @since 3.1.0 Now uses parse_str and add_query_arg, preventing duplicated entries.
+	 * @since 4.1.4
 	 *
 	 * @param string $url   A fully qualified URL.
 	 * @param string $query A fully qualified query taken from parse_url( $url, PHP_URL_QUERY );
 	 * @return string A fully qualified URL with appended $query.
 	 */
-	public function append_php_query( $url, $query = '' ) {
+	public function append_url_query( $url, $query = '' ) {
 
 		if ( ! $query )
 			return $url;
@@ -1083,7 +1081,7 @@ class Generate_Url extends Generate_Title {
 		$_fragment = parse_url( $url, PHP_URL_FRAGMENT );
 
 		if ( $_fragment )
-			$url = str_replace( '#' . $_fragment, '', $url );
+			$url = str_replace( "#$_fragment", '', $url );
 
 		parse_str( $query, $results );
 

@@ -35,8 +35,7 @@
     <div class="wpallexport-header">
 		<div class="wpallexport-logo"></div>
 		<div class="wpallexport-title">
-			<p><?php _e('WP All Export', 'wp_all_export_plugin'); ?></p>
-			<h3><?php _e('Settings', 'wp_all_export_plugin'); ?></h3>			
+			<h3><?php _e('Settings', 'wp_all_export_plugin'); ?></h3>
 		</div>
 	</div>
 	<h2 style="padding:0px;"></h2>
@@ -54,7 +53,7 @@
 				<?php foreach ($templates as $t): ?>
 					<tr>
 						<td>
-							<label class="selectit" for="template-<?php echo $t->id ?>"><input id="template-<?php echo $t->id ?>" type="checkbox" name="templates[]" value="<?php echo $t->id ?>" /> <?php echo $t->name ?></label>
+							<label class="selectit" for="template-<?php echo $t->id ?>"><input id="template-<?php echo $t->id ?>" type="checkbox" name="templates[]" value="<?php echo $t->id ?>" /> <?php echo wp_all_export_clear_xss($t->name); ?></label>
 						</td>
 					</tr>
 				<?php endforeach ?>
@@ -189,7 +188,7 @@
                 ?>
                 <input type="checkbox" id="role-<?php echo $key; ?>"
                        value="<?php echo $key; ?>"
-                    <?php if(is_array($post['client_mode_roles']) && in_array($key, $post['client_mode_roles'])) {?> checked="checked" <?php } ?>
+                    <?php if(isset($post['client_mode_roles']) && is_array($post['client_mode_roles']) && in_array($key, $post['client_mode_roles'])) {?> checked="checked" <?php } ?>
                     <?php if($roleObject->has_cap('manage_options')) {?> disabled="disabled" checked="checked" <?php }?>
                        name="client_mode_roles[]"/>
                 <label

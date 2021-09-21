@@ -1,12 +1,11 @@
-<div class="wpallimport-header" style="overflow:hidden; height: 65px; padding-top: 10px; margin-bottom: -20px;">
+<h2></h2> <!-- Do not remove -->
+
+<div class="wpallimport-header" style="overflow:hidden; height: 70px; padding-top: 10px; margin-bottom: -15px;">
 	<div class="wpallimport-logo"></div>
 	<div class="wpallimport-title">
-		<p><?php _e('WP All Import', 'wp_all_import_plugin'); ?></p>
-		<h3><?php _e('Manage Imports', 'wp_all_import_plugin'); ?></h3>			
+		<h3><?php _e('Manage Imports', 'wp_all_import_plugin'); ?></h3>
 	</div>	
 </div>
-
-<h2></h2> <!-- Do not remove -->
 
 <?php if ($this->errors->get_error_codes()): ?>
 	<?php $this->error() ?>

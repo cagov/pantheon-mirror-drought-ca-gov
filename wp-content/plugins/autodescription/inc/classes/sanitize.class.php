@@ -10,7 +10,7 @@ namespace The_SEO_Framework;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2015 - 2020 Sybre Waaijer, CyberWire (https://cyberwire.nl/)
+ * Copyright (C) 2015 - 2021 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -261,7 +261,6 @@ class Sanitize extends Admin_Pages {
 				'display_character_counter',
 
 				'cache_sitemap',
-				'cache_object',
 
 				'display_seo_bar_tables',
 				'display_seo_bar_metabox',
@@ -835,6 +834,35 @@ class Sanitize extends Admin_Pages {
 	}
 
 	/**
+	 * Sanitizes user meta.
+	 *
+	 * @since 4.1.4
+	 *
+	 * @param array $data The user meta to sanitize.
+	 * @return array The sanitized user meta.
+	 */
+	public function s_user_meta( array $data ) {
+
+		foreach ( $data as $key => &$value ) :
+			switch ( $key ) :
+				case 'facebook_page':
+					$value = $this->s_facebook_profile( $value );
+					continue 2;
+
+				case 'twitter_page':
+					$value = $this->s_twitter_name( $value );
+					continue 2;
+
+				default:
+					unset( $data[ $key ] );
+					break;
+			endswitch;
+		endforeach;
+
+		return $data;
+	}
+
+	/**
 	 * Returns the title separator value string.
 	 *
 	 * @since 2.2.2
@@ -883,9 +911,9 @@ class Sanitize extends Admin_Pages {
 	 * Returns an one-line sanitized description and escapes it.
 	 *
 	 * @since 2.5.0
-	 * @since 2.6.6 : Removes duplicated spaces.
-	 * @since 2.8.0 : Method is now public.
-	 * @since 2.8.2 : Added extra sanitation.
+	 * @since 2.6.6 Removes duplicated spaces.
+	 * @since 2.8.0 Method is now public.
+	 * @since 2.8.2 Added extra sanitation.
 	 * @uses $this->s_description_raw().
 	 * @uses $this->escape_description().
 	 *
@@ -1246,8 +1274,8 @@ class Sanitize extends Admin_Pages {
 
 		if ( ! \is_array( $new_values ) ) return [];
 
-		foreach ( $new_values as $index => $value ) {
-			$new_values[ $index ] = $this->s_one_zero( $value );
+		foreach ( $new_values as $index => &$value ) {
+			$value = $this->s_one_zero( $value );
 		}
 
 		return $new_values;
@@ -1285,14 +1313,7 @@ class Sanitize extends Admin_Pages {
 	 * @return array
 	 */
 	public function s_taxonomies( $new_values ) {
-
-		if ( ! \is_array( $new_values ) ) return [];
-
-		foreach ( $new_values as $index => $value ) {
-			$new_values[ $index ] = $this->s_one_zero( $value );
-		}
-
-		return $new_values;
+		return $this->s_post_types( $new_values );
 	}
 
 	/**
@@ -1357,6 +1378,7 @@ class Sanitize extends Admin_Pages {
 	 * of entities in HTML input value attributes.
 	 *
 	 * @since 4.0.0
+	 * TODO a better name would've been "esc_attr_revert_amp"...?
 	 *
 	 * @param string $new_value String with possibly ampersands.
 	 * @return string
@@ -1514,9 +1536,7 @@ class Sanitize extends Admin_Pages {
 
 		if ( strpos( $link, 'profile.php' ) ) {
 			//= Gets query parameters.
-			// FIXME why don't we use parse_url( $link, PHP_URL_QUERY );?
-			$q = strtok( substr( $link, strpos( $link, '?' ) ), '?' );
-			parse_str( $q, $r );
+			parse_str( parse_url( $link, PHP_URL_QUERY ), $r );
 			if ( isset( $r['id'] ) ) {
 				$link = 'https://www.facebook.com/profile.php?id=' . \absint( $r['id'] );
 				$link = $this->s_url_query( $link );
@@ -1806,7 +1826,6 @@ class Sanitize extends Admin_Pages {
 	 *
 	 * @see WordPress Core sanitize_key()
 	 * @since 4.0.0
-	 * @deprecated
 	 *
 	 * @param string $id The unsanitized ID.
 	 * @return string The sanitized ID.
@@ -1941,6 +1960,8 @@ class Sanitize extends Admin_Pages {
 	 * @since 4.0.0
 	 * @since 4.0.2 Now finds smaller images when they're over 4K.
 	 * @since 4.0.5 Now faults images with filename extensions APNG, BMP, ICO, TIFF, or SVG.
+	 * @since 4.1.4 Fixed theoretical issue where a different image could be set when width
+	 *              and height are supplied and either over 4K, but no ID is given.
 	 * @NOTE If the input details are in an associative array, they'll be converted to sequential.
 	 *
 	 * @param array $details The image details, either associative (see $defaults) or sequential.
@@ -1997,8 +2018,7 @@ class Sanitize extends Admin_Pages {
 		if ( ! $width || ! $height )
 			$width = $height = 0;
 
-		if ( $width > 4096 || $height > 4096 ) {
-			// FIXME Why do we assume there's an $id available here, because we only know $width/$height when there's an $id?
+		if ( $id && ( $width > 4096 || $height > 4096 ) ) {
 			$new_image = $this->get_largest_acceptable_image_src( $id, 4096 );
 			$url       = $new_image ? $this->s_url_relative_to_current_scheme( $new_image[0] ) : '';
 
@@ -2041,9 +2061,8 @@ class Sanitize extends Admin_Pages {
 		if ( isset( $details_array['url'] ) )
 			$details_array = [ $details_array ];
 
-		foreach ( $details_array as $details ) {
+		foreach ( $details_array as $details )
 			$cleaned_details[] = $this->s_image_details( $details );
-		}
 
 		return array_values(
 			array_intersect_key(

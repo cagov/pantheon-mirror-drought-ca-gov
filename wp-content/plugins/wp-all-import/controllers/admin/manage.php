@@ -460,13 +460,11 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 						))->update();
 						$this->errors->add('root-element-validation', __('No matching elements found for Root element and XPath expression specified', 'wp_all_import_plugin'));						
 					}
-				}													   							
-
+				}
 			}
-			
-			if ( $chunks ) { // xml is valid						
-				
-				if ( ! PMXI_Plugin::is_ajax() and empty(PMXI_Plugin::$session->chunk_number)){					
+
+			if ( $chunks ) { // xml is valid
+				if ( ! PMXI_Plugin::is_ajax() and empty(PMXI_Plugin::$session->chunk_number)) {
 					// compose data to look like result of wizard steps				
 					$sesson_data = array(						
 						'filePath' => $filePath,
@@ -495,26 +493,20 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 						'action' => (!empty($action_type) and $action_type == 'continue') ? 'continue' : 'update',	
 						'nonce' => wp_create_nonce( 'import' ),
 						'deligate' => false				
-					);										
-					
+					);
 					foreach ($sesson_data as $key => $value) {
 						PMXI_Plugin::$session->set($key, $value);
 					}
-
 					PMXI_Plugin::$session->save_data();
-					
 				}
-
 				$item->set(array('canceled' => 0, 'failed' => 0))->update();
-
 				// deligate operation to other controller
 				$controller = new PMXI_Admin_Import();
 				$controller->data['update_previous'] = $item;
 				$controller->process();
 				return;
 			}
-		}		
-
+		}
 		$this->render('admin/import/confirm');
 	}
 

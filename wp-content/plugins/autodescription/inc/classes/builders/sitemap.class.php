@@ -8,7 +8,7 @@ namespace The_SEO_Framework\Builders;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2019 - 2020 Sybre Waaijer, CyberWire (https://cyberwire.nl/)
+ * Copyright (C) 2019 - 2021 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -114,6 +114,7 @@ abstract class Sitemap {
 
 	/**
 	 * Creates XML entry from array input.
+	 * Input is expected to be escaped and XML-safe.
 	 *
 	 * Note: Not final, other classes may overwrite this.
 	 *
@@ -151,10 +152,11 @@ abstract class Sitemap {
 	 * @since 3.1.0 1. Resolved a PHP notice when ID is 0, resulting in returning false-esque unintentionally.
 	 *              2. Now accepts 0 in the filter.
 	 * @since 4.0.0 1. Now tests qubit options.
-	 *              2. Now tests for redirect settings.
+	 *              2. FALSE: Now tests for redirect settings. <- it never did! We did document this though...
 	 *              3. First parameter can now be a post object.
 	 *              4. If the first parameter is 0, it's now indicative of a home-as-blog page.
 	 *              5. Moved to \The_SEO_Framework\Builders\Sitemap
+	 * @since 4.1.4 TRUE: Now tests for redirect settings.
 	 *
 	 * @param int $post_id The Post ID to check.
 	 * @return bool True if included, false otherwise.
@@ -165,28 +167,39 @@ abstract class Sitemap {
 		if ( null === $excluded ) {
 			/**
 			 * @since 2.5.2
-			 * @since 2.8.0 : No longer accepts '0' as entry.
-			 * @since 3.1.0 : '0' is accepted again.
-			 * @param array $excluded Sequential list of excluded IDs: [ int ...post_id ]
+			 * @since 2.8.0 No longer accepts '0' as entry.
+			 * @since 3.1.0 '0' is accepted again.
+			 * @param int[] $excluded Sequential list of excluded IDs: [ int ...post_id ]
 			 */
 			$excluded = (array) \apply_filters( 'the_seo_framework_sitemap_exclude_ids', [] );
 
 			if ( empty( $excluded ) ) {
 				$excluded = [];
 			} else {
+				// isset() is faster than in_array(). So, we flip it.
 				$excluded = array_flip( $excluded );
 			}
 		}
 
-		// ROBOTS_IGNORE_PROTECTION as we don't need to test 'private' (because of sole 'publish'), and 'password' (because of false 'has_password')
-		return ! isset( $excluded[ $post_id ] )
-			&& ! static::$tsf->is_robots_meta_noindex_set_by_args(
-				[
-					'id'       => $post_id,
-					'taxonomy' => '',
-				],
-				\The_SEO_Framework\ROBOTS_IGNORE_PROTECTION
-			);
+		$included = ! isset( $excluded[ $post_id ] );
+
+		while ( $included ) :
+			$_args = [
+				'id'       => $post_id,
+				'taxonomy' => '',
+			];
+
+			// ROBOTS_IGNORE_PROTECTION as we don't need to test 'private' (because of sole 'publish'), and 'password' (because of false 'has_password')
+			$meta     = static::$tsf->generate_robots_meta( $_args, null, \The_SEO_Framework\ROBOTS_IGNORE_PROTECTION );
+			$included = ! ( isset( $meta['noindex'] ) && 'noindex' === $meta['noindex'] );
+
+			if ( ! $included ) break;
+
+			$included = ! static::$tsf->get_redirect_url( $_args );
+			break;
+		endwhile;
+
+		return $included;
 	}
 
 	/**
@@ -196,6 +209,7 @@ abstract class Sitemap {
 	 * The URL also isn't checked, nor the position.
 	 *
 	 * @since 4.0.0
+	 * @since 4.1.4 Now tests for redirect settings.
 	 * @see https://github.com/sybrew/tsf-term-sitemap for example.
 	 *
 	 * @param int    $term_id  The Term ID to check.
@@ -208,26 +222,39 @@ abstract class Sitemap {
 		if ( null === $excluded ) {
 			/**
 			 * @since 4.0.0
-			 * @param array $excluded Sequential list of excluded IDs: [ int ...term_id ]
+			 * @param int[] $excluded Sequential list of excluded IDs: [ int ...term_id ]
 			 */
 			$excluded = (array) \apply_filters( 'the_seo_framework_sitemap_exclude_term_ids', [] );
 
 			if ( empty( $excluded ) ) {
 				$excluded = [];
 			} else {
+				// isset() is faster than in_array(). So, we flip it.
 				$excluded = array_flip( $excluded );
 			}
 		}
 
-		// ROBOTS_IGNORE_PROTECTION is not tested for terms. However, we may use that later.
-		return ! isset( $excluded[ $term_id ] )
-			&& ! static::$tsf->is_robots_meta_noindex_set_by_args(
-				[
-					'id'       => $term_id,
-					'taxonomy' => $taxonomy,
-				],
-				\The_SEO_Framework\ROBOTS_IGNORE_PROTECTION
-			);
+		$included = ! isset( $excluded[ $term_id ] );
+
+		// Yes, 90% of this code code isn't DRY. However, terms != posts. terms == posts, though :).
+		// Really: <https://core.trac.wordpress.org/ticket/50568>
+		while ( $included ) :
+			$_args = [
+				'id'       => $term_id,
+				'taxonomy' => $taxonomy,
+			];
+
+			// ROBOTS_IGNORE_PROTECTION is not tested for terms. However, we may use that later.
+			$meta     = static::$tsf->generate_robots_meta( $_args, null, \The_SEO_Framework\ROBOTS_IGNORE_PROTECTION );
+			$included = ! ( isset( $meta['noindex'] ) && 'noindex' === $meta['noindex'] );
+
+			if ( ! $included ) break;
+
+			$included = ! static::$tsf->get_redirect_url( $_args );
+			break;
+		endwhile;
+
+		return $included;
 	}
 
 	/**

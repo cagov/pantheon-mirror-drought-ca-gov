@@ -10,7 +10,7 @@ namespace The_SEO_Framework;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2015 - 2020 Sybre Waaijer, CyberWire (https://cyberwire.nl/)
+ * Copyright (C) 2015 - 2021 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -48,6 +48,18 @@ class Post_Data extends Detect {
 	public $inpost_nonce_field = 'tsf_inpost_nonce';
 
 	/**
+	 * Initializes post meta data handlers.
+	 *
+	 * @since 4.1.4
+	 */
+	protected function init_post_meta() {
+		// Save post data.
+		\add_action( 'save_post', [ $this, '_update_post_meta' ], 1, 2 );
+		\add_action( 'edit_attachment', [ $this, '_update_attachment_meta' ], 1 );
+		\add_action( 'save_post', [ $this, '_save_inpost_primary_term' ], 1, 2 );
+	}
+
+	/**
 	 * Returns a post SEO meta item by key.
 	 *
 	 * Unlike other post meta calls, no \WP_Post object is accepted as an input value,
@@ -82,6 +94,8 @@ class Post_Data extends Detect {
 	 *
 	 * @since 4.0.0
 	 * @since 4.0.2 Now tests for valid post ID in the post object.
+	 * @since 4.1.4 1. Now returns an empty array when the post type isn't supported.
+	 *              2. Now considers headlessness.
 	 *
 	 * @param int  $post_id   The post ID.
 	 * @param bool $use_cache Whether to use caching.
@@ -99,7 +113,7 @@ class Post_Data extends Detect {
 		// get_post_meta() requires a valid post ID. Make sure that post exists.
 		$post = \get_post( $post_id );
 
-		if ( empty( $post->ID ) )
+		if ( empty( $post->ID ) || ! $this->is_post_type_supported( $post->post_type ) )
 			return $cache[ $post_id ] = [];
 
 		/**
@@ -111,28 +125,35 @@ class Post_Data extends Detect {
 			$this->get_post_meta_defaults( $post->ID )
 		);
 
-		// Filter the post meta items based on defaults' keys.
-		$meta = array_intersect_key(
-			\get_post_meta( $post->ID ), // Gets all post meta. This is a discrepancy with get_term_meta()!
-			$defaults
-		);
+		if ( $this->is_headless['meta'] ) {
+			$meta = [];
+		} else {
+			// Filter the post meta items based on defaults' keys.
+			$meta = array_intersect_key(
+				\get_post_meta( $post->ID ), // Gets all post meta. This is a discrepancy with get_term_meta()!
+				$defaults
+			);
 
-		// WP converts all entries to arrays, because we got ALL entries. Disarray!
-		foreach ( $meta as $key => $value ) {
-			$meta[ $key ] = $value[0];
+			// WP converts all entries to arrays, because we got ALL entries. Disarray!
+			foreach ( $meta as $key => $value )
+				$meta[ $key ] = $value[0];
 		}
 
 		/**
 		 * @since 4.0.5
+		 * @since 4.1.4 1. Now considers headlessness.
+		 *              2. Now returns a 3rd parameter: boolean $headless.
 		 * @note Do not delete/unset/add indexes! It'll cause errors.
 		 * @param array $meta    The current post meta.
 		 * @param int   $post_id The post ID.
+		 * @param bool  $headless Whether the meta are headless.
 		 */
 		$meta = \apply_filters_ref_array(
 			'the_seo_framework_post_meta',
 			[
 				array_merge( $defaults, $meta ),
 				$post->ID,
+				$this->is_headless['meta'],
 			]
 		);
 
@@ -155,19 +176,35 @@ class Post_Data extends Detect {
 	 * @return array The default post meta.
 	 */
 	public function get_post_meta_defaults( $post_id = 0 ) {
+
 		/**
-		 * @since 3.1.0
+		 * @since 4.1.4
 		 * @param array    $defaults
 		 * @param integer  $post_id Post ID.
 		 * @param \WP_Post $post    Post object.
 		 */
-		return (array) \apply_filters_ref_array(
-			'the_seo_framework_inpost_seo_save_defaults', // TODO rename to the_seo_framework_post_meta_defaults. 4.1.0?
+		$defaults = (array) \apply_filters_ref_array(
+			'the_seo_framework_post_meta_defaults',
 			[
 				$this->get_unfiltered_post_meta_defaults(),
 				$post_id,
-				\get_post( $post_id ),
+				$post = \get_post( $post_id ),
 			]
+		);
+
+		/**
+		 * @since 3.1.0
+		 * @since 4.1.4 Deprecated. Use filter `the_seo_framework_post_meta_defaults` instead.
+		 * @deprecated
+		 * @param array    $defaults
+		 * @param integer  $post_id Post ID.
+		 * @param \WP_Post $post    Post object.
+		 */
+		return (array) \apply_filters_deprecated(
+			'the_seo_framework_inpost_seo_save_defaults',
+			[ $defaults, $post_id, $post ],
+			'4.1.4 of The SEO Framework',
+			'the_seo_framework_post_meta_defaults'
 		);
 	}
 
@@ -228,6 +265,7 @@ class Post_Data extends Detect {
 	 * Save post meta / custom field data for a singular post type.
 	 *
 	 * @since 4.0.0
+	 * @since 4.1.4 Removed deprecated filter.
 	 *
 	 * @param \WP_Post|integer $post The post object or post ID.
 	 * @param array            $data The post meta fields, will be merged with the defaults.
@@ -239,25 +277,6 @@ class Post_Data extends Detect {
 		if ( ! $post ) return;
 
 		$data = (array) \wp_parse_args( $data, $this->get_post_meta_defaults( $post->ID ) );
-		$data = $this->s_post_meta( $data );
-
-		if ( \has_filter( 'the_seo_framework_save_custom_fields' ) ) {
-			$this->_deprecated_filter( 'the_seo_framework_save_custom_fields', '4.0.0', 'the_seo_framework_save_post_meta' );
-			/**
-			 * @since 3.1.0
-			 * @since 4.0.0 Deprecated.
-			 * @deprecated
-			 * @param array    $data The data that's going to be saved.
-			 * @param \WP_Post $post The post object.
-			 */
-			$data = (array) \apply_filters_ref_array(
-				'the_seo_framework_save_custom_fields',
-				[
-					$data,
-					$post,
-				]
-			);
-		}
 
 		/**
 		 * @since 4.0.0
@@ -267,7 +286,7 @@ class Post_Data extends Detect {
 		$data = (array) \apply_filters_ref_array(
 			'the_seo_framework_save_post_meta',
 			[
-				$data,
+				$this->s_post_meta( $data ),
 				$post,
 			]
 		);
@@ -279,6 +298,7 @@ class Post_Data extends Detect {
 			if ( $value || ( \is_string( $value ) && \strlen( $value ) ) ) {
 				\update_post_meta( $post->ID, $field, $value );
 			} else {
+				// All empty values are deleted here, even if they never existed... is this the best way to handle this?
 				// This is fine for as long as we merge the getter values with the defaults.
 				\delete_post_meta( $post->ID, $field );
 			}
@@ -538,10 +558,10 @@ class Post_Data extends Detect {
 			];
 		}
 
-		foreach ( $values as $t => $v ) {
+		foreach ( $values as $_taxonomy => $v ) {
 			if ( ! isset( $_POST[ $v['name'] ] ) ) continue;
 			if ( \wp_verify_nonce( $_POST[ $v['name'] ], $v['action'] ) ) { // Redundant. Fortified.
-				$this->update_primary_term_id( $post->ID, $t, $v['value'] );
+				$this->update_primary_term_id( $post->ID, $_taxonomy, $v['value'] );
 			}
 		}
 	}
@@ -606,7 +626,7 @@ class Post_Data extends Detect {
 	 * @since 2.6.6
 	 * @since 3.1.0 Added Elementor detection
 	 * @since 4.0.0 Now detects page builders before looping over the meta.
-	 * @TODO deprecate?
+	 * @TODO deprecate? -> We may use this data for they have FSE builders. We may want to interface with those, some day.
 	 * @ignore unused.
 	 *
 	 * @param int $post_id The post ID to check.
@@ -801,22 +821,36 @@ class Post_Data extends Detect {
 	 * Returns the primary term for post.
 	 *
 	 * @since 3.0.0
+	 * @since 4.1.5   1. Added memoization.
+	 *                2. The first and second parameters are now required.
+	 * @since 4.1.5.1 1. No longer causes a PHP warning in the unlikely event a post's taxonomy gets deleted.
+	 *                2. This method now converts the post meta to an integer, making the comparison work again.
 	 *
-	 * @param int|null $post_id  The post ID.
-	 * @param string   $taxonomy The taxonomy name.
+	 * @param int    $post_id  The post ID.
+	 * @param string $taxonomy The taxonomy name.
 	 * @return \WP_Term|false The primary term. False if not set.
 	 */
-	public function get_primary_term( $post_id = null, $taxonomy = '' ) {
+	public function get_primary_term( $post_id, $taxonomy ) {
 
-		$primary_id = $this->get_primary_term_id( $post_id, $taxonomy );
+		static $primary_terms = [];
 
-		if ( ! $primary_id ) return false;
+		if ( isset( $primary_terms[ $post_id ][ $taxonomy ] ) )
+			return $primary_terms[ $post_id ][ $taxonomy ];
+
+		$primary_id = (int) \get_post_meta( $post_id, '_primary_term_' . $taxonomy, true ) ?: 0;
+
+		if ( ! $primary_id ) return $primary_terms[ $post_id ][ $taxonomy ] = false;
 
 		// Users can alter the term list via quick/bulk edit, but cannot set a primary term that way.
 		// Users can also delete a term from the site that was previously assigned as primary.
 		// So, test if the term still exists for the post.
+		// Although 'get_the_terms()' is an expensive function, it memoizes, and
+		// is always called by WP before we fetch a primary term. So, 0 overhead here.
 		$terms        = \get_the_terms( $post_id, $taxonomy );
 		$primary_term = false;
+
+		// Test for otherwise foreach emits a PHP warning in the unlikely event a post's taxonomy is gone.
+		if ( ! \is_array( $terms ) ) return $primary_terms[ $post_id ][ $taxonomy ] = false;
 
 		foreach ( $terms as $term ) {
 			if ( $primary_id === (int) $term->term_id ) {
@@ -825,20 +859,23 @@ class Post_Data extends Detect {
 			}
 		}
 
-		return $primary_term;
+		return $primary_terms[ $post_id ][ $taxonomy ] = $primary_term;
 	}
 
 	/**
 	 * Returns the primary term ID for post.
 	 *
 	 * @since 3.0.0
+	 * @since 4.1.5 1. Now validates if the stored term ID's term exists (for the post or at all).
+	 *              2. The first and second parameters are now required.
 	 *
-	 * @param int|null $post_id  The post ID.
-	 * @param string   $taxonomy The taxonomy name.
-	 * @return int     The primary term ID. 0 if not set.
+	 * @param int    $post_id  The post ID.
+	 * @param string $taxonomy The taxonomy name.
+	 * @return int   The primary term ID. 0 if not found.
 	 */
-	public function get_primary_term_id( $post_id = null, $taxonomy = '' ) {
-		return (int) \get_post_meta( $post_id, '_primary_term_' . $taxonomy, true ) ?: 0;
+	public function get_primary_term_id( $post_id, $taxonomy ) {
+		$primary_term = $this->get_primary_term( $post_id, $taxonomy );
+		return isset( $primary_term->term_id ) ? $primary_term->term_id : 0;
 	}
 
 	/**
@@ -852,7 +889,7 @@ class Post_Data extends Detect {
 	 * @return bool True on success, false on failure.
 	 */
 	public function update_primary_term_id( $post_id = null, $taxonomy = '', $value = 0 ) {
-		if ( empty( $value ) ) {
+		if ( ! $value ) {
 			$success = \delete_post_meta( $post_id, '_primary_term_' . $taxonomy );
 		} else {
 			$success = \update_post_meta( $post_id, '_primary_term_' . $taxonomy, $value );

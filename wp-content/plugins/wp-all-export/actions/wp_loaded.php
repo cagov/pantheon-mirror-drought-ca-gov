@@ -9,13 +9,12 @@ function pmxe_wp_loaded() {
 		$maxExecutionTime = 0;
 	}
 
-	@ini_set("max_execution_time", $maxExecutionTime);
-
 	$scheduledExport = new \Wpae\Scheduling\Export();
 
 	if ( ! empty($_GET['zapier_subscribe']) and ! empty($_GET['api_key']) )
 	{
-		$zapier_api_key = PMXE_Plugin::getInstance()->getOption('zapier_api_key');
+        pmxe_set_max_execution_time();
+        $zapier_api_key = PMXE_Plugin::getInstance()->getOption('zapier_api_key');
 
 		if ( ! empty($zapier_api_key) and $zapier_api_key == $_GET['api_key'] )
 		{
@@ -41,6 +40,7 @@ function pmxe_wp_loaded() {
 
 	if ( ! empty($_GET['zapier_unsubscribe']) and ! empty($_GET['api_key']) )
 	{
+	    pmxe_set_max_execution_time();
 		$zapier_api_key = PMXE_Plugin::getInstance()->getOption('zapier_api_key');
 
 		if ( ! empty($zapier_api_key) and $zapier_api_key == $_GET['api_key'] )
@@ -64,6 +64,7 @@ function pmxe_wp_loaded() {
 
 	if ( ! empty($_GET['export_completed']) and ! empty($_GET['api_key']))
 	{
+        pmxe_set_max_execution_time();
 
 		$zapier_api_key = PMXE_Plugin::getInstance()->getOption('zapier_api_key');
 
@@ -144,6 +145,7 @@ function pmxe_wp_loaded() {
 
 	if ( ! empty($_GET['action']) && ! empty($_GET['export_id']) && (!empty($_GET['export_hash']) || !empty($_GET['security_token'])))
 	{
+        pmxe_set_max_execution_time();
 
 		if(empty($_GET['export_hash'])) {
 			$securityToken = $_GET['security_token'];
@@ -244,8 +246,24 @@ function pmxe_wp_loaded() {
 	}
 
     if(isset($_GET['action']) && $_GET['action'] == 'wpae_public_api') {
+
+        pmxe_set_max_execution_time();
+
         $router = new \Wpae\Http\Router();
         $router->route($_GET['q'], false);
     }
 }
 
+if(!function_exists('pmxe_set_max_execution_time')) {
+    function pmxe_set_max_execution_time()
+    {
+        @ini_set("max_input_time", PMXE_Plugin::getInstance()->getOption('max_input_time'));
+
+        $maxExecutionTime = PMXE_Plugin::getInstance()->getOption('max_execution_time');
+        if ($maxExecutionTime == -1) {
+            $maxExecutionTime = 0;
+        }
+
+        @ini_set("max_execution_time", $maxExecutionTime);
+    }
+}

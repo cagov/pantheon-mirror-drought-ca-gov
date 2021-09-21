@@ -7,6 +7,8 @@
 // phpcs:disable, VariableAnalysis.CodeAnalysis.VariableAnalysis.UndefinedVariable -- includes.
 // phpcs:disable, WordPress.WP.GlobalVariablesOverride -- This isn't the global scope.
 
+use The_SEO_Framework\Interpreters\HTML;
+
 defined( 'THE_SEO_FRAMEWORK_PRESENT' ) and the_seo_framework()->_verify_include_secret( $_secret ) or die;
 
 if ( ! $message ) return;
@@ -23,10 +25,10 @@ $dismiss_title = __( 'Dismiss this notice', 'default' );
 $button_js   = sprintf(
 	'<a class="hide-if-no-tsf-js tsf-dismiss" href="javascript:;" title="%s" %s></a>',
 	esc_attr( $dismiss_title ),
-	$this->make_data_attributes( [
+	HTML::make_data_attributes( [
 		'key'   => $key,
 		// Is this the best nonce key key? Capability validation already happened. See `output_dismissible_persistent_notices()`.
-		'nonce' => wp_create_nonce( $this->get_dismiss_notice_nonce_action( $key ) ),
+		'nonce' => wp_create_nonce( $this->_get_dismiss_notice_nonce_action( $key ) ),
 	] )
 );
 $button_nojs = vsprintf(
@@ -38,7 +40,7 @@ $button_nojs = vsprintf(
 		implode(
 			'',
 			[
-				wp_nonce_field( $this->get_dismiss_notice_nonce_action( $key ), 'tsf-notice-nonce', true, false ),
+				wp_nonce_field( $this->_get_dismiss_notice_nonce_action( $key ), 'tsf_notice_nonce', true, false ),
 				sprintf(
 					'<button class="tsf-dismiss" type=submit name=tsf-notice-submit id=tsf-notice-submit[%s] value=%s title="%s">%s</button>',
 					esc_attr( $key ),

@@ -8,7 +8,7 @@
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2019 - 2020 Sybre Waaijer, CyberWire (https://cyberwire.nl/)
+ * Copyright (C) 2019 - 2021 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -311,7 +311,7 @@ window.tsfC = function( $ ) {
 			url: ajaxurl,
 			datatype: 'json',
 			data: {
-				action: 'the_seo_framework_update_counter',
+				action: 'tsf_update_counter',
 				nonce:  tsf.l10n.nonces.edit_posts,
 				val:    counterType,
 			},

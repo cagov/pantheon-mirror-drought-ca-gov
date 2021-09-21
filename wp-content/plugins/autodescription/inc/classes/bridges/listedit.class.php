@@ -6,9 +6,11 @@
 
 namespace The_SEO_Framework\Bridges;
 
+use \The_SEO_Framework\Interpreters\HTML;
+
 /**
  * The SEO Framework plugin
- * Copyright (C) 2019 - 2020 Sybre Waaijer, CyberWire (https://cyberwire.nl/)
+ * Copyright (C) 2019 - 2021 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -170,8 +172,9 @@ final class ListEdit extends ListTable {
 			'taxonomy' => '',
 		];
 
-		$r_defaults = $tsf->robots_meta(
+		$r_defaults = $tsf->generate_robots_meta(
 			$query,
+			null,
 			\The_SEO_Framework\ROBOTS_IGNORE_SETTINGS
 		);
 
@@ -230,7 +233,7 @@ final class ListEdit extends ListTable {
 			'<span class=hidden id=%s %s></span>',
 			sprintf( 'tsfLeData[%s]', (int) $post_id ),
 			// phpcs:ignore, WordPress.Security.EscapeOutput -- make_data_attributes escapes.
-			$tsf->make_data_attributes( [ 'le' => $data ] )
+			HTML::make_data_attributes( [ 'le' => $data ] )
 		);
 
 		if ( $tsf->is_static_frontpage( $query['id'] ) ) {
@@ -261,6 +264,9 @@ final class ListEdit extends ListTable {
 			$is_desc_ref_locked  = false;
 		}
 
+		$post_data  = [
+			'isFront' => $tsf->is_static_frontpage( $query['id'] ),
+		];
 		$title_data = [
 			'refTitleLocked'    => $is_title_ref_locked,
 			'defaultTitle'      => $default_title,
@@ -274,18 +280,25 @@ final class ListEdit extends ListTable {
 		];
 
 		printf(
+			// '<span class=hidden id=%s data-le-post-data="%s"></span>',
+			'<span class=hidden id=%s %s></span>',
+			sprintf( 'tsfLePostData[%s]', (int) $post_id ),
+			// phpcs:ignore, WordPress.Security.EscapeOutput -- make_data_attributes escapes.
+			HTML::make_data_attributes( [ 'lePostData' => $post_data ] )
+		);
+		printf(
 			// '<span class=hidden id=%s data-le-title="%s"></span>',
 			'<span class=hidden id=%s %s></span>',
 			sprintf( 'tsfLeTitleData[%s]', (int) $post_id ),
 			// phpcs:ignore, WordPress.Security.EscapeOutput -- make_data_attributes escapes.
-			$tsf->make_data_attributes( [ 'leTitle' => $title_data ] )
+			HTML::make_data_attributes( [ 'leTitle' => $title_data ] )
 		);
 		printf(
 			// '<span class=hidden id=%s data-le-description="%s"></span>',
 			'<span class=hidden id=%s %s></span>',
 			sprintf( 'tsfLeDescriptionData[%s]', (int) $post_id ),
 			// phpcs:ignore, WordPress.Security.EscapeOutput -- make_data_attributes escapes.
-			$tsf->make_data_attributes( [ 'leDescription' => $desc_data ] )
+			HTML::make_data_attributes( [ 'leDescription' => $desc_data ] )
 		);
 
 		if ( $this->doing_ajax )
@@ -319,8 +332,9 @@ final class ListEdit extends ListTable {
 			'taxonomy' => $this->taxonomy,
 		];
 
-		$r_defaults = $tsf->robots_meta(
+		$r_defaults = $tsf->generate_robots_meta(
 			$query,
+			null,
 			\The_SEO_Framework\ROBOTS_IGNORE_SETTINGS
 		);
 
@@ -380,7 +394,7 @@ final class ListEdit extends ListTable {
 			'<span class=hidden id=%s %s></span>',
 			sprintf( 'tsfLeData[%s]', (int) $term_id ),
 			// phpcs:ignore, WordPress.Security.EscapeOutput -- make_data_attributes escapes.
-			$tsf->make_data_attributes( [ 'le' => $data ] )
+			HTML::make_data_attributes( [ 'le' => $data ] )
 		);
 
 		$term_prefix = $tsf->use_generated_archive_prefix( \get_taxonomy( $query['taxonomy'] ) )
@@ -404,13 +418,13 @@ final class ListEdit extends ListTable {
 			'<span class=hidden id=%s %s></span>',
 			sprintf( 'tsfLeTitleData[%s]', (int) $term_id ),
 			// phpcs:ignore, WordPress.Security.EscapeOutput -- make_data_attributes escapes.
-			$tsf->make_data_attributes( [ 'leTitle' => $title_data ] )
+			HTML::make_data_attributes( [ 'leTitle' => $title_data ] )
 		);
 		$container .= sprintf(
 			'<span class=hidden id=%s %s></span>',
 			sprintf( 'tsfLeDescriptionData[%s]', (int) $term_id ),
 			// phpcs:ignore, WordPress.Security.EscapeOutput -- make_data_attributes escapes.
-			$tsf->make_data_attributes( [ 'leDescription' => $desc_data ] )
+			HTML::make_data_attributes( [ 'leDescription' => $desc_data ] )
 		);
 
 		if ( $this->doing_ajax )

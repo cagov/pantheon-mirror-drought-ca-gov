@@ -488,7 +488,7 @@ function _do_install_notice() {
  * @param string $current_version The current version of the site.
  * @return void Early when already enqueued
  */
-function _prepare_upgrade_suggestion( $previous_version, $current_version ) {
+function _prepare_upgrade_suggestion( $previous_version, $current_version ) { // phpcs:ignore, VariableAnalysis.CodeAnalysis.VariableAnalysis
 	// Don't invoke if the user didn't upgrade.
 	if ( ! $previous_version ) return;
 
@@ -589,7 +589,7 @@ function _do_upgrade_2900() {
 	if ( \get_option( 'the_seo_framework_initial_db_version' ) < '2900' ) {
 		$tsf = \the_seo_framework();
 
-		$card_type = trim( \esc_attr( $tsf->get_option( 'twitter_card', false ) ) );
+		$card_type = trim( $tsf->get_option( 'twitter_card', false ) );
 		if ( 'photo' === $card_type ) {
 			$tsf->update_option( 'twitter_card', 'summary_large_image' );
 			_add_upgrade_notice(

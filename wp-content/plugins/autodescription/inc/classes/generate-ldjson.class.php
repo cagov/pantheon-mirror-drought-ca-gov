@@ -10,7 +10,7 @@ namespace The_SEO_Framework;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2015 - 2020 Sybre Waaijer, CyberWire (https://cyberwire.nl/)
+ * Copyright (C) 2015 - 2021 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -187,8 +187,8 @@ class Generate_Ldjson extends Generate_Image {
 		$alternate_name = $kname && $kname !== $blogname ? $kname : '';
 
 		$data += [
-			'name'          => $this->escape_title( $blogname ),
-			'alternateName' => $this->escape_title( $alternate_name ),
+			'name'          => \strlen( $blogname ) ? $this->escape_title( $blogname ) : '',
+			'alternateName' => \strlen( $alternate_name ) ? $this->escape_title( $alternate_name ) : '',
 		];
 
 		//= The searchbox part.
