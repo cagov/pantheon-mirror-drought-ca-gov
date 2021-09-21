@@ -9,7 +9,7 @@
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2019 - 2020 Sybre Waaijer, CyberWire (https://cyberwire.nl/)
+ * Copyright (C) 2019 - 2021 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -243,9 +243,6 @@ window.tsfTT = function( $ ) {
 		 *
 		 * Doesn't test whether a tooltip is present, since that happens asynchronously--often (yet _not always_) after the click finishes.
 		 * If we set a datapoint where we tell the tooltip is still building, we might be able to read that out (e.g. instigatingTooltip).
-		 *
-		 * FIXME: When a tooltip is injected via another script (via tsfTT.doTooltip()) that has a toolTipWrapName,
-		 *        this might cause a click on the object to become unnatural.
 		 *
 		 * @function
 		 * @param {Event} event

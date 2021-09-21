@@ -35,6 +35,9 @@ class SchedulingController extends BaseController
         $export = new \PMXE_Export_Record();
         $export->getById($exportId);
 
+        $this->disableExportsThatDontHaveAddon($export);
+
+
         if ($export->isEmpty()) {
             return new JsonResponse(array('message' => 'Export not found'), 404);
         }
@@ -152,6 +155,19 @@ class SchedulingController extends BaseController
         ) {
             die(\__('The User Export Add-On Pro is required to run this export. You can download the add-on here: <a href="http://www.wpallimport.com/portal/" target="_blank">http://www.wpallimport.com/portal/</a>', \PMXE_Plugin::LANGUAGE_DOMAIN));
         }
+
+        if (
+            (( (in_array('product', $cpt) && in_array('product_variation', $cpt)) || in_array('shop_order', $cpt) || in_array('shop_coupon', $cpt)) && !$addons->isWooCommerceAddonActive())
+            ||
+            ($export->options['export_type'] == 'advanced' && in_array($export->options['exportquery']->query['post_type'], array(array('product', 'product_variation'), 'shop_order', 'shop_coupon')) && !$addons->isWooCommerceAddonActive())
+        ) {
+            die(\__('The WooCommerce Export Add-On Pro is required to run this export. You can download the add-on here: <a href="http://www.wpallimport.com/portal/" target="_blank">http://www.wpallimport.com/portal/</a>', \PMXE_Plugin::LANGUAGE_DOMAIN));
+        }
+
+        if(in_array('acf', $export->options['cc_type']) && !$addons->isAcfAddonActive()) {
+            die(\__('The ACF Export Add-On Pro is required to run this export. You can download the add-on here: <a href="http://www.wpallimport.com/portal/" target="_blank">http://www.wpallimport.com/portal/</a>', \PMXE_Plugin::LANGUAGE_DOMAIN));
+        }
+
     }
 
 }

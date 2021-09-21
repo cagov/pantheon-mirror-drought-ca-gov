@@ -9,7 +9,7 @@ namespace The_SEO_Framework;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2015 - 2020 Sybre Waaijer, CyberWire (https://cyberwire.nl/)
+ * Copyright (C) 2015 - 2021 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -85,6 +85,9 @@ class Init extends Query {
 
 		if ( \wp_doing_cron() )
 			$this->init_cron_actions();
+
+		if ( \wp_doing_ajax() )
+			$this->init_ajax_actions();
 	}
 
 	/**
@@ -103,6 +106,7 @@ class Init extends Query {
 	 * @since 2.8.0
 	 * @since 4.1.2 1. Added hook for sitemap prerender.
 	 *              2. Added hook for ping retry.
+	 * TODO make protected?
 	 */
 	public function init_cron_actions() {
 		// Init post update/delete caching actions which may occur during cronjobs.
@@ -110,13 +114,32 @@ class Init extends Query {
 
 		// Ping searchengines.
 		if ( $this->get_option( 'ping_use_cron' ) ) {
-			if ( $this->get_option( 'sitemaps_output' ) && $this->get_option( 'ping_use_cron_prerender' ) ) {
+			if ( $this->get_option( 'sitemaps_output' ) && $this->get_option( 'ping_use_cron_prerender' ) )
 				\add_action( 'tsf_sitemap_cron_hook_before', [ new Builders\Sitemap_Base, 'prerender_sitemap' ] );
-			}
 
 			\add_action( 'tsf_sitemap_cron_hook', Bridges\Ping::class . '::ping_search_engines' );
 			\add_action( 'tsf_sitemap_cron_hook_retry', Bridges\Ping::class . '::retry_ping_search_engines' );
 		}
+	}
+
+	/**
+	 * Initializes AJAX actions.
+	 *
+	 * @since 4.1.4
+	 */
+	protected function init_ajax_actions() {
+
+		// Admin AJAX for notice dismissal.
+		\add_action( 'wp_ajax_tsf_dismiss_notice', '\The_SEO_Framework\Bridges\AJAX::_wp_ajax_dismiss_notice' );
+
+		// Admin AJAX for TSF Cropper
+		\add_action( 'wp_ajax_tsf_crop_image', '\The_SEO_Framework\Bridges\AJAX::_wp_ajax_crop_image' );
+
+		// Admin AJAX for counter options.
+		\add_action( 'wp_ajax_tsf_update_counter', '\The_SEO_Framework\Bridges\AJAX::_wp_ajax_update_counter_type' );
+
+		// Admin AJAX for Gutenberg SEO Bar update.
+		\add_action( 'wp_ajax_tsf_update_post_data', '\The_SEO_Framework\Bridges\AJAX::_wp_ajax_get_post_data' );
 	}
 
 	/**
@@ -135,39 +158,12 @@ class Init extends Query {
 		//= Initialize caching actions.
 		$this->init_admin_caching_actions();
 
-		//= Initialize profile fields.
-		$this->init_profile_fields();
+		if ( ! $this->is_headless['meta'] ) {
+			//= Initialize term meta filters and actions.
+			$this->init_term_meta();
 
-		//= Initialize term meta filters and actions.
-		$this->init_term_meta();
-
-		// Save post data.
-		\add_action( 'save_post', [ $this, '_update_post_meta' ], 1, 2 );
-		\add_action( 'edit_attachment', [ $this, '_update_attachment_meta' ], 1 );
-		\add_action( 'save_post', [ $this, '_save_inpost_primary_term' ], 1, 2 );
-
-		// Enqueues admin scripts.
-		\add_action( 'admin_enqueue_scripts', [ $this, '_init_admin_scripts' ], 0, 1 );
-
-		// Add plugin links to the plugin activation page.
-		\add_filter( 'plugin_action_links_' . THE_SEO_FRAMEWORK_PLUGIN_BASENAME, [ $this, '_add_plugin_action_links' ], 10, 2 );
-		\add_filter( 'plugin_row_meta', [ $this, '_add_plugin_row_meta' ], 10, 2 );
-
-		if ( $this->load_options ) :
-			// Set up site settings and allow saving resetting them.
-			\add_action( 'admin_init', [ $this, 'register_settings' ], 5 );
-
-			// Initialize the SEO Bar for tables.
-			\add_action( 'admin_init', [ $this, '_init_seo_bar_tables' ] );
-
-			// Initialize List Edit for tables.
-			\add_action( 'admin_init', [ $this, '_init_list_edit' ] );
-
-			// Adds post states to list view tables.
-			\add_filter( 'display_post_states', [ $this, '_add_post_state' ], 10, 2 );
-
-			// Loads setting notices.
-			\add_action( 'the_seo_framework_setting_notices', [ $this, '_do_settings_page_notices' ] );
+			//= Initialize term meta filters and actions.
+			$this->init_post_meta();
 
 			// Enqueue Post meta boxes.
 			\add_action( 'add_meta_boxes', [ $this, '_init_post_edit_view' ], 5, 2 );
@@ -175,27 +171,49 @@ class Init extends Query {
 			// Enqueue Term meta output.
 			\add_action( 'current_screen', [ $this, '_init_term_edit_view' ] );
 
+			// Adds post states to list view tables.
+			\add_filter( 'display_post_states', [ $this, '_add_post_state' ], 10, 2 );
+
+			// Initialize the SEO Bar for tables.
+			\add_action( 'admin_init', [ $this, '_init_seo_bar_tables' ] );
+		}
+
+		if ( ! $this->is_headless['settings'] ) {
+			// Set up site settings and allow saving resetting them.
+			\add_action( 'admin_init', [ $this, 'register_settings' ], 5 );
+
+			// Initialize List Edit for tables.
+			\add_action( 'admin_init', [ $this, '_init_list_edit' ] );
+
+			// Loads setting notices.
+			\add_action( 'the_seo_framework_setting_notices', [ $this, '_do_settings_page_notices' ] );
+
 			// Add menu links and register $this->seo_settings_page_hook
 			\add_action( 'admin_menu', [ $this, 'add_menu_link' ] );
+		}
 
+		if ( ! $this->is_headless['user'] ) {
+			//= Initialize user meta filters and actions.
+			$this->init_user_meta();
+
+			// Enqueue user meta output.
+			\add_action( 'current_screen', [ $this, '_init_user_edit_view' ] );
+		}
+
+		if ( \in_array( false, $this->is_headless, true ) ) {
 			// Set up notices.
 			\add_action( 'admin_notices', [ $this, '_output_notices' ] );
 
 			// Fallback HTML-only notice dismissal.
 			\add_action( 'admin_init', [ $this, '_dismiss_notice' ] );
 
-			// Admin AJAX for notice dismissal.
-			\add_action( 'wp_ajax_tsf-dismiss-notice', [ $this, '_wp_ajax_dismiss_notice' ] );
+			// Enqueues admin scripts.
+			\add_action( 'admin_enqueue_scripts', [ $this, '_init_admin_scripts' ], 0, 1 );
+		}
 
-			// Admin AJAX for counter options.
-			\add_action( 'wp_ajax_the_seo_framework_update_counter', [ $this, '_wp_ajax_update_counter_type' ] );
-
-			// Admin AJAX for Gutenberg SEO Bar update.
-			\add_action( 'wp_ajax_the_seo_framework_update_post_data', [ $this, '_wp_ajax_get_post_data' ] );
-
-			// Admin AJAX for TSF Cropper
-			\add_action( 'wp_ajax_tsf-crop-image', [ $this, '_wp_ajax_crop_image' ] );
-		endif;
+		// Add plugin links to the plugin activation page.
+		\add_filter( 'plugin_action_links_' . THE_SEO_FRAMEWORK_PLUGIN_BASENAME, '\The_SEO_Framework\Bridges\PluginTable::_add_plugin_action_links', 10, 2 );
+		\add_filter( 'plugin_row_meta', '\The_SEO_Framework\Bridges\PluginTable::_add_plugin_row_meta', 10, 2 );
 
 		/**
 		 * @since 2.9.4
@@ -307,6 +325,14 @@ class Init extends Query {
 			}
 		}
 
+		/**
+		 * @since 4.1.4
+		 * @param bool $kill_core_robots Whether you lack sympathy for rocks tricked to think.
+		 */
+		if ( \apply_filters( 'the_seo_framework_kill_core_robots', true ) ) {
+			\remove_filter( 'wp_robots', 'wp_robots_max_image_preview_large' );
+		}
+
 		if ( $this->get_option( 'og_tags' ) ) { // independent from filter at use_og_tags--let that be deciding later.
 			// Disable Jetpack's Open Graph tags. But Sybre, compat files? Yes.
 			\add_filter( 'jetpack_enable_open_graph', '__return_false' );
@@ -387,6 +413,17 @@ class Init extends Query {
 		if ( $this->is_preview() || $this->is_customize_preview() || ! $this->query_supports_seo() ) return;
 
 		/**
+		 * We added this filter a second time, for this method is conditional (see two lines above).
+		 * When the query doesn't support TSF's SEO, we want default behavior to ensue.
+		 *
+		 * @since 4.1.4
+		 * @param bool $kill_core_robots Whether you feel sympathy for rocks tricked to think.
+		 */
+		if ( \apply_filters( 'the_seo_framework_kill_core_robots', true ) ) {
+			\remove_filter( 'wp_robots', 'wp_robots_noindex_search' );
+		}
+
+		/**
 		 * @since 2.6.0
 		 */
 		\do_action( 'the_seo_framework_do_before_output' );
@@ -399,21 +436,14 @@ class Init extends Query {
 		 */
 		$init_start = microtime( true );
 
-		if ( $this->use_object_cache ) {
-			$cache_key = $this->get_meta_output_cache_key_by_query();
-			$output    = $this->object_cache_get( $cache_key );
-		} else {
-			$cache_key = '';
-			$output    = false;
-		}
+		// phpcs:disable, WordPress.Security.EscapeOutput -- Output is escaped.
+		// phpcs:ignore Squiz.WhiteSpace.LanguageConstructSpacing -- We're fancy here.
+		echo PHP_EOL, $this->get_plugin_indicator( 'before' );
 
-		if ( false === $output ) {
-			$output = $this->get_html_output();
-			$this->use_object_cache and $this->object_cache_set( $cache_key, $output, DAY_IN_SECONDS );
-		}
+		$this->do_meta_output();
 
-		// phpcs:ignore, WordPress.Security.EscapeOutput -- $output is escaped.
-		echo PHP_EOL, $this->get_plugin_indicator( 'before' ), $output, $this->get_plugin_indicator( 'after', $init_start ), PHP_EOL;
+		echo $this->get_plugin_indicator( 'after', $init_start ), PHP_EOL;
+		// phpcs:enable, WordPress.Security.EscapeOutput
 
 		/**
 		 * @since 2.6.0
@@ -422,99 +452,117 @@ class Init extends Query {
 	}
 
 	/**
-	 * Generates front-end HTMl output.
+	 * Outputs all meta tags for the current query.
 	 *
-	 * @since 4.0.5
-	 * @todo convert $output to array and allow filtering it.
-	 *
-	 * @return string The HTML output.
+	 * @since 4.1.4
 	 */
-	public function get_html_output() {
+	public function do_meta_output() {
 
-		$robots = $this->robots();
+		// phpcs:disable, WordPress.Security.EscapeOutput -- Everything we produce is escaped.
 
-		/** @since 4.0.4 : Added as WP 5.3 patch. */
+		$get = [ 'robots' ];
+
+		/** @since 4.0.4 Added as WP 5.3 patch. */
 		$this->set_timezone( 'UTC' );
 
 		/**
 		 * @since 2.6.0
-		 * @param string $before The content before the SEO output. Stored in object cache.
+		 * @param string $before The content before the SEO output.
 		 */
-		$before = (string) \apply_filters( 'the_seo_framework_pre', '' );
+		echo \apply_filters( 'the_seo_framework_pre', '' );
 
-		$before_legacy = $this->get_legacy_header_filters_output( 'before' );
+		echo $this->get_legacy_header_filters_output( 'before' );
 
 		// Limit processing and redundant tags on 404 and search.
 		if ( $this->is_search() ) :
-			$output = $this->og_locale()
-					. $this->og_type()
-					. $this->og_title()
-					. $this->og_url()
-					. $this->og_sitename()
-					. $this->theme_color()
-					. $this->shortlink()
-					. $this->canonical()
-					. $this->paged_urls()
-					. $this->google_site_output()
-					. $this->bing_site_output()
-					. $this->yandex_site_output()
-					. $this->baidu_site_output()
-					. $this->pint_site_output();
+			array_push(
+				$get,
+				...[
+					'og_locale',
+					'og_type',
+					'og_title',
+					'og_url',
+					'og_sitename',
+					'theme_color',
+					'shortlink',
+					'canonical',
+					'paged_urls',
+					'google_site_output',
+					'bing_site_output',
+					'yandex_site_output',
+					'baidu_site_output',
+					'pint_site_output',
+				]
+			);
 		elseif ( $this->is_404() ) :
-			$output = $this->theme_color()
-					. $this->google_site_output()
-					. $this->bing_site_output()
-					. $this->yandex_site_output()
-					. $this->baidu_site_output()
-					. $this->pint_site_output();
+			array_push(
+				$get,
+				...[
+					'theme_color',
+					'google_site_output',
+					'bing_site_output',
+					'yandex_site_output',
+					'baidu_site_output',
+					'pint_site_output',
+				]
+			);
 		elseif ( $this->is_query_exploited() ) :
-			// aqp = advanced query protection
-			$output = '<meta name="tsf:aqp" value="1" />' . PHP_EOL;
+			$get[] = 'advanced_query_protection';
 		else :
-			// Inefficient concatenation is inefficient. Improve this?
-			$output = $this->the_description()
-					. $this->og_image()
-					. $this->og_locale()
-					. $this->og_type()
-					. $this->og_title()
-					. $this->og_description()
-					. $this->og_url()
-					. $this->og_sitename()
-					. $this->facebook_publisher()
-					. $this->facebook_author()
-					. $this->facebook_app_id()
-					. $this->article_published_time()
-					. $this->article_modified_time()
-					. $this->twitter_card()
-					. $this->twitter_site()
-					. $this->twitter_creator()
-					. $this->twitter_title()
-					. $this->twitter_description()
-					. $this->twitter_image()
-					. $this->theme_color()
-					. $this->shortlink()
-					. $this->canonical()
-					. $this->paged_urls()
-					. $this->ld_json()
-					. $this->google_site_output()
-					. $this->bing_site_output()
-					. $this->yandex_site_output()
-					. $this->baidu_site_output()
-					. $this->pint_site_output();
+			array_push(
+				$get,
+				...[
+					'the_description',
+					'og_image',
+					'og_locale',
+					'og_type',
+					'og_title',
+					'og_description',
+					'og_url',
+					'og_sitename',
+					'og_updated_time',
+					'facebook_publisher',
+					'facebook_author',
+					'facebook_app_id',
+					'article_published_time',
+					'article_modified_time',
+					'twitter_card',
+					'twitter_site',
+					'twitter_creator',
+					'twitter_title',
+					'twitter_description',
+					'twitter_image',
+					'theme_color',
+					'shortlink',
+					'canonical',
+					'paged_urls',
+					'ld_json',
+					'google_site_output',
+					'bing_site_output',
+					'yandex_site_output',
+					'baidu_site_output',
+					'pint_site_output',
+				]
+			);
 		endif;
 
-		$after_legacy = $this->get_legacy_header_filters_output( 'after' );
+		// TODO add filter? It won't last a few major updates though...
+		// But that's why I created this method like so... anyway... tough luck.
+		foreach ( $get as $method )
+			echo $this->{$method}();
+
+		echo $this->get_legacy_header_filters_output( 'after' );
 
 		/**
 		 * @since 2.6.0
-		 * @param string $after The content after the SEO output. Stored in object cache.
+		 * @param string $after The content after the SEO output.
 		 */
-		$after = (string) \apply_filters( 'the_seo_framework_pro', '' );
+		echo \apply_filters( 'the_seo_framework_pro', '' );
 
-		/** @since 4.0.4 : Added as WP 5.3 patch. */
+		/** @since 4.0.4 Added as WP 5.3 patch. */
 		$this->reset_timezone();
 
-		return "{$robots}{$before}{$before_legacy}{$output}{$after_legacy}{$after}";
+		// phpcs:enable, WordPress.Security.EscapeOutput
 	}
 
 	/**
@@ -534,13 +582,7 @@ class Init extends Query {
 
 		if ( $this->is_preview() || $this->is_customize_preview() || ! $this->query_supports_seo() ) return;
 
-		$url = '';
-
-		if ( $this->is_singular() ) {
-			$url = $this->get_post_meta_item( 'redirect' ) ?: '';
-		} elseif ( $this->is_term_meta_capable() ) {
-			$url = $this->get_term_meta_item( 'redirect' ) ?: '';
-		}
+		$url = $this->get_redirect_url();
 
 		if ( $url ) {
 			/**
@@ -653,10 +695,12 @@ class Init extends Query {
 	 *                4. Now marked as private. Will be renamed to `_robots_txt()` in the future.
 	 * @since 4.1.0 Now adds the WordPress Core sitemap URL.
 	 * @since 4.1.2 Now only adds the WP Core sitemap URL when the provider tells us it's enabled.
+	 * @since 4.1.4 Removed object caching support.
 	 * @uses robots_txt filter located at WP core
 	 * @access private
 	 * @TODO extrapolate the contents without a warning to get_robots_txt(). Forward filter to it.
 	 *       See Monitor extension.
+	 * @TODO rework into a workable standard...
 	 *
 	 * @param string $robots_txt The current robots_txt output. Not used.
 	 * @param string $public The blog_public option value.
@@ -664,47 +708,38 @@ class Init extends Query {
 	 */
 	public function robots_txt( $robots_txt = '', $public = '' ) {
 
-		if ( $this->use_object_cache ) {
-			$cache_key = $this->get_robots_txt_cache_key();
-			$output    = $this->object_cache_get( $cache_key );
-		} else {
-			$output = false;
+		$site_path = \esc_attr( parse_url( \site_url(), PHP_URL_PATH ) ) ?: '';
+
+		/**
+		 * @since 2.5.0
+		 * @param string $pre The output before this plugin's output.
+		 *                    Don't forget to add line breaks ( "\r\n" || PHP_EOL )!
+		 */
+		$output = (string) \apply_filters( 'the_seo_framework_robots_txt_pre', '' );
+
+		// Output defaults
+		$output .= "User-agent: *\r\n";
+		$output .= "Disallow: $site_path/wp-admin/\r\n";
+		$output .= "Allow: $site_path/wp-admin/admin-ajax.php\r\n";
+
+		/**
+		 * @since 2.5.0
+		 * @param bool $disallow Whether to disallow robots queries.
+		 */
+		if ( \apply_filters( 'the_seo_framework_robots_disallow_queries', false ) ) {
+			$output .= "Disallow: /*?*\r\n";
 		}
 
-		if ( false === $output ) :
-			$output = '';
+		/**
+		 * @since 2.5.0
+		 * @param string $pro The output after this plugin's output.
+		 *                    Don't forget to add line breaks ( "\r\n" || PHP_EOL )!
+		 */
+		$output .= (string) \apply_filters( 'the_seo_framework_robots_txt_pro', '' );
 
-			$site_path = \esc_attr( parse_url( \site_url(), PHP_URL_PATH ) ) ?: '';
-
-			/**
-			 * @since 2.5.0
-			 * @param string $pre The output before this plugin's output.
-			 *                    Don't forget to add line breaks ( "\r\n" || PHP_EOL )!
-			 */
-			$output .= (string) \apply_filters( 'the_seo_framework_robots_txt_pre', '' );
-
-			// Output defaults
-			$output .= "User-agent: *\r\n";
-			$output .= "Disallow: $site_path/wp-admin/\r\n";
-			$output .= "Allow: $site_path/wp-admin/admin-ajax.php\r\n";
-
-			/**
-			 * @since 2.5.0
-			 * @param bool $disallow Whether to disallow robots queries.
-			 */
-			if ( \apply_filters( 'the_seo_framework_robots_disallow_queries', false ) ) {
-				$output .= "Disallow: /*?*\r\n";
-			}
-
-			/**
-			 * @since 2.5.0
-			 * @param string $pro The output after this plugin's output.
-			 *                    Don't forget to add line breaks ( "\r\n" || PHP_EOL )!
-			 */
-			$output .= (string) \apply_filters( 'the_seo_framework_robots_txt_pro', '' );
-
-			// Add extra whitespace and sitemap full URL
-			if ( $this->can_do_sitemap_robots( true ) ) {
+		// Add extra whitespace and sitemap full URL
+		if ( $this->get_option( 'sitemaps_robots' ) ) {
+			if ( $this->get_option( 'sitemaps_output' ) ) {
 				$sitemaps = Bridges\Sitemap::get_instance();
 				foreach ( $sitemaps->get_sitemap_endpoint_list() as $id => $data ) {
 					if ( ! empty( $data['robots'] ) ) {
@@ -712,7 +747,7 @@ class Init extends Query {
 					}
 				}
 				$output .= "\r\n";
-			} elseif ( $this->get_option( 'sitemaps_robots' ) && ! $this->detect_sitemap_plugin() ) { // detect_sitemap_plugin() temp backward compat.
+			} elseif ( ! $this->detect_sitemap_plugin() ) { // detect_sitemap_plugin() temp backward compat.
 				if ( $this->use_core_sitemaps() ) {
 					$wp_sitemaps_server = \wp_sitemaps_get_server();
 					if ( method_exists( $wp_sitemaps_server, 'add_robots' ) ) {
@@ -721,9 +756,7 @@ class Init extends Query {
 					}
 				}
 			}
-
-			$this->use_object_cache and $this->object_cache_set( $cache_key, $output, 86400 );
-		endif;
+		}
 
 		$raw_uri = rawurldecode(
 			\wp_check_invalid_utf8(
@@ -742,7 +775,7 @@ class Init extends Query {
 		}
 
 		/**
-		 * The robots.txt output. This filter output not cached; however, the $output variable can be via object caching.
+		 * The robots.txt output.
 		 *
 		 * @since 4.0.5
 		 * @param string $output The (cached) robots.txt output.
@@ -852,7 +885,7 @@ class Init extends Query {
 			if ( ! isset( $wp_query->query['s'] ) )
 				return;
 
-			if ( $this->is_archive_query_adjustment_blocked( $wp_query ) )
+			if ( $this->is_query_adjustment_blocked( $wp_query ) )
 				return;
 
 			$excluded = $this->get_ids_excluded_from_search();
@@ -885,7 +918,7 @@ class Init extends Query {
 	public function _alter_archive_query_in( $wp_query ) {
 
 		if ( $wp_query->is_archive || $wp_query->is_home ) {
-			if ( $this->is_archive_query_adjustment_blocked( $wp_query ) )
+			if ( $this->is_query_adjustment_blocked( $wp_query ) )
 				return;
 
 			$excluded = $this->get_ids_excluded_from_archive();
@@ -917,13 +950,12 @@ class Init extends Query {
 	public function _alter_search_query_post( $posts, $wp_query ) {
 
 		if ( $wp_query->is_search ) {
-			if ( $this->is_archive_query_adjustment_blocked( $wp_query ) )
+			if ( $this->is_query_adjustment_blocked( $wp_query ) )
 				return $posts;
 
 			foreach ( $posts as $n => $post ) {
-				if ( $this->get_post_meta_item( 'exclude_local_search', $post->ID ) ) {
+				if ( $this->get_post_meta_item( 'exclude_local_search', $post->ID ) )
 					unset( $posts[ $n ] );
-				}
 			}
 			//= Reset numeric index.
 			$posts = array_values( $posts );
@@ -945,13 +977,12 @@ class Init extends Query {
 	public function _alter_archive_query_post( $posts, $wp_query ) {
 
 		if ( $wp_query->is_archive || $wp_query->is_home ) {
-			if ( $this->is_archive_query_adjustment_blocked( $wp_query ) )
+			if ( $this->is_query_adjustment_blocked( $wp_query ) )
 				return $posts;
 
 			foreach ( $posts as $n => $post ) {
-				if ( $this->get_post_meta_item( 'exclude_from_archive', $post->ID ) ) {
+				if ( $this->get_post_meta_item( 'exclude_from_archive', $post->ID ) )
 					unset( $posts[ $n ] );
-				}
 			}
 			//= Reset numeric index.
 			$posts = array_values( $posts );
@@ -963,35 +994,76 @@ class Init extends Query {
 	/**
 	 * Determines whether the archive query adjustment is blocked.
 	 *
+	 * We do NOT treat this feature with security: If a post still slips through
+	 * a query, then so be it. The post may be accessed anyway, otherwise,
+	 * if not redirected. This last part is of concern, however, because one
+	 * might think the contents of a post is hidden thanks to the redirect, for it
+	 * to be exposable via other means. Nevertheless, we never (and won't ever)
+	 * redirect REST queries, which may access post content regardless of user settings.
+	 *
+	 * Perhaps, we should add a disclaimer: Even IF you redirect the post, noindex it,
+	 * exclude it from search and archive queries, the post content may still be readable
+	 * to the public.
+	 *
 	 * @since 2.9.4
 	 * @since 3.1.0 Now checks for the post type.
+	 * @since 4.1.4 1. Renamed from `is_archive_query_adjustment_blocked()`
+	 *              2. Added taxonomy-supported lookups.
+	 *              3. Added WP Rest checks for the Block Editor.
 	 *
 	 * @param \WP_Query $wp_query WP_Query object.
 	 * @return bool
 	 */
-	protected function is_archive_query_adjustment_blocked( $wp_query ) {
+	protected function is_query_adjustment_blocked( $wp_query ) {
 
 		static $has_filter = null;
-
-		$blocked = false;
 
 		if ( null === $has_filter ) {
 			$has_filter = \has_filter( 'the_seo_framework_do_adjust_archive_query' );
 		}
 		if ( $has_filter ) {
 			/**
+			 * This filter affects both 'search-"archives"' and terms/taxonomies.
+			 *
 			 * @since 2.9.4
 			 * @param bool      $do       True is unblocked (do adjustment), false is blocked (don't do adjustment).
-			 * @param \WP_Query $wp_query The current query. Passed by reference.
+			 * @param \WP_Query $wp_query The current query.
 			 */
 			if ( ! \apply_filters_ref_array( 'the_seo_framework_do_adjust_archive_query', [ true, $wp_query ] ) )
-				$blocked = true;
+				return true;
 		}
 
-		if ( isset( $wp_query->query_vars->post_type ) )
-			$blocked = $this->is_post_type_disabled( $wp_query->query_vars->post_type );
+		if ( \defined( 'REST_REQUEST' ) && REST_REQUEST ) {
+			$referer = \wp_get_referer();
+			if ( false !== strpos( $referer, 'post.php' ) || false !== strpos( $referer, 'post-new.php' ) ) {
+				/**
+				 * WordPress should've authenthicated the user at
+				 * WP_REST_Server::check_authentication() -> rest_cookie_check_errors() -> wp_nonce et al.
+				 * before executing the query. For REST_REQUEST can not be true otherwise. Ergo,
+				 * \current_user_can() should work. If it returns true, we can trust it's a safe request.
+				 * If it returns false, the user may still be logged in, but the request isn't sent via
+				 * WordPress's API with the proper nonces supplied. This is as perfect as it can be.
+				 */
+				if ( \current_user_can( 'edit_posts' ) )
+					return true;
+			}
+		}
 
-		return $blocked;
+		// This primarily affects 'terms'.
+		if ( ! empty( $wp_query->tax_query->queries ) ) :
+			$unsupported = [];
+
+			foreach ( $wp_query->tax_query->queries as $_query ) {
+				if ( isset( $_query['taxonomy'] ) )
+					$unsupported[] = ! $this->is_taxonomy_supported( $_query['taxonomy'] );
+			}
+
+			// Only block when taxonomies were found and all of them are unsupported.
+			if ( $unsupported && ! \in_array( false, $unsupported, true ) )
+				return true;
+		endif;
+
+		return false;
 	}
 
 	/**

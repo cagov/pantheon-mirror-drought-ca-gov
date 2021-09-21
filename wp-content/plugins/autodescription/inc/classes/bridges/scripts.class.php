@@ -8,7 +8,7 @@ namespace The_SEO_Framework\Bridges;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2019 - 2020 Sybre Waaijer, CyberWire (https://cyberwire.nl/)
+ * Copyright (C) 2019 - 2021 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -184,7 +184,7 @@ final class Scripts {
 	 * @return mixed
 	 */
 	public static function decode_entities( $value ) {
-		return $value && \is_string( $value ) ? html_entity_decode( $value, ENT_QUOTES | ENT_COMPAT, 'UTF-8' ) : $value;
+		return $value && \is_string( $value ) ? html_entity_decode( $value, ENT_QUOTES, 'UTF-8' ) : $value;
 	}
 
 	/**
@@ -970,7 +970,7 @@ final class Scripts {
 					'name' => 'tsfCL10n',
 					'data' => [
 						'guidelines'  => $tsf->get_input_guidelines(),
-						'counterType' => \absint( $tsf->get_user_option( 0, 'counter_type', 3 ) ),
+						'counterType' => \absint( $tsf->get_user_meta_item( 'counter_type' ) ),
 						'i18n'        => [
 							'guidelines' => $tsf->get_input_guidelines_i18n(),
 							/* translators: Pixel counter. 1: number (value), 2: number (guideline) */

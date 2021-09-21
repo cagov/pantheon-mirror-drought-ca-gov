@@ -10,7 +10,7 @@ namespace The_SEO_Framework;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2015 - 2020 Sybre Waaijer, CyberWire (https://cyberwire.nl/)
+ * Copyright (C) 2015 - 2021 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -44,6 +44,7 @@ class Generate_Image extends Generate_Url {
 	 *              This parameter might get deprecated when we start supporting PHP 7.1+ only.
 	 * TODO yield from and memoize deeper? Iterators calling this method currently do not affect the generators.
 	 *
+	 * @param bool $single Whether to return at most a single array item.
 	 * @return array The image details array, sequential: int => {
 	 *    string url:    The image URL,
 	 *    int    id:     The image ID,

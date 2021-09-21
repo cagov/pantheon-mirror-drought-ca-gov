@@ -6,7 +6,7 @@
                 var exportVariations = $('#export_variations').val();
                 var exportVariationsTitle = $('#export_variations_title').val();
 
-                $('.sub-options-' + exportVariations).css('display', 'block');
+                //$('.sub-options-' + exportVariations).css('display', 'block');
             }
 
             $('.export_variations').change(function () {

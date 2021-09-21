@@ -8,7 +8,7 @@ namespace The_SEO_Framework\Bridges;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2019 - 2020 Sybre Waaijer, CyberWire (https://cyberwire.nl/)
+ * Copyright (C) 2019 - 2021 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -45,7 +45,7 @@ final class Ping {
 	 *
 	 * @since 4.0.0
 	 * @since 4.1.0 Now returns whether the cron engagement was successful.
-	 * @since 4.1.2 Now registers before and after cron hooks. They should run subsequential when successful.
+	 * @since 4.1.2 Now registers before and after cron hooks. They should run subsequentially when successful.
 	 * @see static::engage_pinging_retry_cron()
 	 *
 	 * @return bool True on success, false on failure.
@@ -160,7 +160,7 @@ final class Ping {
 	 * @since 4.0.0 Moved to \The_SEO_Framework\Bridges\Ping
 	 * @since 4.0.3 Google now redirects to HTTPS. Updated URL scheme to accomodate.
 	 * @since 4.1.2 Now fetches WP Sitemaps' index URL when it's enabled.
-	 * @link https://support.google.com/webmasters/answer/6065812?hl=en
+	 * @link https://developers.google.com/search/docs/advanced/crawling/ask-google-to-recrawl
 	 */
 	public static function ping_google() {
 
@@ -184,7 +184,7 @@ final class Ping {
 	 * @since 4.0.0 Moved to \The_SEO_Framework\Bridges\Ping
 	 * @since 4.0.3 Bing now redirects to HTTPS. Updated URL scheme to accomodate.
 	 * @since 4.1.2 Now fetches WP Sitemaps' index URL when it's enabled.
-	 * @link https://www.bing.com/webmaster/help/how-to-submit-sitemaps-82a15bd4
+	 * @link https://www.bing.com/webmasters/help/Sitemaps-3b5cf6ed
 	 */
 	public static function ping_bing() {
 

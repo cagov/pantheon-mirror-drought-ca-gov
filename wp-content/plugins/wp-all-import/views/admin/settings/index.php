@@ -3,7 +3,6 @@
 	<div class="wpallimport-header">
 		<div class="wpallimport-logo"></div>
 		<div class="wpallimport-title">
-			<p style="font-size:18px !important;"><?php _e('WP All Import', 'wp_all_import_plugin'); ?></p>
 			<h3><?php _e('Settings', 'wp_all_import_plugin'); ?></h3>			
 		</div>	
 	</div>

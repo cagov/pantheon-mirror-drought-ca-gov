@@ -8,7 +8,7 @@
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2019 - 2020 Sybre Waaijer, CyberWire (https://cyberwire.nl/)
+ * Copyright (C) 2019 - 2021 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -212,6 +212,7 @@ window.tsfPost = function( $ ) {
 	 *
 	 * @since 4.0.0
 	 * @since 4.1.2 Changed name from _initCanonicalInput
+	 * @since 4.1.4 Now no longer proceeds on absence of element ID 'autodescription_noindex'.
 	 * @access private
 	 *
 	 * @function
@@ -219,11 +220,12 @@ window.tsfPost = function( $ ) {
 	 */
 	const _initVisibilityListeners = () => {
 
+		const indexSelect = document.getElementById( 'autodescription_noindex' );
+		if ( ! indexSelect ) return;
+
 		// Prefix with B because I don't trust using 'protected' (might become reserved).
 		const BPROTECTED = 0b01,
 		      BNOINDEX   = 0b10;
-
-		const indexSelect = document.getElementById( 'autodescription_noindex' );
 
 		let canonicalPhState = 0b00,
 			canonicalUrl     = '';
@@ -682,9 +684,11 @@ window.tsfPost = function( $ ) {
 							tsfSocial.updateState( 'twDescPlaceholder', response.data.twdescription.trim() );
 						}
 
-						// Is this necessary? It's safer, though :)
-						imageUrl.placeholder = tsf.decodeEntities( response.data.imageurl );
-						imageUrl.dispatchEvent( new Event( 'change' ) );
+						if ( imageUrl ) {
+							// Is this necessary? It's safer than assuming, though :)
+							imageUrl.placeholder = tsf.decodeEntities( response.data.imageurl );
+							imageUrl.dispatchEvent( new Event( 'change' ) );
+						}
 
 						'tsfAys' in window && tsfAys.reset();
 					}, fadeTime );
@@ -724,7 +728,7 @@ window.tsfPost = function( $ ) {
 				url:      ajaxurl,
 				datatype: 'json',
 				data:     {
-					action:  'the_seo_framework_update_post_data',
+					action:  'tsf_update_post_data',
 					nonce:   tsf.l10n.nonces.edit_posts,
 					post_id: l10n.states.id,
 					get:     getData,

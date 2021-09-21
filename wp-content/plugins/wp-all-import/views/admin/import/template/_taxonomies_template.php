@@ -94,7 +94,7 @@ if ( ! empty($post_taxonomies)):
 																					<div style="position:relative;">
 																						<input type="hidden" class="assign_term" name="tax_hierarchical_assing[<?php echo $ctx->name;?>][<?php echo $k;?>]" value="1"/>
 																						<input type="text" class="widefat hierarchical_xpath_field" name="tax_hierarchical_xpath[<?php echo $ctx->name; ?>][]" value="<?php echo esc_textarea($path); ?>"/>
-																						<a href="javascript:void(0);" class="icon-item remove-ico" style="top:8px;"></a>
+																						<a href="javascript:void(0);" class="icon-item remove-ico"></a>
 																					</div>
 																				</li>
 																			<?php $txes_count++; endforeach; endif; ?>
@@ -103,7 +103,7 @@ if ( ! empty($post_taxonomies)):
 																					<div style="position:relative;">
 																						<input type="hidden" class="assign_term" name="tax_hierarchical_assing[<?php echo $ctx->name;?>][0]" value="1"/>
 																				    	<input type="text" class="widefat hierarchical_xpath_field" name="tax_hierarchical_xpath[<?php echo $ctx->name; ?>][]" value=""/>
-																				    	<a href="javascript:void(0);" class="icon-item remove-ico" style="top:8px;"></a>
+																						<a href="javascript:void(0);" class="icon-item remove-ico"></a>
 																				    </div>
 																			    </li>
 																			<?php endif; ?>
@@ -111,7 +111,7 @@ if ( ! empty($post_taxonomies)):
 																				<div style="position:relative;">
 																					<input type="hidden" class="assign_term" name="tax_hierarchical_assing[<?php echo $ctx->name;?>][NUMBER]" value="1"/>
 																			    	<input type="text" class="widefat hierarchical_xpath_field" name="tax_hierarchical_xpath[<?php echo $ctx->name; ?>][]" value=""/>
-																			    	<a href="javascript:void(0);" class="icon-item remove-ico" style="top:8px;"></a>
+																					<a href="javascript:void(0);" class="icon-item remove-ico"></a>
 																			    </div>
 																		    </li>
 																		</ul>																		

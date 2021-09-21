@@ -364,7 +364,7 @@ class PMXE_Export_Record extends PMXE_Model_Record {
 
 	                $headers = 'From: '. get_bloginfo( 'name' ) .' <'. get_bloginfo( 'admin_email' ) .'>' . "\r\n";
 	                
-	                $message = '<p>Export '. $this->options['friendly_name'] .' has been completed. You can find exported file in attachments.</p>';                
+	                $message = '<p>Export '. wp_all_export_clear_xss($this->options['friendly_name']) .' has been completed. You can find exported file in attachments.</p>';
 
 	                wp_mail($this->options['scheduled_email'], __("WP All Export", "pmxe_plugin"), $message, $headers, array($file_path));
 

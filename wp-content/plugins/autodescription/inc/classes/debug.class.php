@@ -12,7 +12,7 @@ namespace The_SEO_Framework;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2015 - 2020 Sybre Waaijer, CyberWire (https://cyberwire.nl/)
+ * Copyright (C) 2015 - 2021 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -87,20 +87,6 @@ final class Debug {
 		}
 
 		return static::$instance;
-	}
-
-	/**
-	 * Mark a filter as deprecated and inform when it has been used.
-	 *
-	 * @since 2.8.0
-	 * @see @this->_deprecated_function().
-	 *
-	 * @param string $filter      The function that was called.
-	 * @param string $version     The version of WordPress that deprecated the function.
-	 * @param string $replacement Optional. The function that should have been called. Default null.
-	 */
-	public function _deprecated_filter( $filter, $version, $replacement = null ) {
-		$this->_deprecated_function( 'Filter ' . $filter, $version, $replacement ); // phpcs:ignore -- Wrong asserts, copied method name.
 	}
 
 	/**
@@ -291,7 +277,7 @@ final class Debug {
 	 */
 	protected function get_error( $type = null ) {
 
-		$backtrace = debug_backtrace();
+		$backtrace = debug_backtrace( DEBUG_BACKTRACE_PROVIDE_OBJECT, 5 );
 
 		if ( ! $backtrace ) return [];
 
@@ -522,7 +508,7 @@ final class Debug {
 	/**
 	 * Sets debug query cache.
 	 *
-	 * @since 3.1.0 : Introducted in 2.8.0, but the name changed.
+	 * @since 3.1.0 Introducted in 2.8.0, but the name changed.
 	 * @access private
 	 */
 	public function _set_debug_query_output_cache() {
@@ -601,9 +587,7 @@ final class Debug {
 		$is_tag                 = $tsf->is_tag();
 		$is_tax                 = $tsf->is_tax();
 		$is_shop                = $tsf->is_shop();
-		$is_wc_shop             = $tsf->is_wc_shop();
 		$is_product             = $tsf->is_product();
-		$is_wc_product          = $tsf->is_wc_product();
 		$is_seo_settings_page   = $tsf->is_seo_settings_page( true );
 		$numpages               = $tsf->numpages();
 		$is_multipage           = $tsf->is_multipage();

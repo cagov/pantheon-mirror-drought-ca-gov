@@ -8,7 +8,7 @@ namespace The_SEO_Framework\Builders;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2019 - 2020 Sybre Waaijer, CyberWire (https://cyberwire.nl/)
+ * Copyright (C) 2019 - 2021 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -165,6 +165,7 @@ abstract class SeoBar {
 	 * Runs one or more SEO bar tests.
 	 *
 	 * @since 4.0.0
+	 * @since 4.1.4 No longer clears the query cache.
 	 * @access private
 	 * @generator
 	 *
@@ -192,8 +193,26 @@ abstract class SeoBar {
 
 		foreach ( $tests as $test )
 			yield $test => $this->{"test_$test"}();
+	}
 
+	/**
+	 * Clears the query cache. Saving a few bytes of memory, prepping for the next yield.
+	 *
+	 * @since 4.1.4
+	 */
+	final public function clear_query_cache() {
 		$this->query_cache = [];
+	}
+
+	/**
+	 * Presents an unalterable form of query cache.
+	 *
+	 * @since 4.1.4
+	 *
+	 * @return array The query cache, unknown values.
+	 */
+	final public function get_query_cache() {
+		return $this->query_cache;
 	}
 
 	/**
@@ -206,6 +225,7 @@ abstract class SeoBar {
 
 	/**
 	 * Primes the current query cache.
+	 * It's best to overwrite the cache whenever you generate a new SEO Bar.
 	 *
 	 * @since 4.0.0
 	 * @abstract

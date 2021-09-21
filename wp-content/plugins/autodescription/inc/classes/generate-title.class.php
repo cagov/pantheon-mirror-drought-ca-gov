@@ -10,7 +10,7 @@ namespace The_SEO_Framework;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2015 - 2020 Sybre Waaijer, CyberWire (https://cyberwire.nl/)
+ * Copyright (C) 2015 - 2021 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -597,10 +597,11 @@ class Generate_Title extends Generate_Description {
 	 * Removes default title filters, for consistent output and sanitation.
 	 * Memoizes the filters removed, so it can add them back on reset.
 	 *
+	 * Performance test: 0.007ms per remove+reset on PHP 8.0, single core VPN.
+	 *
 	 * @since 3.1.0
 	 * @since 4.1.0 Added a second parameter, $args, to help soften the burden of this method.
 	 * @internal Only to be used within $this->get_raw_generated_title()
-	 * Peformance test: 0.000003s per remove+reset on PHP 7.3, single core VPN. This is the heaviest method of the plugin.
 	 *
 	 * @param bool       $reset Whether to reset the removed filters.
 	 * @param array|null $args  The query arguments. Accepts 'id' and 'taxonomy'.
@@ -611,13 +612,11 @@ class Generate_Title extends Generate_Description {
 		static $filtered = [];
 
 		if ( $reset ) {
-			foreach ( $filtered as $tag => $priorities ) {
-				foreach ( $priorities as $priority => $functions ) {
-					foreach ( $functions as $function ) {
+			foreach ( $filtered as $tag => $functions )
+				foreach ( $functions as $function => $priorities )
+					foreach ( $priorities as $priority )
 						\add_filter( $tag, $function, $priority );
-					}
-				}
-			}
+
 			// Reset filters.
 			$filtered = [];
 		} else {
@@ -640,17 +639,17 @@ class Generate_Title extends Generate_Description {
 			 */
 			$functions = [ 'wptexturize' ];
 
-			if ( ! $this->get_option( 'title_strip_tags' ) ) {
+			if ( ! $this->get_option( 'title_strip_tags' ) )
 				$functions[] = 'strip_tags';
-			}
 
 			foreach ( $filters as $tag ) {
 				foreach ( $functions as $function ) {
+					// Only grab 10 of these. Yes, one might transform still on the 11th.
 					$it = 10;
 					$i  = 0;
 					// phpcs:ignore, WordPress.CodeAnalysis.AssignmentInCondition
 					while ( $priority = \has_filter( $tag, $function ) ) {
-						$filtered[ $tag ][ $priority ][] = $function;
+						$filtered[ $tag ][ $function ][] = $priority;
 						\remove_filter( $tag, $function, $priority );
 						// Some noob might've destroyed \WP_Hook. Safeguard.
 						if ( ++$i > $it ) break 1;
@@ -730,6 +729,7 @@ class Generate_Title extends Generate_Description {
 	 * Generates front page title.
 	 *
 	 * @since 3.1.0
+	 * @TODO figure out why we didn't choose to use $this->get_blogname()?
 	 *
 	 * @return string The generated front page title.
 	 */

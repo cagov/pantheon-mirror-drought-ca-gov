@@ -10,7 +10,7 @@ namespace The_SEO_Framework;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2015 - 2020 Sybre Waaijer, CyberWire (https://cyberwire.nl/)
+ * Copyright (C) 2015 - 2021 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -79,7 +79,6 @@ class Site_Options extends Sanitize {
 				'alter_search_query_type'  => 'in_query', // Search query type.
 
 				'cache_sitemap' => 1, // Sitemap transient cache.
-				'cache_object'  => 1, // Object caching.
 
 				// General. Layout.
 				'display_seo_bar_tables'  => 1, // SEO Bar post-list tables.
@@ -141,7 +140,7 @@ class Site_Options extends Sanitize {
 				'advanced_query_protection' => 1,
 
 				// Robots pagination index.
-				'paged_noindex'      => 1, // Every second or later page noindex
+				'paged_noindex'      => 0, // Every second or later page noindex
 				'home_paged_noindex' => 0, // Every second or later homepage noindex
 
 				// Robots copyright.
@@ -194,7 +193,7 @@ class Site_Options extends Sanitize {
 				// oEmbed.
 				'oembed_use_og_title'     => 0, // Use custom meta titles in oEmbeds
 				'oembed_use_social_image' => 1, // Use social images in oEmbeds
-				'oembed_remove_author'    => 0, // Remove author from oEmbeds
+				'oembed_remove_author'    => 1, // Remove author from oEmbeds
 
 				// Social on/off.
 				'og_tags'        => 1, // Output of Open Graph meta tags
@@ -247,7 +246,7 @@ class Site_Options extends Sanitize {
 
 				// Sitemaps.
 				'sitemaps_output'     => 1,    // Output of sitemap
-				'sitemap_query_limit' => 3000, // Sitemap post limit.
+				'sitemap_query_limit' => 1000, // Sitemap post limit.
 
 				'sitemaps_modified' => 1, // Add sitemap modified time.
 				'sitemaps_priority' => 0, // Add sitemap priorities.
@@ -376,14 +375,21 @@ class Site_Options extends Sanitize {
 
 		/**
 		 * @since 2.0.0
+		 * @since 4.1.4 1. Now considers headlessness.
+		 *              2. Now returns a 3rd parameter: boolean $headless.
+		 *
 		 * @param array  $settings The settings
 		 * @param string $setting  The settings field.
+		 * @param bool   $headless Whether the options are headless.
 		 */
 		return $cache[ $setting ] = \apply_filters_ref_array(
 			'the_seo_framework_get_options',
 			[
-				\get_option( $setting ),
+				$this->is_headless['settings'] && THE_SEO_FRAMEWORK_SITE_OPTIONS === $setting
+					? $this->get_default_site_options()
+					: \get_option( $setting ),
 				$setting,
+				$this->is_headless['settings'],
 			]
 		);
 	}
@@ -541,7 +547,7 @@ class Site_Options extends Sanitize {
 	 * Get the default of any of the The SEO Framework settings.
 	 *
 	 * @since 2.2.4
-	 * @since 2.8.2 : No longer decodes entities on request.
+	 * @since 2.8.2 No longer decodes entities on request.
 	 * @since 3.1.0 : 1. Now returns null if the option doesn't exist, instead of -1.
 	 *                2. Is now influenced by filters.
 	 *                3. Now also strips slashes when using cache.
@@ -579,7 +585,7 @@ class Site_Options extends Sanitize {
 	 * Get the warned setting of any of the The SEO Framework settings.
 	 *
 	 * @since 2.3.4
-	 * @since 3.1.0 : Now returns 0 if the option doesn't exist, instead of -1.
+	 * @since 3.1.0 Now returns 0 if the option doesn't exist, instead of -1.
 	 * @uses THE_SEO_FRAMEWORK_SITE_OPTIONS
 	 * @uses $this->get_warned_site_options()
 	 *

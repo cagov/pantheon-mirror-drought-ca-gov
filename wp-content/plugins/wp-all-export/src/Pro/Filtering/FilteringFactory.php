@@ -10,6 +10,13 @@ class FilteringFactory
 {
     public static function getFilterEngine()
     {
+        if (\XmlExportEngine::$is_user_export && \XmlExportEngine::get_addons_service()->isUserAddonActive() && PMUE_EDITION == 'paid'){
+            if (! empty(\XmlExportEngine::$post_types) and @in_array("shop_customer", \XmlExportEngine::$post_types)){
+                return new \Pmue\Pro\Filtering\FilteringCustomers();
+            }
+            return new \Pmue\Pro\Filtering\FilteringUsers();
+        }
+
         return new FilteringFree();
     }
 

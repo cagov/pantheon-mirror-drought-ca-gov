@@ -10,7 +10,7 @@ namespace The_SEO_Framework;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2015 - 2020 Sybre Waaijer, CyberWire (https://cyberwire.nl/)
+ * Copyright (C) 2015 - 2021 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -196,6 +196,7 @@ class Detect extends Render {
 	 * Memoizes the return value for the input argument--sorts the array deeply to ensure a match.
 	 *
 	 * @since 2.5.2
+	 * @since 4.1.4 Fixed sorting algorithm from fribbling-me to resolving-me. Nothing changed but legibility.
 	 * @uses $this->detect_plugin_multi()
 	 *
 	 * @param array $plugins   Array of array for globals, constants, classes
@@ -212,18 +213,14 @@ class Detect extends Render {
 		$mapped = [];
 
 		// Prepare multidimensional array for cache.
-		foreach ( $plugins as $key => $func ) {
+		foreach ( $plugins as $type => $func ) {
 			if ( ! \is_array( $func ) )
 				return false; // doing it wrong...
 
-			// Sort alphanumeric by value, put values back after sorting.
-			// TODO Use asort or usort instead???
-			$func = array_flip( $func );
-			ksort( $func );
-			$func = array_flip( $func );
+			sort( $func );
 
 			// Glue with underscore and space for debugging purposes.
-			$mapped[ $key ] = $key . '_' . implode( ' ', $func );
+			$mapped[ $type ] = $type . '_' . implode( ' ', $func );
 		}
 
 		ksort( $mapped );
@@ -646,33 +643,6 @@ class Detect extends Render {
 	}
 
 	/**
-	 * Determines whether to add a line within robots based by plugin detection, or sitemap output option.
-	 *
-	 * @since 2.6.0
-	 * @since 2.8.0 Added check_option parameter.
-	 * @since 2.9.0 Now also checks for subdirectory installations.
-	 * @since 2.9.2 Now also checks for permalinks.
-	 * @since 2.9.3 Now also checks for sitemap_robots option.
-	 * @since 3.1.0 Removed Jetpack's sitemap check -- it's no longer valid.
-	 * @since 4.0.0 : 1. Now uses has_robots_txt()
-	 *              : 2. Now uses the get_robots_txt_url() to determine validity.
-	 * FIXME This method also checks for file existence (and location...), but is only used when the file definitely doesn't exist.
-	 *
-	 * @param bool $check_option Whether to check for sitemap option.
-	 * @return bool True when no conflicting plugins are detected or when The SEO Framework's Sitemaps are output.
-	 */
-	public function can_do_sitemap_robots( $check_option = true ) {
-
-		if ( $check_option ) {
-			if ( ! $this->get_option( 'sitemaps_output' )
-			|| ! $this->get_option( 'sitemaps_robots' ) )
-				return false;
-		}
-
-		return ! $this->has_robots_txt() && \strlen( $this->get_robots_txt_url() );
-	}
-
-	/**
 	 * Detects presence of robots.txt in root folder.
 	 * Memoizes the return value.
 	 *
@@ -978,7 +948,7 @@ class Detect extends Render {
 	 */
 	public function is_post_type_supported( $post_type = '' ) {
 
-		$post_type = $post_type ?: $this->get_post_type_real_ID() ?: $this->get_admin_post_type();
+		$post_type = $post_type ?: $this->get_current_post_type();
 
 		/**
 		 * @since 2.6.2
@@ -1048,7 +1018,7 @@ class Detect extends Render {
 		if ( isset( $cache[ $post_type ] ) )
 			return $cache[ $post_type ];
 
-		$post_type = $post_type ?: $this->get_post_type_real_ID() ?: $this->get_admin_post_type();
+		$post_type = $post_type ?: $this->get_current_post_type();
 		if ( ! $post_type ) return false;
 
 		if ( \get_object_taxonomies( $post_type, 'names' ) )
@@ -1081,6 +1051,7 @@ class Detect extends Render {
 	 * Memoizes the return value.
 	 *
 	 * @since 4.1.0
+	 * @since 4.1.4 Now resets the index keys of the return value.
 	 *
 	 * @return array All public post types.
 	 */
@@ -1088,17 +1059,17 @@ class Detect extends Render {
 
 		static $cache = null;
 
-		return isset( $cache ) ? $cache : $cache = array_filter(
-			array_unique(
-				array_merge(
-					$this->get_forced_supported_post_types(),
-					//? array_values() because get_post_types() gives a sequential array.
-					array_values( (array) \get_post_types( [
-						'public' => true,
-					] ) )
-				)
-			),
-			'\\is_post_type_viewable'
+		return isset( $cache ) ? $cache : $cache = array_values(
+			array_filter(
+				array_unique(
+					array_merge(
+						$this->get_forced_supported_post_types(),
+						//? array_values() because get_post_types() gives a sequential array.
+						array_keys( (array) \get_post_types( [ 'public' => true ] ) )
+					)
+				),
+				'\\is_post_type_viewable'
+			)
 		);
 	}
 
@@ -1177,7 +1148,6 @@ class Detect extends Render {
 		);
 	}
 
-
 	/**
 	 * Determines if the post type is disabled from SEO all optimization.
 	 *
@@ -1191,7 +1161,7 @@ class Detect extends Render {
 	 */
 	public function is_post_type_disabled( $post_type = '' ) {
 
-		$post_type = $post_type ?: $this->get_post_type_real_ID() ?: $this->get_admin_post_type();
+		$post_type = $post_type ?: $this->get_current_post_type();
 
 		/**
 		 * @since 3.1.2

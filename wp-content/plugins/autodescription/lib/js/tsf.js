@@ -8,7 +8,7 @@
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2015 - 2020 Sybre Waaijer, CyberWire (https://cyberwire.nl/)
+ * Copyright (C) 2015 - 2021 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -461,10 +461,10 @@ window.tsf = function( $ ) {
 				// Do not inform the user of its completion--it adds a lot to the annoyance.
 				// Instead, rely on keeping the 'count' low!
 				wp.ajax.post(
-					'tsf-dismiss-notice',
+					'tsf_dismiss_notice',
 					{
-						'tsf-dismiss-key': key,
-						'tsf-dismiss-nonce': nonce,
+						'tsf_dismiss_key': key,
+						'tsf_dismiss_nonce': nonce,
 					}
 				);
 			}

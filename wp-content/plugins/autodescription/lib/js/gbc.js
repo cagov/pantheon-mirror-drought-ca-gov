@@ -11,7 +11,7 @@
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2019 - 2020 Sybre Waaijer, CyberWire (https://cyberwire.nl/)
+ * Copyright (C) 2019 - 2021 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -329,9 +329,11 @@ window.tsfGBC = function( $ ) {
 	 */
 	const _initCompat = () => {
 
-		wp.data.subscribe( debounce( sidebarDispatcher, 500 ) );
-		wp.data.subscribe( debounce( assessData, 300 ) );
-		wp.data.subscribe( saveDispatcher );
+		const { subscribe } = wp.data;
+
+		subscribe( debounce( sidebarDispatcher, 500 ) );
+		subscribe( debounce( assessData, 300 ) );
+		subscribe( saveDispatcher );
 
 		// Set all values prior debouncing.
 		setTimeout( () => {

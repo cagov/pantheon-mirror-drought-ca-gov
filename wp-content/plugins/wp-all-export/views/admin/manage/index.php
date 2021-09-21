@@ -1,14 +1,27 @@
 <?php
 $addons = new \Wpae\App\Service\Addons\AddonService();
 ?>
-<div class="wpallexport-header" style="overflow:hidden; height: 60px; padding-top: 10px; margin-bottom: -20px;">
+
+<div class="wpallexport-header" style="overflow:hidden; height: 70px; padding-top: 10px; margin-bottom: -15px;">
     <div class="wpallexport-logo"></div>
     <div class="wpallexport-title">
-        <p><?php _e('WP All Export', 'wp_all_export_plugin'); ?></p>
         <h3><?php _e('Manage Exports', 'wp_all_export_plugin'); ?></h3>
     </div>
 </div>
+<!-- TO DO: REMOVE THIS SNIPPET -->
+<script type="text/javascript">
+    (function ($, ajaxurl, wp_all_export_security) {
 
+        $(document).ready(function () {
+            $('.test').on('click', function () {
+
+                var addon = 'wooco';
+                openUpgradeNotice(addon, $(this), '<?php echo PMXE_ROOT_URL; ?>/static/img/preloader.gif');
+            });
+        });
+    })(jQuery, ajaxurl, wp_all_export_security);
+</script>
+<!-- END TO DO -->
 <h2></h2> <!-- Do not remove -->
 
 <script type="text/javascript">
@@ -148,7 +161,7 @@ $columns = apply_filters('pmxe_manage_imports_columns', $columns);
 							case 'name':
 								?>
 								<td style="min-width: 325px;">
-									<strong><?php echo $item['friendly_name']; ?></strong> <br>									
+									<strong><?php echo wp_all_export_clear_xss($item['friendly_name']); ?></strong> <br>
 									<div class="row-actions">										
 										<span class="edit"><a class="edit" href="<?php echo esc_url(add_query_arg(array('id' => $item['id'], 'action' => 'template'), $this->baseUrl)) ?>"><?php _e('Edit Export', 'wp_all_export_plugin') ?></a></span> |
 										<span class="edit"><a class="edit" href="<?php echo esc_url(add_query_arg(array('id' => $item['id'], 'action' => 'options'), $this->baseUrl)) ?>"><?php _e('Export Settings', 'wp_all_export_plugin') ?></a></span> |										
@@ -179,23 +192,46 @@ $columns = apply_filters('pmxe_manage_imports_columns', $columns);
 							case 'info':
 								?>
 								<td style="min-width: 180px;">
-                                    <a <?php
-                                    if (!is_array($item['options']['cpt'])) {
-                                        $item['options']['cpt'] = array($item['options']['cpt']);
-                                    }
-                                    if (
-                                        ((in_array('users', $item['options']['cpt']) || in_array('shop_customer', $item['options']['cpt'])) && !$addons->isUserAddonActive()) ||
-                                        ($item['options']['export_type'] == 'advanced' && $item['options']['wp_query_selector'] == 'wp_user_query' && !$addons->isUserAddonActive())
-                                    ) {
-                                        ?>
-                                        href="<?php echo esc_url(add_query_arg(array('id' => $item['id'], 'action' => 'update'), $this->baseUrl)) ?>"
-                                        <?php
-                                    } else {
-                                        ?>
-                                        href="#" class="open_cron_scheduling"
+                                    <?php if (current_user_can(PMXE_Plugin::$capabilities)) { ?>
+                                        <a
+                                            <?php
+                                            if (!is_array($item['options']['cpt'])) {
+                                                $item['options']['cpt'] = array($item['options']['cpt']);
+                                            }
+                                            // Disable scheduling options for User exports if User Export Add-On isn't enabled
+                                            if (
+                                                ((in_array('users', $item['options']['cpt']) || in_array('shop_customer', $item['options']['cpt'])) && !$addons->isUserAddonActive()) ||
+                                                ($item['options']['export_type'] == 'advanced' && $item['options']['wp_query_selector'] == 'wp_user_query' && !$addons->isUserAddonActive())
+                                            ) {
+                                                ?>
+                                                href="<?php echo esc_url(add_query_arg(array('id' => $item['id'], 'action' => 'options'), $this->baseUrl)) ?>"
+                                                <?php
+                                                // Disable scheduling options for WooCo exports if WooCo Export Add-On isn't enabled
+                                            } else if (
+                                                (( (in_array('product', $item['options']['cpt']) && in_array('product_variation', $item['options']['cpt'])) || in_array('shop_order', $item['options']['cpt']) || in_array('shop_coupon', $item['options']['cpt']) || in_array('shop_review', $item['options']['cpt']) ) && !$addons->isWooCommerceAddonActive())
+                                                ||
+                                                ($item['options']['export_type'] == 'advanced' && in_array($item['options']['exportquery']->query['post_type'], array(array('product', 'product_variation'), 'shop_order', 'shop_coupon')) && !$addons->isWooCommerceAddonActive())
+                                            ) {
+                                                ?>
+                                                href="<?php echo esc_url(add_query_arg(array('id' => $item['id'], 'action' => 'options'), $this->baseUrl)) ?>"
+                                                <?php
+                                                // Disable scheduling options for ACF exports if ACF Export Add-On isn't enabled
+                                            } else if (
+                                                ((!in_array('comments', $item['options']['cpt']) || !in_array('shop_review', $item['options']['cpt'])) && in_array('acf', $item['options']['cc_type']) && !$addons->isAcfAddonActive()) ||
+                                                ($item['options']['export_type'] == 'advanced' && $item['options']['wp_query_selector'] != 'wp_comment_query' && in_array('acf', $item['options']['cc_type']) && !$addons->isAcfAddonActive())
+                                            ) {
+                                                ?>
+                                                href="<?php echo esc_url(add_query_arg(array('id' => $item['id'], 'action' => 'options'), $this->baseUrl)) ?>"
+                                                <?php
+                                            } else {
+
+                                                ?>
+                                                href="javascript:void(0);" class="open_cron_scheduling"
+
+                                            <?php } ?>
+                                                data-itemid="<?php echo $item['id']; ?>"><?php _e('Scheduling Options', 'wp_all_export_plugin'); ?></a>
+                                        <br>
                                     <?php } ?>
-                                       data-itemid="<?php echo $item['id']; ?>"><?php _e('Scheduling Options', 'wp_all_export_plugin'); ?></a>
-                                    <br>
 									<?php									
 										$is_re_import_allowed = true;
 										if ( ! empty($item['options']['ids']) )

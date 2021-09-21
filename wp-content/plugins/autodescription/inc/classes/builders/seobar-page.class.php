@@ -8,7 +8,7 @@ namespace The_SEO_Framework\Builders;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2019 - 2020 Sybre Waaijer, CyberWire (https://cyberwire.nl/)
+ * Copyright (C) 2019 - 2021 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -102,7 +102,7 @@ final class SeoBar_Page extends SeoBar {
 						'nofollow'  => false,
 						'noarchive' => false,
 					],
-					static::$tsf->robots_meta( [
+					static::$tsf->generate_robots_meta( [
 						'id'       => static::$query['id'],
 						'taxonomy' => '',
 					] )
@@ -507,6 +507,7 @@ final class SeoBar_Page extends SeoBar {
 			$max = max( $duplicated_words );
 			$max = reset( $max );
 
+			// Warn when more than 3x triplet+/quintet+ words are found.
 			if ( $max > 3 || \count( $duplicated_words ) > 1 ) {
 				// This must be resolved.
 				$item['reason'] = $cache['reason']['foundmanydupe'];
@@ -619,8 +620,6 @@ final class SeoBar_Page extends SeoBar {
 			]
 		);
 
-		$robots_global = static::get_cache( 'general/detect/robotsglobal' );
-
 		if ( $this->query_cache['states']['isdraft'] ) {
 			$item = $cache['defaults']['draft'];
 			// TODO Really stop asserting from here?
@@ -630,6 +629,8 @@ final class SeoBar_Page extends SeoBar {
 		} else {
 			$item = $cache['defaults']['index'];
 		}
+
+		$robots_global = static::get_cache( 'general/detect/robotsglobal' );
 
 		if ( ! $robots_global['blogpublic'] ) {
 			$item['status'] = \The_SEO_Framework\Interpreters\SeoBar::STATE_BAD;
@@ -773,8 +774,6 @@ final class SeoBar_Page extends SeoBar {
 			]
 		);
 
-		$robots_global = static::get_cache( 'general/detect/robotsglobal' );
-
 		if ( $this->query_cache['states']['isdraft'] ) {
 			$item = $cache['defaults']['draft'];
 			// TODO Really stop asserting from here?
@@ -784,6 +783,8 @@ final class SeoBar_Page extends SeoBar {
 		} else {
 			$item = $cache['defaults']['follow'];
 		}
+
+		$robots_global = static::get_cache( 'general/detect/robotsglobal' );
 
 		if ( ! $robots_global['blogpublic'] ) {
 			$item['status'] = \The_SEO_Framework\Interpreters\SeoBar::STATE_BAD;
@@ -904,8 +905,6 @@ final class SeoBar_Page extends SeoBar {
 			]
 		);
 
-		$robots_global = static::get_cache( 'general/detect/robotsglobal' );
-
 		if ( $this->query_cache['states']['isdraft'] ) {
 			$item = $cache['defaults']['draft'];
 			// TODO Really stop asserting from here?
@@ -915,6 +914,8 @@ final class SeoBar_Page extends SeoBar {
 		} else {
 			$item = $cache['defaults']['archive'];
 		}
+
+		$robots_global = static::get_cache( 'general/detect/robotsglobal' );
 
 		if ( ! $robots_global['blogpublic'] ) {
 			$item['status'] = \The_SEO_Framework\Interpreters\SeoBar::STATE_BAD;
