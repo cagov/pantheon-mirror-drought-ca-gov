@@ -2,31 +2,34 @@
  CA Design System Page CSS
 */
 
-.page-date time {
-    font-weight: 400;
-    
-}
-
-header {
-    margin-bottom: 32px;
-}
-
 .page-container-ds {
-    margin-top: 32px;
-}
-
-.page-container-ds {
-    
-    max-width: 1147px;
+    max-width: 1176px;
 }
 
 .main-content-ds {
     max-width: 100%;
 }
 
+.single-column.landing {
+    max-width: 1176px;
+}
+
+
+
 /* Single column layout */
-.single-column {
-    max-width: 1147px;
+.single-column.main-content-ds .ds-content-layout {
+    max-width: 876px;
+    margin: 0 auto;
+}
+
+.single-column.landing .ds-content-layout {
+    max-width: 1176px;
+    margin: 0 auto;
+}
+
+.single-column.single-column-wide .ds-content-layout{
+    max-width: 1176px;
+    margin: 0 auto;
 }
 
 /* SIDEBAR */
@@ -127,7 +130,7 @@ header {
     margin-bottom: 32px; 
 }
 
-@media (min-width: 992px) {
+@media (min-width: 1176px) {
     #main-content.main-content-ds.landing .breadcrumb {
         margin-top: 0px;
         margin-bottom: 64px !important; /* conflict with divi breadcrumb class*/
@@ -171,7 +174,7 @@ h6 {
 /* BREADCRUMB */
 
 .with-sidebar .main-container-ds {
-    max-width: 877px;
+    max-width: 876px;
 }
 
 .breadcrumb {
@@ -371,17 +374,29 @@ main ul li {
     padding-top: 32px;
 }
 
-@media only screen and (max-width: 992px) {
+@media only screen and (max-width: 1215px) {
+    .page-container-ds {
+        margin-left: 15px;
+        margin-right: 15px;
+      }
+}
+
+@media only screen and (max-width: 1175px) {
+
+    /* .page-container-ds {
+        margin: 0 auto;
+    } */
+    
+    .single-column {
+        margin: 0 auto;
+    }
+
 
     .with-sidebar .main-content-default,
     .with-sidebar .ds-content-layout {
         display: block;
     }
 
-    .page-container-ds {
-        padding-left: 15px;
-        padding-right: 15px;
-    }
 
     article {
         display: block;
@@ -556,10 +571,10 @@ main ul li {
 }
 
 /* override card grid so they stack at theme breakpoint that slims main content */
-@media (max-width: 991px) {
+@media (max-width: 1175px) {
 
-    .cagov-grid,
-    .cagov-grid .block-editor-block-list__layout {
+    .cagov-card-grid.cagov-grid,
+    .cagov-card-grid.cagov-grid .block-editor-block-list__layout {
         grid-template-columns: repeat(auto-fit, minmax(min(500px, 100%), 1fr));
     }
 }
@@ -567,10 +582,10 @@ main ul li {
 /* New from manual CSS */
 
 /* override card grid so they stack at theme breakpoint that slims main content */
-@media (max-width: 991px) {
+@media (max-width: 1175px) {
 
-    .cagov-grid,
-    .cagov-grid .block-editor-block-list__layout {
+    .cagov-card-grid.cagov-grid,
+    .cagov-card-grid.cagov-grid .block-editor-block-list__layout {
         grid-template-columns: repeat(auto-fit, minmax(min(500px, 100%), 1fr));
     }
 }
