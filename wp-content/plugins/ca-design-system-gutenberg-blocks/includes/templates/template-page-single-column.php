@@ -1,7 +1,8 @@
 <?php
 /*
- * Template Name: Single Column Page
+ * Template Name: Single Column
  * Template Post Type: page
+ * Template Machine Name: single-column
  */
 ?>
 
@@ -61,5 +62,9 @@ if (file_exists(get_stylesheet_directory() . '/partials/header.php')) {
     </div> <!-- #main-content -->
 
 </div>
+
+<?php
+    do_action("cagov_content_menu");
+?>
 
 <?php get_footer(); ?>
