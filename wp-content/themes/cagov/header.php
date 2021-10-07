@@ -57,7 +57,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	?>
 
 
-		<?php
+	<?php
 		/**
 		 * generate_inside_site_container hook.
 		 *
@@ -73,3 +73,5 @@ if ( ! defined( 'ABSPATH' ) ) {
 			 * @since 0.1
 			 */
 			do_action( 'generate_inside_container' );
+
+

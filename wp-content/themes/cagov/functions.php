@@ -11,7 +11,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Set our theme version.
-define('CAGOV_THEME_VERSION', '1.0.0');
+define('CAGOV_THEME_VERSION', '1.0.1');
 
 add_action('wp_enqueue_style', 'cagov_enqueue_styles');
 // add_action('wp_head', 'cagov_header_scripts');
@@ -144,7 +144,6 @@ function cagov_statewide_footer_menu() {
         return;
     }
 ?>
-
     <div class="statewide-footer-container">
         <div class="statewide-footer">
             <div class="menu-section">
@@ -235,8 +234,6 @@ function cagov_content_menu()
  */
 function cagov_content_social_menu()
 {
-
-
     /* loop thru and create a link (parent nav item only) */
     $nav_menus = get_nav_menu_locations();
 
@@ -264,8 +261,5 @@ function cagov_content_social_menu()
         }
         ?>
     </ul>
-
-
-
 <?php
 }
