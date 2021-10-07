@@ -53,8 +53,8 @@ function cagov_cannabis_library_build_scripts_frontend()
 
         // PERFORMANCE OPTION (re render blocking): inlining our CSS 
         // Note: only bother with this if a plugin isn't available to automatically doing this, and also change this rendering for our blocks
-        $critical_css = file_get_contents(CAGOV_DESIGN_SYSTEM_HEADLESS_WORDPRESS__ADMIN_URL . 'styles/page.css');
-        echo '<style>' . $critical_css . '</style>';
+        // $critical_css = file_get_contents(CAGOV_DESIGN_SYSTEM_HEADLESS_WORDPRESS__ADMIN_URL . 'styles/page.css');
+        // echo '<style>' . $critical_css . '</style>';
     }
 }
 

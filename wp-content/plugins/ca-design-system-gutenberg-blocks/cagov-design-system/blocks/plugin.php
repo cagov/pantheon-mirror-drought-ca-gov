@@ -125,8 +125,8 @@ function cagov_design_system_build_scripts_frontend()
 
         // PERFORMANCE OPTION (re render blocking): inlining CSS 
         // NOTE We hope to avoid this & only require editor CSS for this plugin.
-        $critical_css = file_get_contents(CAGOV_DESIGN_SYSTEM_HEADLESS_WORDPRESS__ADMIN_URL . 'styles/page.css');
-        echo '<style>' . $critical_css . '</style>';
+        // $critical_css = file_get_contents(CAGOV_DESIGN_SYSTEM_HEADLESS_WORDPRESS__ADMIN_URL . 'styles/page.css');
+        // echo '<style>' . $critical_css . '</style>';
     }
 }
 
