@@ -115,5 +115,5 @@ include_once CAGOV_DESIGN_SYSTEM_HEADLESS_WORDPRESS__DIR_PATH . '/includes/panth
 // - namespace rename migration function
 // - Convert all blocks to static HTML
 
-// Add cannabis only code (subplugin needs some work)
-include_once CAGOV_DESIGN_SYSTEM_HEADLESS_WORDPRESS__DIR_PATH . '/cagov-cannabis-headless-wordpress/plugin.php';
+// Add developement only code (not in design system yet)
+include_once CAGOV_DESIGN_SYSTEM_HEADLESS_WORDPRESS__DIR_PATH . '/cagov-development-headless-wordpress/plugin.php';

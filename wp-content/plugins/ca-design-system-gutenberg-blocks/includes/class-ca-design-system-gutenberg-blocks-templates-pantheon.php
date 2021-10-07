@@ -207,22 +207,28 @@ class CADesignSystemGutenbergBlocks_Plugin_Templates_Loader_Pantheon
         global $post;
 
         if (isset($post->ID)) {
-            $user_selected_template = get_page_template_slug($post->ID);
             
+            $user_selected_template = get_page_template_slug($post->ID);
 
+            if(!isset($user_selected_template)) {
+                $user_selected_template = $post->post_type;
+            }
+            
             $templates = $this->_lookup_template_file($user_selected_template);
 
-            $file_name = $templates[$user_selected_template];
-            $template_dir = $this->template_dir;
-            $template_path = $template_dir  . $file_name;
-           
-            $is_plugin = false;
-            if (file_exists($template_path)) {
-                $is_plugin = true;
-            }
+            if (isset($templates[$user_selected_template])) {
+                $file_name = $templates[$user_selected_template];
+                $template_dir = $this->template_dir;
+                $template_path = $template_dir  . $file_name;
+            
+                $is_plugin = false;
+                if (file_exists($template_path)) {
+                    $is_plugin = true;
+                }
 
-            if ($user_selected_template != '' and $is_plugin) {
-                $template = $template_path;
+                if ($user_selected_template != '' and $is_plugin) {
+                    $template = $template_path;
+                }
             }
         }
 

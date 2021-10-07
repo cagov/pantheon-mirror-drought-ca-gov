@@ -25,7 +25,7 @@ function cagov_get_page_post_templates() {
 			)
 		);
 
-		$templates[ $file ] = $filedata['Template Name'];
+		$templates[ $filedata['Template Machine Name'] ] = $filedata['Template Name'];
 	}
 
 	return $templates;
