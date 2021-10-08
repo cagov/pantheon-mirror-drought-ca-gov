@@ -23,7 +23,7 @@
   let siteUrl = window.location.origin;
 
   blocks.registerBlockType("ca-design-system/post-list", {
-    title: __("Post list", "ca-design-system"),
+    // title: __("Post list", "ca-design-system"),
     icon: "format-aside",
     category: "ca-design-system-utilities",
     description: __(
@@ -31,10 +31,10 @@
       "ca-design-system"
     ),
     attributes: {
-      title: {
-        type: "string",
-        default: "Recent Posts",
-      },
+      // title: {
+      //   type: "string",
+      //   default: "Recent Posts",
+      // },
       category: {
         type: "string",
         default: "announcements,press-releases",
@@ -73,7 +73,7 @@
     },
     example: {
       attributes: {
-        title: __("Recent posts", "ca-design-system"),
+        // title: __("Recent posts", "ca-design-system"),
         category: __("announcements,press-releases", "ca-design-system"),
         readMore: __("<a href=\"#\">View all posts</a>", "ca-design-system"),
         order: "desc",
@@ -96,16 +96,16 @@
         el(
           "div",
           {},
-          el(RichText, {
-            tagName: "div",
-            className: "post-list-title",
-            inline: false,
-            placeholder: __("Post list title", "ca-design-system"),
-            value: attributes.title,
-            onChange: function (value) {
-              props.setAttributes({ title: value });
-            },
-          }),
+          // el(RichText, {
+          //   tagName: "div",
+          //   className: "post-list-title",
+          //   inline: false,
+          //   placeholder: __("Post list title", "ca-design-system"),
+          //   value: attributes.title,
+          //   onChange: function (value) {
+          //     props.setAttributes({ title: value });
+          //   },
+          // }),
           // Display output of component.
           // @TODO refresh on change
           el("cagov-post-list", {

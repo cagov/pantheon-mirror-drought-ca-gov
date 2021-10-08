@@ -63,7 +63,7 @@ function cagov_page_identifier_metabox_callback($post)
 
     
     <label for="ca_custom_post_date">Date posted</label><br />
-    <input type="datetime-local" id="ca_custom_post_date" name="ca_custom_post_date" value="<?php print $custom_post_date; ?>">
+    <input type="date" id="ca_custom_post_date" name="ca_custom_post_date" value="<?php print $custom_post_date; ?>">
     <br />
 
     <label for="ca_custom_post_location">Post location</label><br />

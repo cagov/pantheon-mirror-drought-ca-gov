@@ -16,7 +16,7 @@ function cagov_design_system_events_detail__init()
     // Adjust excerpt behavior to return intended excerpts
     add_filter('get_the_excerpt', 'cagov_design_system_events_detail_excerpt');
     
-    add_filter( 'rest_post_collection_params', 'cagov_design_system_filter_add_rest_orderby_params', 10, 2 );
+    // add_filter( 'rest_post_collection_params', 'cagov_design_system_filter_add_rest_orderby_params', 10, 2 );
 }
 
 function cagov_design_system_events_register_custom_rest_fields() {
@@ -123,11 +123,10 @@ function cagov_design_system_excerpt_event($post, $meta, $excerpt)
     return $event_excerpt;
 }
 
-
-
+// Has conflict
 function cagov_design_system_filter_add_rest_orderby_params ( $params ) {
     if (isset($params) && is_array($params)) {
-	$params["orderby"] = array("event.startDateTimeUTC" => "asc");
+	    $params["orderBy"] = array("event.startDateTimeUTC" => "asc");
     }
 	return $params;
 }

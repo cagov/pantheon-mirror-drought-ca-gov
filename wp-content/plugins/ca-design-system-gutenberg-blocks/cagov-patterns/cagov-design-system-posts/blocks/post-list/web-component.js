@@ -160,7 +160,7 @@ class CAGovPostList extends window.HTMLElement {
     // featured_media = null, // 0
     categories = null,
     format = null,
-    post = null
+    meta = null
   }) {
   
     let dateFormatted;
@@ -168,9 +168,12 @@ class CAGovPostList extends window.HTMLElement {
       dateFormatted = moment(date).format("MMMM DD, YYYY");
     }
 
-    if (post !== null && post.custom_post_date !== "") {
+    console.log("meta", meta.custom_post_date);
+
+    if (meta !== null && meta.custom_post_date !== "") {
       try {
-        dateFormatted = moment(post.custom_post_date).format("MMMM DD, YYYY");
+        dateFormatted = moment(meta.custom_post_date).format("MMMM DD, YYYY");
+        console.log("dateFormatted", dateFormatted);
       } catch(error) {
         console.error(error);
       }
