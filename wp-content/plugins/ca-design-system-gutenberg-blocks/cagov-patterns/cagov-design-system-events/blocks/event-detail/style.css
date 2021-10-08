@@ -24,7 +24,6 @@
 .cagov-event-detail .start-date {
     display: inline-block;
     font-size: 18px;
-    text-transform: uppercase;
 }
 
 .cagov-event-detail .end-date::before {
@@ -34,11 +33,11 @@
 .cagov-event-detail .end-date {
     display: inline-block;
     font-size: 18px;
-    text-transform: uppercase;
 }
 
 .cagov-event-detail .start-time {
     display: inline-block;
+    text-transform: uppercase;
 }
 
 .cagov-event-detail .end-time::before {
@@ -47,6 +46,7 @@
 
 .cagov-event-detail .end-time {
     display: inline-block;
+    text-transform: uppercase;
 
 }
 .cagov-event-detail {

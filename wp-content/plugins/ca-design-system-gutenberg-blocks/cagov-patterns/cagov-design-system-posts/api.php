@@ -15,7 +15,7 @@ function cagov_design_system_posts_detail__init()
     
     add_filter( 'rest_post_collection_params', 'cagov_design_system_filter_posts_add_rest_orderby_params', 10, 2 );
 
-    // add_filter( 'rest_post_query', 'cagov_design_system_filter_posts_add_rest_post_query', 10, 2);
+    add_filter( 'rest_post_query', 'cagov_design_system_filter_posts_add_rest_post_query', 10, 2);
 
 }
 
@@ -80,34 +80,24 @@ function cagov_design_system_rest_custom_post_date($post)
     }
     return null;
 }
-
+// eg. wp-json/wp/v2/posts?categories=7&orderby=custom_post_date
 function cagov_design_system_filter_posts_add_rest_orderby_params ( $params ) {
     if (isset($params) && is_array($params)) {
-	    $params["orderby"]['enum'] = "custom_post_date";
+        $params['custom_post_date'] = array(
+            'description'        => __( 'Custom post date ' ),
+            'type'               => 'string',
+        );        
+        $params["orderby"]['enum'][] = "custom_post_date";
     }
 	return $params;
 }
 
-// function cagov_design_system_filter_posts_add_rest_post_query($query_vars, $request) {
-//     $orderby = $request->get_param('orderby');
-    
-//     if (isset($orderby) && $orderby === 'custom_post_date') {
-//         // $query_vars["orderBy"] = "custom_post_date";
-//         // $query_vars["meta_key"] = "custom_post_date";
-//         // $query_vars["order"] = "desc";
-
-
-//         $query_vars = array(
-//             'post_type' => 'post',
-//             'order' => 'DESC',
-//             'orderby'   => 'custom_post_date',   
-//             // 'meta_query' => array(
-//             //     'custom_post_date' => array(
-//             //         'key' => 'post'
-//             //     )
-//             // )
-//         );
-//     }
-//     return $query_vars;
-// }
+function cagov_design_system_filter_posts_add_rest_post_query($query_args, $request) {
+    if ( isset( $request['orderby'] ) ) {
+        $query_args['meta_key'] = "_ca_custom_post_date";
+        $query_args['orderby'] = "meta_value_num";
+        $query_args['order'] = "DESC";
+    }
+    return $query_args;
+}
 

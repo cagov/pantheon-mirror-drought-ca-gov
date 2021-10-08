@@ -74,7 +74,7 @@ function cagov_design_system_post_list_dynamic_render_callback($block_attributes
     }
 
     $domain = $host . $_SERVER['HTTP_HOST'];
-    $title = isset($block_attributes["title"]) ? $block_attributes["title"] : "Recent Posts";
+    // $title = isset($block_attributes["title"]) ? $block_attributes["title"] : "Recent Posts";
     $count = isset($block_attributes["count"]) ? $block_attributes["count"] : "10";
     $order = isset($block_attributes["order"]) ? $block_attributes["order"] : "desc";
     $category = isset($block_attributes["category"]) ? $block_attributes["category"] : "announcements,press-releases";
@@ -89,8 +89,6 @@ function cagov_design_system_post_list_dynamic_render_callback($block_attributes
     return <<<EOT
     <div class="wp-block-ca-design-system-post-list cagov-post-list cagov-stack">
         <div>
-        
-            <h3>$title</h3>
             <cagov-post-list 
                 class="post-list" 
                 data-category="$category"
