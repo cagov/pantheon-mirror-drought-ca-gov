@@ -23,7 +23,7 @@
   let siteUrl = window.location.origin;
 
   blocks.registerBlockType("ca-design-system/post-list", {
-    // title: __("Post list", "ca-design-system"),
+    title: __("Post list", "ca-design-system"),
     icon: "format-aside",
     category: "ca-design-system-utilities",
     description: __(
