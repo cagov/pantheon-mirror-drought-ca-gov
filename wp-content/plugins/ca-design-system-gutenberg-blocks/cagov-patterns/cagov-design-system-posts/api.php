@@ -11,6 +11,7 @@ cagov_design_system_posts_detail__init();
 function cagov_design_system_posts_detail__init()
 {
     // Add post detail metadata to WP-API
+
     add_action('rest_api_init', 'cagov_design_system_posts_register_custom_rest_fields');
     
     add_filter( 'rest_post_collection_params', 'cagov_design_system_filter_posts_add_rest_orderby_params', 10, 2 );
@@ -28,7 +29,7 @@ function cagov_design_system_posts_register_custom_rest_fields() {
             'schema'          => null,
         )
     );
-
+    
     register_rest_field(
         'post',
         'meta',
@@ -73,7 +74,6 @@ function cagov_design_system_rest_custom_post_date($post)
     try {
         $custom_post_date = get_post_meta($post->ID, '_ca_custom_post_date', true);
         return $custom_post_date;
-        
     } catch (Exception $e) {
     } finally {
     }
@@ -83,7 +83,7 @@ function cagov_design_system_rest_custom_post_date($post)
 function cagov_design_system_filter_posts_add_rest_orderby_params ( $params ) {
     if (isset($params) && is_array($params)) {
         $params['custom_post_date'] = array(
-            'description'        => __( 'Custom post date ' ),
+            'description'        => __( 'Custom post date' ),
             'type'               => 'string',
         );        
         $params["orderby"]['enum'][] = "custom_post_date";
@@ -94,7 +94,7 @@ function cagov_design_system_filter_posts_add_rest_orderby_params ( $params ) {
 function cagov_design_system_filter_posts_add_rest_post_query($query_args, $request) {
     if ( isset( $request['orderby'] ) ) {
         $query_args['meta_key'] = "_ca_custom_post_date";
-        $query_args['orderby'] = "meta_value_num";
+        $query_args['orderby'] = "meta_value";
         $query_args['order'] = "DESC";
     }
     return $query_args;
