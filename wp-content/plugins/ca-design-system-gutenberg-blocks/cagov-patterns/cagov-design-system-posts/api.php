@@ -15,8 +15,7 @@ function cagov_design_system_posts_detail__init()
     
     add_filter( 'rest_post_collection_params', 'cagov_design_system_filter_posts_add_rest_orderby_params', 10, 2 );
 
-    add_filter( 'rest_post_query', 'cagov_design_system_filter_posts_add_rest_post_query', 10, 2);
-
+    add_filter( 'rest_post_query', 'cagov_design_system_filter_posts_add_rest_post_query', 10, 3);
 }
 
 function cagov_design_system_posts_register_custom_rest_fields() {

@@ -33,7 +33,6 @@ class CAGovPostList extends window.HTMLElement {
       }
 
       let categoryEndpoint = `${this.endpoint}/categories?slug=${this.category}`;
-      console.log("category endpoint", categoryEndpoint, this.dataset);
 
       // Get data
       window
