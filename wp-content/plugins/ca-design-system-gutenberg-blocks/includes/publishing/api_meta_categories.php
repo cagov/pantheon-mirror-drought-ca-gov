@@ -31,15 +31,15 @@ function cagov_gb_register_meta_categories_fields()
         )
     );
 
-    register_rest_field(
-        'attachment',
-        'headless_categories',
-        array(
-            'get_callback'    => 'cagov_meta_categories',
-            'update_callback' => null,
-            'schema'          => null, // @TODO look up what our options are here
-        )
-    );
+    // register_rest_field(
+    //     'attachment',
+    //     'headless_categories',
+    //     array(
+    //         'get_callback'    => 'cagov_meta_categories',
+    //         'update_callback' => null,
+    //         'schema'          => null, // @TODO look up what our options are here
+    //     )
+    // );
 }
 
 function cagov_meta_categories($object, $field_name, $request)
