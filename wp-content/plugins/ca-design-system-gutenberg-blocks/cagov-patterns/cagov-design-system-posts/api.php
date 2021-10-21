@@ -92,7 +92,7 @@ function cagov_design_system_filter_posts_add_rest_orderby_params ( $params ) {
 }
 
 function cagov_design_system_filter_posts_add_rest_post_query($query_args, $request) {
-    if ( isset( $request['orderby'] ) ) {
+    if ( null !== $request['orderby'] && null !== $request['custom_post_date_sort'] ) {
         $query_args['meta_key'] = "_ca_custom_post_date";
         $query_args['orderby'] = "meta_value";
         $query_args['order'] = "DESC";

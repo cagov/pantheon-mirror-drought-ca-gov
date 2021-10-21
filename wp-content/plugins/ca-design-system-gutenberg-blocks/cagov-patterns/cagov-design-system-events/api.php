@@ -11,7 +11,7 @@ cagov_design_system_events_detail__init();
 function cagov_design_system_events_detail__init()
 {
     // Add event detail metadata to WP-API
-    add_action('rest_api_init', 'cagov_design_system_events_register_custom_rest_fields');
+    // add_action('rest_api_init', 'cagov_design_system_events_register_custom_rest_fields');
     
     // Adjust excerpt behavior to return intended excerpts
     add_filter('get_the_excerpt', 'cagov_design_system_events_detail_excerpt');
