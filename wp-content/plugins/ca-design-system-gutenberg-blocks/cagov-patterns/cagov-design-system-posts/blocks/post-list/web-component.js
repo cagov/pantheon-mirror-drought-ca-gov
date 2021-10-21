@@ -65,6 +65,8 @@ class CAGovPostList extends window.HTMLElement {
             if (this.order) {
               postsEndpoint += `&order=${this.order}`;
               postsEndpoint += `&orderBy=post.custom_post_date`;
+              postsEndpoint += `&custom_post_date_sort=true`;
+              
             }
             if(this.currentPage) {
               postsEndpoint += `&page=${this.currentPage}`;
@@ -166,8 +168,6 @@ class CAGovPostList extends window.HTMLElement {
     if (date !== null && window.moment !== undefined) {
       dateFormatted = moment(date).format("MMMM DD, YYYY");
     }
-
-    console.log("meta", meta.custom_post_date);
 
     if (meta !== null && meta.custom_post_date !== "") {
       try {
