@@ -1,96 +1,95 @@
-<?php return array (
-  'root' => 
-  array (
-    'pretty_version' => '7.2.4',
-    'version' => '7.2.4.0',
-    'aliases' => 
-    array (
+<?php return array(
+    'root' => array(
+        'pretty_version' => '8.0.3',
+        'version' => '8.0.3.0',
+        'type' => 'wordpress-plugin',
+        'install_path' => __DIR__ . '/../../',
+        'aliases' => array(),
+        'reference' => '05ef332a4ac9aef5940bc9849bb93826b1e3a0fa',
+        'name' => 'bracketspace/notification',
+        'dev' => false,
     ),
-    'reference' => 'a24094c19ca118a628e30803d1d1a545e50c1bd3',
-    'name' => 'bracketspace/notification',
-  ),
-  'versions' => 
-  array (
-    'bracketspace/notification' => 
-    array (
-      'pretty_version' => '7.2.4',
-      'version' => '7.2.4.0',
-      'aliases' => 
-      array (
-      ),
-      'reference' => 'a24094c19ca118a628e30803d1d1a545e50c1bd3',
+    'versions' => array(
+        'bracketspace/notification' => array(
+            'pretty_version' => '8.0.3',
+            'version' => '8.0.3.0',
+            'type' => 'wordpress-plugin',
+            'install_path' => __DIR__ . '/../../',
+            'aliases' => array(),
+            'reference' => '05ef332a4ac9aef5940bc9849bb93826b1e3a0fa',
+            'dev_requirement' => false,
+        ),
+        'enshrined/svg-sanitize' => array(
+            'pretty_version' => '0.14.1',
+            'version' => '0.14.1.0',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../enshrined/svg-sanitize',
+            'aliases' => array(),
+            'reference' => '307b42066fb0b76b5119f5e1f0826e18fefabe95',
+            'dev_requirement' => false,
+        ),
+        'micropackage/ajax' => array(
+            'pretty_version' => '1.0.1',
+            'version' => '1.0.1.0',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../micropackage/ajax',
+            'aliases' => array(),
+            'reference' => '8bf2c0528776696208f53ce8c393da3aba7b24ac',
+            'dev_requirement' => false,
+        ),
+        'micropackage/cache' => array(
+            'pretty_version' => '1.0.3',
+            'version' => '1.0.3.0',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../micropackage/cache',
+            'aliases' => array(),
+            'reference' => '4132b1de3036d72befc526ba4e78f50b5f23764c',
+            'dev_requirement' => false,
+        ),
+        'micropackage/dochooks' => array(
+            'pretty_version' => '1.0.2',
+            'version' => '1.0.2.0',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../micropackage/dochooks',
+            'aliases' => array(),
+            'reference' => '9eddd9b480fce394d0123ebe806d542e6409105e',
+            'dev_requirement' => false,
+        ),
+        'micropackage/filesystem' => array(
+            'pretty_version' => '1.1.4',
+            'version' => '1.1.4.0',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../micropackage/filesystem',
+            'aliases' => array(),
+            'reference' => 'fb643749ff282bf9d057caf9903ab17c5deceb33',
+            'dev_requirement' => false,
+        ),
+        'micropackage/internationalization' => array(
+            'pretty_version' => '1.0.1',
+            'version' => '1.0.1.0',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../micropackage/internationalization',
+            'aliases' => array(),
+            'reference' => '8de158b8fc71557a8310f0d98d2b8ad9f4f44dd5',
+            'dev_requirement' => false,
+        ),
+        'micropackage/requirements' => array(
+            'pretty_version' => '1.1.0',
+            'version' => '1.1.0.0',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../micropackage/requirements',
+            'aliases' => array(),
+            'reference' => '855b21b6df8f48fa82528dd073ed1b29a645d2ee',
+            'dev_requirement' => false,
+        ),
+        'micropackage/templates' => array(
+            'pretty_version' => '1.1.3',
+            'version' => '1.1.3.0',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../micropackage/templates',
+            'aliases' => array(),
+            'reference' => '2ed9aca818fd911183d5cbefb4aa10ff4e4794d9',
+            'dev_requirement' => false,
+        ),
     ),
-    'micropackage/ajax' => 
-    array (
-      'pretty_version' => '1.0.1',
-      'version' => '1.0.1.0',
-      'aliases' => 
-      array (
-      ),
-      'reference' => '8bf2c0528776696208f53ce8c393da3aba7b24ac',
-    ),
-    'micropackage/dochooks' => 
-    array (
-      'pretty_version' => '1.0.2',
-      'version' => '1.0.2.0',
-      'aliases' => 
-      array (
-      ),
-      'reference' => '9eddd9b480fce394d0123ebe806d542e6409105e',
-    ),
-    'micropackage/filesystem' => 
-    array (
-      'pretty_version' => '1.1.3',
-      'version' => '1.1.3.0',
-      'aliases' => 
-      array (
-      ),
-      'reference' => 'a686c7c2d7c7443c4cf6dc55dbd2283a6e219b06',
-    ),
-    'micropackage/internationalization' => 
-    array (
-      'pretty_version' => '1.0.1',
-      'version' => '1.0.1.0',
-      'aliases' => 
-      array (
-      ),
-      'reference' => '8de158b8fc71557a8310f0d98d2b8ad9f4f44dd5',
-    ),
-    'micropackage/requirements' => 
-    array (
-      'pretty_version' => '1.0.3',
-      'version' => '1.0.3.0',
-      'aliases' => 
-      array (
-      ),
-      'reference' => '86ad5fcfdbe2c89eaab4c0895d122957fde1de82',
-    ),
-    'micropackage/templates' => 
-    array (
-      'pretty_version' => '1.1.2',
-      'version' => '1.1.2.0',
-      'aliases' => 
-      array (
-      ),
-      'reference' => 'b7fa204273d75326d398a573dbf667fe7130b987',
-    ),
-    'typisttech/imposter' => 
-    array (
-      'pretty_version' => '0.6.1',
-      'version' => '0.6.1.0',
-      'aliases' => 
-      array (
-      ),
-      'reference' => 'f52b1a2289d2ea9c660cf9595085d0b11469af83',
-    ),
-    'typisttech/imposter-plugin' => 
-    array (
-      'pretty_version' => '0.6.2',
-      'version' => '0.6.2.0',
-      'aliases' => 
-      array (
-      ),
-      'reference' => '15fa3c90aca3b79497f438b9e02a6176498de53c',
-    ),
-  ),
 );

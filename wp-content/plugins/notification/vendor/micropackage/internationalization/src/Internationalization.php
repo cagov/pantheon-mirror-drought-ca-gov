@@ -5,7 +5,7 @@
  * @package micropackage/internationalization
  */
 
-namespace BracketSpace\Notification\Vendor\Micropackage\Internationalization;
+namespace Micropackage\Internationalization;
 
 /**
  * Internationalization class

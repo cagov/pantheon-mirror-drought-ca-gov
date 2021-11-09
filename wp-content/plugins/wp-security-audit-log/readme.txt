@@ -6,7 +6,7 @@ License URI: https://www.gnu.org/licenses/gpl.html
 Tags: activity log, wordpress activity logs, security audit log, audit log, user tracking, security event log, audit trail, wordpress security monitor, wordpress admin, wordpress admin monitoring, user activity, admin, multisite, SMS alerts, wordpress monitoring, email notification, wordpress email alerts, tracking, user tracking, user activity report, wordpress audit trail
 Requires at least: 4.4
 Tested up to: 5.8
-Stable tag: 4.3.2
+Stable tag: 4.3.1.1
 Requires PHP: 7.0
 
 The #1 user-rated activity log plugin. Keep a comprehensive log of the changes that happen on your site with this easy to use plugin.
@@ -208,63 +208,75 @@ Please refer to our [support pages](https://wpactivitylog.com/support/?utm_sourc
 
 == Changelog ==
 
-= 4.3.2 (2021-08-03) =
+= 4.3.3.1 (2021-10-13) =
 
-Release notes: [WP Activity Log 4.3.2: New external database module, plugin logging, and other exciting features](https://wpactivitylog.com/wsal-4-3-0/)
+**Bug fixes**
+	* Fixed critical error with PHP 7.2.
+	
+= 4.3.3 (2021-10-13) =
 
-**New event IDs for WP Activity Log plugin settings changes**
-	* ID 6046: enabled / disabled the Login Page Notification.
-	* ID 6047: changed the text of the Login Page Notification.
-	* ID 6048: changed the status of the Reverse proxy / firewall option.
-	* ID 6049: changed the Restriction Access setting.
-	* ID 6050: changed the list of users that can view the activity log.
-	* ID 6051: enabled / disabled the Hide plugin in plugins page setting.
-	* ID 6052: changed the activity log retention policies.
-	* ID 6053: excluded / included back a user in the activity log.
-	* ID 6054: excluded / included back a user role in the activity log.
-	* ID 6055: excluded / included back an IP address in the activity log.
-	* ID 6056: excluded / included back a post type in the activity log.
-	* ID 6057: excluded / included back a custom field in the activity log.
-	* ID 6058: excluded / included back a user profile custom field in the activity log.
+Release notes: [WP Activity Log 4.3.3: Plugin setting importer & exporter & support for REST API](https://wpactivitylog.com/wsal-4-3-0/)
+
+**New activity log event IDs**
+	*  ID 5028: Enabled or disabled automatic updates for a plugin.
+	*  ID 5029: Enabled or disabled automatic updates for a theme.
+
+**New activity log event IDs for notifications in the plugin**
+	* ID 6310: Changed the status of the "Daily activity log summary email".
+	* ID 6311: Modified the list of recepients of the "Daily activity log summary email".
+	* ID 6312: Changed the status of a built in notification.
+	* ID 6313: Changed the recepient(s) of a built in notification.
+	* ID 6314: Added a new custom notification.
+	* ID 6315: Modified a custom notification.
+	* ID 6316: Changed the status of a custom notification.
+	* ID 6317: Deleted a custom notification.
+	* ID 6318: Modified the default notification template.
+
+**New activity log event IDs for integrations & activity log mirrors**
+	* ID 6320: Added a new integration connection.
+	* ID 6321: Modified an integration connection.
+	* ID 6322: Deleted an integration connection.
+	* ID 6323: Added a new activity log mirror.
+	* ID 6324: Modified an activity log mirror.
+	* ID 6325: Changed the status of an activity log morror (disabled/enabled).
+	* ID 6326: Deleted an activity log mirror.
+	* ID 6327: Changed the statues of the setting "Logging events to database".
 
 **New features**
 
-	* A completely new external database module (with full backward compatability support).
-	* Activity log can now be stored on external MySQL databases on Microsoft Azure.
-	* A new sensor to keep a log of WP Activity Log plugin settings changes.
-	* New setting to "not write activity log to database" when mirroring the activity log to a third party service.
-	* The "all except from" criterion in the reports, allowing users to easily exclude specific object from a report criteria.
-	* Plugin database version: the plugin's database is now versioned,  making it much easier to upgrade the database structured when required.
-	* Custom fields in user profiles can be excluded from the activity log from the "Exclude Objects" settings section.
-	* The filter "wsal_event_metadata_definition" which allows users to add additional meta data to an event in the activity log. Refer to the list of [hooks & filters](https://wpactivitylog.com/support/kb/list-hooks/) for more information.
-	* Added events severity level filter in the mirroring connection, allowing users to filter which events should be mirrored by severity level.
-
+	*  Plugin settings exporter & importer: easily export and import the plugin's settings configuration for backups, migration etc.
+	*  Options to delete specific data from the activity log, such as all events about a user, or an IP address.
+	*  Plugin keeps log of authenticated user changes done to the website via the REST API.
+	*  New button to only terminate the users' sessions that match the search criteria in Logged in users' session.
+	* Added the new {first_name} and {last_name} tags to the custom notifications template.
+	* New hook to [edit the activity log event data before it is sent to mirrors](https://wpactivitylog.com/support/kb/list-hooks/#wsal_event_data_before_mirror).
 	
 **Improvements**
 
-	* Replaced the old external database buffer system with the Action Scheduler library to improve reliability and performance.
-	* Redesigned the reports download functionality so it works on any type of WordPress web hosting.
-	* Replaced the old activity log events migration module with WP Background processing, for a more reliable migration process.
-	* Full support for PHP 8.
-	* Detection of third party plugins activity & recommendations for activity log extensions.
-	* Added a number of checks to the external database module for an improved database connection setup UX.
-	* Activity log plugin extensions are also hidden when the WP Activity Log plugin is hidden from the plugins page.
-	* Removed all the code that was previously used for migration of events between the WordPress and external database.
-	* Remove code that is no longer required in the free edition of the plugin.
-	* Better support for plugins that still use old methods (old use of the lostpassword_post filter) to allow users to reset their password without an error. 
-	* All database events have been moved under the "WordPress & System" tab in the Enable/Disable events section.
-	* Improved the text of the plugin's install wizard.
-	* Live notifications in Admin toolbar are now disabled by default (performance enhancement).
-	* Amazon AWS library is disabled by default. Users will be alerted to initialize it from wp-config.php if required.
-	* Added the ";" as separator in the meta data section in CSV reports.
-	* Removed the event ID 4-digits limit to allow users to declare event IDs with 5+ digits.
-	* CSV reports now show the right username & display name, as configured in the plugin settings.
- 
+	*  Logs from subsites on multisite networks can be mirrored to AWS Cloudwatch as individual log streams.
+	* [Activity log retention policy](https://wpactivitylog.com/support/kb/activity-log-retention-policies/) can now be specified by the number of days.
+	* Plugin now reports user role changes done via the "Members" plugin (by Memberpress).
+	* Event ID 2010 (user uploaded a file) now includes a link to the uploaded attachment.
+	* Added "Blog ID" and "Site URL" to mirrored activity log events.
+	* Hover over prompt for users entries in activity log viewer now displays more information about the user.
+	* Improved the handling of post meta changes ([support ticket](https://wordpress.org/support/topic/issue-with-hook-name-and-param-callback/)).
+	* Renamed menu entry "BD & Integrations" to "Integrations" to better reflect its purpose.
+	* Contact us link in install wizard now points to contact us page on website instead of homepage.
+	* Auto complete filters in Reports now check up to 100 records.
+	* Added additional database checks to ensure all data is removed from database upon uninstall on a multisite network.
+	* Improved coverage for the Members plugin - plugin now reports user role changes done via the Members plugin.
+	* Updated the "Help" link in the first time install wizard.
+	* change the "wsal_inactive_sessions_test" database override to a filter.
+	* Improved in-context help messages in plugin settings and ensured all titles are uniform.
+	
 **Bug fixes**
-	* Plugin was not capturing user logouts from Ultimate Member plugin profile page.
-	* Plugin was reporting wrong directory name in URL in event ID 2101 on a multisite environment.
-	* In specific scenarios the plugin reported a custom field name as NULL in event ID 2054.	
-	* Fixed the broken link to user profile page in event ID 4001.
-	* Event ID 4029 (user sent a password request) had the wrong Event Type.
-
+	* Fixed a PHP warning which happened when visiting the plugin's settings pages ([support ticket](https://wordpress.org/support/topic/version-4-3-2-php-warning/)).
+	* Fixed PHP notice which happened when visiting an archive page ([support ticket](https://wordpress.org/support/topic/undefined-index-posturl-on-a-page-type-post/)).
+	* Event IDs for "integration connections" changes wrongly reported for changes in "activity log mirroring connection" changes.
+	* Fixed: Activity log retention policies appearing twice in some scenarios.
+	* Fixed: Activity log retention settings and archive settings popup logic.
+	* Added the missing argument in a multisite network that were creating a PHP error during plugin uninstall.
+	* Setting the setting "Remove all data on uninstall" to "No" no longer leaves no option selected.
+	
+	
 Refer to the [complete plugin changelog](https://wpactivitylog.com/support/kb/plugin-changelog/?utm_source=wordpress.org&utm_medium=referral&utm_campaign=WSAL&utm_content=plugin+repos+description) for more detailed information about what was new, improved and fixed in previous versions of the WP Activity Log plugin.

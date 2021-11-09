@@ -5,10 +5,10 @@
  * @package micropackage/requirements
  */
 
-namespace BracketSpace\Notification\Vendor\Micropackage\Requirements\Checker;
+namespace Micropackage\Requirements\Checker;
 
-use BracketSpace\Notification\Vendor\Micropackage\Requirements\Abstracts;
-use BracketSpace\Notification\Vendor\Micropackage\Requirements\Requirements;
+use Micropackage\Requirements\Abstracts;
+use Micropackage\Requirements\Requirements;
 
 /**
  * PHP Extensions Checker class
