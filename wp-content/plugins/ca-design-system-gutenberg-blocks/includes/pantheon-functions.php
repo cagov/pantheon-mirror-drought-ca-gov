@@ -15,7 +15,6 @@ function cagov_get_page_post_templates() {
 
 	foreach ( glob( CAGOV_DESIGN_SYSTEM_HEADLESS_WORDPRESS__DIR_PATH . '/templates-pantheon/*.php' ) as $file ) {
 		// Gets Template Name from the file.
-		echo $file;
 		$filedata = get_file_data(
 			$file,
 			array(

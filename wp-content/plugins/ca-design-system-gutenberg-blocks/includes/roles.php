@@ -8,7 +8,7 @@ function cagov_design_system_headless_wordpress_new_role() {
 
     $content_admin_role = get_role('content_admin');
 
-    // Should be same as editor, dunno why array wasn't setting.
+    // Should be same as editor, dunno why array wasn't setting, had to do this the long way.
     $content_admin_role->add_cap( 'manage_categories' );
     $content_admin_role->add_cap( 'manage_links' );
     $content_admin_role->add_cap( 'upload_files' );
