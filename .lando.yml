@@ -1,0 +1,6 @@
+name: drought-ca-gov
+recipe: pantheon
+config:
+  framework: wordpress
+  site: drought-ca-gov
+  id: 66ca7dd9-8e67-4be0-b0b8-7fffe311db54
