@@ -3,7 +3,7 @@
 Plugin Name: Media Library Folders for WordPress
 Plugin URI: http://maxgalleria.com
 Description: Gives you the ability to adds folders and move files in the WordPress Media Library.
-Version: 7.0.3
+Version: 7.0.8
 Author: Max Foundry
 Author URI: http://maxfoundry.com
 
@@ -52,7 +52,7 @@ class MaxGalleriaMediaLib {
 
 	public function set_global_constants() {	
 		define('MAXGALLERIA_MEDIA_LIBRARY_VERSION_KEY', 'maxgalleria_media_library_version');
-		define('MAXGALLERIA_MEDIA_LIBRARY_VERSION_NUM', '7.0.3');
+		define('MAXGALLERIA_MEDIA_LIBRARY_VERSION_NUM', '7.0.8');
 		define('MAXGALLERIA_MEDIA_LIBRARY_IGNORE_NOTICE', 'maxgalleria_media_library_ignore_notice');
 		define('MAXGALLERIA_MEDIA_LIBRARY_PLUGIN_NAME', trim(dirname(plugin_basename(__FILE__)), '/'));
 		define('MAXGALLERIA_MEDIA_LIBRARY_PLUGIN_DIR', WP_PLUGIN_DIR . '/' . MAXGALLERIA_MEDIA_LIBRARY_PLUGIN_NAME);
@@ -2722,33 +2722,46 @@ AND pm.meta_key = '_wp_attached_file'";
 						die();
 					}  
 					
-			    //$parent_folder =  $this->get_parent($delete_id);					
-
-					if(file_exists($folder_path)) {
-						if(is_dir($folder_path)) {  //folder
+			    //$parent_folder =  $this->get_parent($delete_id);
+          
+          if(file_exists($folder_path)) {
+            if(is_dir($folder_path)) {  //folder
               @chmod($folder_path, 0777);
-              $this->write_log("Deleting $folder_path");
-              // try to delete first
-              rmdir($folder_path);              
-              if(file_exists($folder_path)) {
-                if($this->is_dir_empty($folder_path)) {
-                  //unlink($folder_path. "/.DS_Store");
-                  //error_log("folder_path $folder_path");
-                  if(rmdir($folder_path)) {
-                    $this->write_log(__('The folder was deleted.','maxgalleria-media-library'));
-                  } else {
-                    $message = __('The folder could not be deleted.','maxgalleria-media-library');
-                    $this->write_log($message);
-                    $folder_deleted = false;
-                  }  
-                } else {
-                  $message = __('The folder is not empty and could not be deleted.','maxgalleria-media-library');
-                  $this->write_log($message);
-                  $folder_deleted = false;                
-                }
-              }
-						}          
-					}                          
+              $this->remove_hidden_files($folder_path);
+              if($this->is_dir_empty($folder_path)) {
+                if(!rmdir($folder_path)) {
+                  $message = __('The folder could not be deleted.','maxgalleria-media-library');
+                }  
+              } else {
+                $message = __('The folder is not empty and could not be deleted.','maxgalleria-media-library');
+                $folder_deleted = false;                                  
+              }         
+            }          
+          }                                    
+
+//					if(file_exists($folder_path)) {
+//						if(is_dir($folder_path)) {  //folder
+//              @chmod($folder_path, 0777);
+//              $this->write_log("Deleting $folder_path");
+//              // try to delete first
+//              rmdir($folder_path);              
+//              if(file_exists($folder_path)) {
+//                $this->remove_hidden_files($folder_path);
+//                if($this->is_dir_empty($folder_path)) {
+//                  //unlink($folder_path. "/.DS_Store");
+//                  //error_log("folder_path $folder_path");
+//                  if(!rmdir($folder_path)) {
+//                    $message = __('The folder could not be deleted.','maxgalleria-media-library');
+//                    $folder_deleted = false;
+//                  }  
+//                } else {
+//                  $message = __('The folder is not empty and could not be deleted.','maxgalleria-media-library');
+//                  $this->write_log($message);
+//                  $folder_deleted = false;                
+//                }
+//              }
+//						}          
+//					}                          
 										
           //$this->display_folder_contents ($parent_folder);
 					//$this->display_folder_nav($parent_folder, $folder_table);
@@ -2810,6 +2823,13 @@ AND pm.meta_key = '_wp_attached_file'";
     die();
   }
 
+  public function remove_hidden_files($directory) {
+    $files = array_diff(scandir($directory), array('.','..'));
+    foreach ($files as $file) {
+      unlink("$directory/$file");
+    }    
+  }
+  
   public function is_dir_empty($directory) {
     $filehandle = opendir($directory);
     while (false !== ($entry = readdir($filehandle))) {
@@ -3401,7 +3421,7 @@ AND pm.meta_key = '_wp_attached_file'", $file_id);
       
       if(!$noecho)
         echo __('Scaning for new folders in ','maxgalleria-media-library') . " $upload_path<br>";      
-      $objects = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($upload_path), RecursiveIteratorIterator::SELF_FIRST);
+      $objects = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($upload_path), RecursiveIteratorIterator::SELF_FIRST, RecursiveIteratorIterator::CATCH_GET_CHILD);
       foreach($objects as $name => $object){
         if(is_dir($name)) {
           $dir_name = pathinfo($name, PATHINFO_BASENAME);
@@ -3985,6 +4005,7 @@ and meta_key = '_wp_attached_file'";
               <li><span>Add Images to WooCommerce Product Gallery</span></li>							
               <li><span>Export the media library from one Wordpress site and import it into another</span></li>
               <li><span>Front End Upload to a Specific Folder</span></li>							
+              <li><span>Bulk Move of media files</span></li>							
             </ul>
           </div>
           <div class="width-50">
@@ -3995,7 +4016,7 @@ and meta_key = '_wp_attached_file'";
               <li><span>Category Interchangability with Enhanced Media Library</span></li>							
               <li><span>Embed PDF files in a page via a shortcode and Embed PDF file shortcode generator</span></li>							
               <li><span>Media Library Maintenance and Bulk File Import</span></li>							
-              <!--<li><span>Jetpack and the Wordpress Gallery Integration</span></li>-->
+              <li><span>Jetpack and the Wordpress Gallery Shortcode Generator</span></li>
             </ul>
           </div>
           <div class="mlf-clearfix"></div>
@@ -4008,7 +4029,7 @@ and meta_key = '_wp_attached_file'";
   <div class="section price-section">
     <div class="container">
       <div class="prices">
-        <h3>$39</h3>
+        <h3>$49</h3>
         <div class="descr">
           <img src="<?php echo MAXGALLERIA_MEDIA_LIBRARY_PLUGIN_URL ?>/images/icons/benefits.png" class=" img-responsive" alt="ico">
           <p>
@@ -5128,34 +5149,9 @@ where folder_id = $folder_id";
 
 		if ( !$post = $wpdb->get_row($wpdb->prepare("SELECT * FROM $wpdb->posts WHERE ID = %d", $postid)) )
 			return $post;
-
+    
 		if ( !$force_delete && ( $post->post_type == 'post' || $post->post_type == 'page') && get_post_status( $postid ) != 'trash' && EMPTY_TRASH_DAYS )
 			return wp_trash_post( $postid );
-
-		/**
-		 * Filters whether a post deletion should take place.
-		 *
-		 * @since 4.4.0
-		 *
-		 * @param bool    $delete       Whether to go forward with deletion.
-		 * @param WP_Post $post         Post object.
-		 * @param bool    $force_delete Whether to bypass the trash.
-		 */
-		$check = apply_filters( 'pre_delete_post', null, $post, $force_delete );
-		if ( null !== $check ) {
-			return $check;
-		}
-
-		/**
-		 * Fires before a post is deleted, at the start of wp_delete_post().
-		 *
-		 * @since 3.2.0
-		 *
-		 * @see wp_delete_post()
-		 *
-		 * @param int $postid Post ID.
-		 */
-		do_action( 'before_delete_post', $postid );
 
 		delete_post_meta($postid,'_wp_trash_meta_status');
 		delete_post_meta($postid,'_wp_trash_meta_time');
@@ -5196,29 +5192,10 @@ where folder_id = $folder_id";
 		foreach ( $post_meta_ids as $mid )
 			delete_metadata_by_mid( 'post', $mid );
 
-		/**
-		 * Fires immediately before a post is deleted from the database.
-		 *
-		 * @since 1.2.0
-		 *
-		 * @param int $postid Post ID.
-		 */
-		do_action( 'delete_post', $postid );
 		$result = $wpdb->delete( $wpdb->posts, array( 'ID' => $postid ) );
 		if ( ! $result ) {
 			return false;
 		}
-
-		/**
-		 * Fires immediately after a post is deleted from the database.
-		 *
-		 * @since 2.2.0
-		 *
-		 * @param int $postid Post ID.
-		 */
-		do_action( 'deleted_post', $postid );
-
-		clean_post_cache( $post );
 
 		if ( is_post_type_hierarchical( $post->post_type ) && $children ) {
 			foreach ( $children as $child )
@@ -5226,17 +5203,6 @@ where folder_id = $folder_id";
 		}
 
 		wp_clear_scheduled_hook('publish_future_post', array( $postid ) );
-
-		/**
-		 * Fires after a post is deleted, at the conclusion of wp_delete_post().
-		 *
-		 * @since 3.2.0
-		 *
-		 * @see wp_delete_post()
-		 *
-		 * @param int $postid Post ID.
-		 */
-		do_action( 'after_delete_post', $postid );
 
 		return $post;
 	}
@@ -5710,10 +5676,11 @@ AND meta_key = '_wp_attached_file'";
                 }
 
                 $image_path = str_replace('.', '*.', $image_path );
+                //error_log("image_path $image_path");
                 $metadata = wp_get_attachment_metadata($copy_id);                               
                 $path_to_thumbnails = pathinfo($image_path, PATHINFO_DIRNAME);
+                //error_log("path_to_thumbnails $path_to_thumbnails");
                 
-                //error_log(print_r($metadata, true));
                 if($scaled) {
                   $full_scaled_image_path = str_replace('-scaled*', '', $image_path);
                   $full_scaled_image = substr($full_scaled_image_path, strrpos($full_scaled_image_path, '/')+1);
@@ -5727,6 +5694,7 @@ AND meta_key = '_wp_attached_file'";
                   
                   foreach($metadata['sizes'] as $source_path) {
                     $thumbnail_file = $path_to_thumbnails . DIRECTORY_SEPARATOR . $source_path['file'];
+                    //error_log("thumbnail_file $thumbnail_file");
                     $thumbnail_destination = $destination_path . DIRECTORY_SEPARATOR . $source_path['file'];
 		                if(file_exists($thumbnail_file)) {
                       rename($thumbnail_file, $thumbnail_destination);

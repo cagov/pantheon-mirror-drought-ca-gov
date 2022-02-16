@@ -124,7 +124,7 @@ if (!class_exists('\WPFront\URE\Taxonomies\WPFront_User_Role_Editor_Taxonomies')
             if (isset($entity_all[$taxonomy])) {
                 $entity = $entity_all[$taxonomy];
                 $saved = $entity->taxonomy_arg;
-                if(empty($saved)){
+                if (empty($saved)) {
                     $saved = array();
                 }
 
@@ -151,7 +151,7 @@ if (!class_exists('\WPFront\URE\Taxonomies\WPFront_User_Role_Editor_Taxonomies')
                 }
             }
         }
-        
+
         /**
          * To handle late post type registrations.
          * 
@@ -161,7 +161,7 @@ if (!class_exists('\WPFront\URE\Taxonomies\WPFront_User_Role_Editor_Taxonomies')
             $entity_all = $this->get_all_entities();
             foreach ($entity_all as $taxonomy => $entity) {
                 $post_types = $entity->post_types;
-                if(in_array($post_type, $post_types)) {
+                if (in_array($post_type, $post_types)) {
                     register_taxonomy_for_object_type($taxonomy, $post_type);
                 }
             }
@@ -176,8 +176,14 @@ if (!class_exists('\WPFront\URE\Taxonomies\WPFront_User_Role_Editor_Taxonomies')
          * @return type
          */
         public function registered_taxonomy($taxonomy, $object_type, $args) {
-            if (empty($this->taxonomy_args[$taxonomy])) {
+            if (!isset($this->taxonomy_args[$taxonomy])) {
                 return;
+            }
+            
+            if(isset($this->taxonomy_args[$taxonomy]['labels'])) {
+                $this->taxonomy_args[$taxonomy]['labels'] = (array) $this->taxonomy_args[$taxonomy]['labels']; //fix if the param supplied is not array
+            } else {
+                $this->taxonomy_args[$taxonomy]['labels'] = array();
             }
 
             if (!empty($this->taxonomy_args[$taxonomy]['labels']['singular_name'])) {
@@ -677,7 +683,7 @@ if (!class_exists('\WPFront\URE\Taxonomies\WPFront_User_Role_Editor_Taxonomies')
         public function apply_active_list_filter() {
             $taxonomies = $this->get_all_taxonomies_data();
             $taxonomies = $this->sort_taxonomies_data($taxonomies);
-            
+
             switch ($this->get_active_list_filter()) {
                 case 'all':
                     break;
@@ -759,10 +765,10 @@ if (!class_exists('\WPFront\URE\Taxonomies\WPFront_User_Role_Editor_Taxonomies')
             $this->entities = $entity->get_all();
 
             $this->entities = $this->sanitize_pro_fields($this->entities);
-            
+
             return $this->entities;
         }
-        
+
         protected function sanitize_pro_fields($entities) {
             foreach ($entities as $post_type => $entity) {
                 $entity->capability_type = null;
@@ -793,7 +799,7 @@ if (!class_exists('\WPFront\URE\Taxonomies\WPFront_User_Role_Editor_Taxonomies')
 
             return $taxonomies;
         }
-        
+
         protected function sort_taxonomies_data($taxonomies) {
             $built_in_taxonomies = array();
             $other_taxonomies = array();
@@ -913,7 +919,12 @@ if (!class_exists('\WPFront\URE\Taxonomies\WPFront_User_Role_Editor_Taxonomies')
                 $data->status = self::STATUS_ACTIVE;
                 $data->source_type = $taxonomy_obj->_builtin ? self::SOURCE_TYPE_BUILTIN : self::SOURCE_TYPE_OTHER;
                 $data->post_types = is_array($taxonomy_obj->object_type) ? $taxonomy_obj->object_type : [];
-                $data->taxonomy_arg = $this->taxonomy_args[$name];
+
+                if (isset($this->taxonomy_args[$name])) {
+                    $data->taxonomy_arg = $this->taxonomy_args[$name];
+                } else {
+                    $data->taxonomy_arg = array();
+                }
 
                 if ($taxonomy_obj->_builtin) {
                     $data->capability_type = null;
@@ -950,9 +961,9 @@ if (!class_exists('\WPFront\URE\Taxonomies\WPFront_User_Role_Editor_Taxonomies')
                 $data->post_types = $entity->post_types;
                 $data->capability_type = $entity->capability_type;
                 $data->entity = $entity;
-                
+
                 $data->taxonomy_arg = (empty($entity->taxonomy_arg) && isset($exiting[$name]->taxonomy_arg)) ? $exiting[$name]->taxonomy_arg : $entity->taxonomy_arg;
-                if(empty($data->taxonomy_arg)) {
+                if (empty($data->taxonomy_arg)) {
                     $data->taxonomy_arg = array();
                 }
 
@@ -962,11 +973,11 @@ if (!class_exists('\WPFront\URE\Taxonomies\WPFront_User_Role_Editor_Taxonomies')
             //reset source types to intial state to take care of registration changing source type.
             $taxes = array_merge($exiting, $user_edited);
             foreach ($taxes as $name => $data) {
-                if(isset($this->taxonomies_cache[$name])) {
+                if (isset($this->taxonomies_cache[$name])) {
                     $data->source_type = $this->taxonomies_cache[$name]->source_type;
                 }
             }
-            
+
             $this->taxonomies_cache = $taxes;
 
             foreach ($this->taxonomies_cache as $name => $data) {
@@ -1137,10 +1148,10 @@ if (!class_exists('\WPFront\URE\Taxonomies\WPFront_User_Role_Editor_Taxonomies')
         }
 
         protected function is_valid_slug($slug) {
-            if(empty($slug)) {
+            if (empty($slug)) {
                 return false;
             }
-            
+
             return sanitize_key($slug) === $slug;
         }
 
@@ -1202,6 +1213,10 @@ if (!class_exists('\WPFront\URE\Taxonomies\WPFront_User_Role_Editor_Taxonomies')
                     $this->clear_cache();
                 }
             }
+        }
+
+        public static function get_debug_setting() {
+            return array('key' => 'taxonomies', 'label' => __('Taxonomies', 'wpfront-user-role-editor'), 'position' => 100, 'description' => __('Disables all taxonomy functionalities.', 'wpfront-user-role-editor'));
         }
 
     }

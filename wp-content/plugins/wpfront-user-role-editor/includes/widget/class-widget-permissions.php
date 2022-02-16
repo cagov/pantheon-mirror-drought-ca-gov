@@ -147,15 +147,15 @@ if (!class_exists('\WPFront\URE\Widget\WPFront_User_Role_Editor_Widget_Permissio
             <p>
                 <label><?php echo __('User Restrictions', 'wpfront-user-role-editor'); ?></label>
                 <span class="user-restriction-container">
-                    <label><input class="user-restriction-type" type="radio" name="<?php echo $widget->get_field_name('user-restriction-type'); ?>" value="<?php echo self::$ALL_USERS; ?>" <?php echo $data->type === self::$ALL_USERS ? 'checked' : ''; ?> /><?php echo __('All Users', 'wpfront-user-role-editor'); ?></label>
-                    <label><input class="user-restriction-type" type="radio" name="<?php echo $widget->get_field_name('user-restriction-type'); ?>" value="<?php echo self::$LOGGEDIN_USERS; ?>" <?php echo $data->type === self::$LOGGEDIN_USERS ? 'checked' : ''; ?> /><?php echo __('Logged in Users', 'wpfront-user-role-editor'); ?></label>
-                    <label><input class="user-restriction-type" type="radio" name="<?php echo $widget->get_field_name('user-restriction-type'); ?>" value="<?php echo self::$GUEST_USERS; ?>" <?php echo $data->type === self::$GUEST_USERS ? 'checked' : ''; ?> /><?php echo __('Guest Users', 'wpfront-user-role-editor'); ?></label>
-                    <label><input class="user-restriction-type" type="radio" name="<?php echo $widget->get_field_name('user-restriction-type'); ?>" value="<?php echo self::$ROLE_USERS; ?>" <?php echo $data->type === self::$ROLE_USERS ? 'checked' : ''; ?> /><?php echo __('Users by Role', 'wpfront-user-role-editor'); ?></label>
+                    <label><input class="user-restriction-type" type="radio" name="<?php echo esc_attr($widget->get_field_name('user-restriction-type')); ?>" value="<?php echo self::$ALL_USERS; ?>" <?php echo $data->type === self::$ALL_USERS ? 'checked' : ''; ?> /><?php echo __('All Users', 'wpfront-user-role-editor'); ?></label>
+                    <label><input class="user-restriction-type" type="radio" name="<?php echo esc_attr($widget->get_field_name('user-restriction-type')); ?>" value="<?php echo self::$LOGGEDIN_USERS; ?>" <?php echo $data->type === self::$LOGGEDIN_USERS ? 'checked' : ''; ?> /><?php echo __('Logged in Users', 'wpfront-user-role-editor'); ?></label>
+                    <label><input class="user-restriction-type" type="radio" name="<?php echo esc_attr($widget->get_field_name('user-restriction-type')); ?>" value="<?php echo self::$GUEST_USERS; ?>" <?php echo $data->type === self::$GUEST_USERS ? 'checked' : ''; ?> /><?php echo __('Guest Users', 'wpfront-user-role-editor'); ?></label>
+                    <label><input class="user-restriction-type" type="radio" name="<?php echo esc_attr($widget->get_field_name('user-restriction-type')); ?>" value="<?php echo self::$ROLE_USERS; ?>" <?php echo $data->type === self::$ROLE_USERS ? 'checked' : ''; ?> /><?php echo __('Users by Role', 'wpfront-user-role-editor'); ?></label>
                     <span class="roles-container <?php echo $data->type === self::$ROLE_USERS ? '' : 'hidden'; ?>">
                         <?php do_action('wp_widget_permissions_custom_fields_roles_list', $widget, $return, $instance); ?>
                     </span>
                     <?php if ($widget->number !== '__i__') { ?>
-                        <span id="<?php echo $widget->get_field_id('in-title-access-type'); ?>" class="in-title-access-type hidden">&nbsp;(<?php echo $this->get_title_text($data); ?>)</span>
+                        <span id="<?php echo esc_attr($widget->get_field_id('in-title-access-type')); ?>" class="in-title-access-type hidden">&nbsp;(<?php echo esc_html($this->get_title_text($data)); ?>)</span>
                     <?php } ?>
                 </span>
             </p>
@@ -366,6 +366,10 @@ if (!class_exists('\WPFront\URE\Widget\WPFront_User_Role_Editor_Widget_Permissio
             }
         }
 
+        public static function get_debug_setting() {
+            return array('key' => 'widget-permissions', 'label' => __('Widget Permissions', 'wpfront-user-role-editor'), 'position' => 170, 'description' => __('Disables widget permissions functionality.', 'wpfront-user-role-editor'));
+        }
+        
     }
 
     \WPFront\URE\WPFront_User_Role_Editor_Uninstall::register_callback('\WPFront\URE\Widget\WPFront_User_Role_Editor_Widget_Permissions::uninstall');

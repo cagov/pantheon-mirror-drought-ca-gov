@@ -447,6 +447,9 @@ if (!class_exists('\WPFront\URE\Assign_Migrate\WPFront_User_Role_Editor_User_Pro
             return $sec_roles;
         }
         
+        public static function get_debug_setting() {
+            return array('key' => 'user-profile', 'label' => __('User Profile Functions', 'wpfront-user-role-editor'), 'position' => 200, 'description' => __('Disables all user profile functionalities.', 'wpfront-user-role-editor'));
+        }
     }
     
     WPFront_User_Role_Editor_User_Profile::load();

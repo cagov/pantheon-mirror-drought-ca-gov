@@ -10,7 +10,7 @@ namespace The_SEO_Framework;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2015 - 2021 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2015 - 2022 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -31,6 +31,7 @@ namespace The_SEO_Framework;
  * Initializes the plugin & Holds plugin core functions.
  *
  * @since 2.8.0
+ * @since 4.2.0 Deprecated $load_options
  */
 class Core {
 
@@ -66,7 +67,7 @@ class Core {
 	final public function __set( $name, $value ) {
 
 		if ( 'load_options' === $name ) {
-			// $this->_inaccessible_p_or_m( 'the_seo_framework()->load_options', 'since 4.2.0; use constant THE_SEO_FRAMEWORK_HEADLESS' );
+			$this->_inaccessible_p_or_m( 'tsf()->load_options', 'since 4.2.0; use constant THE_SEO_FRAMEWORK_HEADLESS' );
 			$this->is_headless['settings'] = $value;
 			return;
 		}
@@ -74,7 +75,7 @@ class Core {
 		/**
 		 * For now, no deprecation is being handled; as no properties have been deprecated. Just removed.
 		 */
-		$this->_inaccessible_p_or_m( 'the_seo_framework()->' . $name, 'unknown' );
+		$this->_inaccessible_p_or_m( "tsf()->$name", 'unknown' );
 
 		// Invoke default behavior: Write variable if it's not protected.
 		if ( ! isset( $this->$name ) )
@@ -96,11 +97,11 @@ class Core {
 	final public function __get( $name ) {
 
 		if ( 'load_options' === $name ) {
-			// $this->_inaccessible_p_or_m( 'the_seo_framework()->load_options', 'since 4.2.0; use constant THE_SEO_FRAMEWORK_HEADLESS' );
+			$this->_inaccessible_p_or_m( 'tsf()->load_options', 'since 4.2.0; use constant THE_SEO_FRAMEWORK_HEADLESS' );
 			return ! $this->is_headless['settings'];
 		}
 
-		$this->_inaccessible_p_or_m( 'the_seo_framework()->' . $name, 'unknown' );
+		$this->_inaccessible_p_or_m( "tsf()->$name", 'unknown' );
 	}
 
 	/**
@@ -117,12 +118,12 @@ class Core {
 		static $depr_class = null;
 
 		if ( \is_null( $depr_class ) )
-			$depr_class = new Deprecated;
+			$depr_class = new Internal\Deprecated;
 
 		if ( \is_callable( [ $depr_class, $name ] ) )
 			return \call_user_func_array( [ $depr_class, $name ], $arguments );
 
-		$this->_inaccessible_p_or_m( 'the_seo_framework()->' . $name . '()' );
+		$this->_inaccessible_p_or_m( "tsf()->$name()" );
 	}
 
 	/**
@@ -158,16 +159,18 @@ class Core {
 	 */
 	public function _include_compat( $what, $type = 'plugin' ) {
 
-		static $included = [];
+		// phpcs:ignore, WordPress.CodeAnalysis.AssignmentInCondition -- I know.
+		if ( null !== $memo = memo( null, $what, $type ) ) return $memo;
+		unset( $memo );
 
-		if ( ! isset( $included[ $what ][ $type ] ) ) {
-			// phpcs:ignore, VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- forwarded to include...
-			$_secret = $this->create_view_secret( uniqid( '', true ) );
+		// phpcs:ignore, VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- forwarded to include...
+		$_secret = $this->create_view_secret( uniqid( '', true ) );
 
-			$included[ $what ][ $type ] = (bool) require THE_SEO_FRAMEWORK_DIR_PATH_COMPAT . $type . '-' . $what . '.php';
-		}
-
-		return $included[ $what ][ $type ];
+		return memo(
+			(bool) require THE_SEO_FRAMEWORK_DIR_PATH_COMPAT . "$type-$what.php",
+			$what,
+			$type
+		);
 	}
 
 	/**
@@ -178,12 +181,12 @@ class Core {
 	 * @access private
 	 * @credits Akismet For some code.
 	 *
-	 * @param string $view     The file name.
-	 * @param array  $__args   The arguments to be supplied within the file name.
-	 *                         Each array key is converted to a variable with its value attached.
-	 * @param string $instance The instance suffix to call back upon.
+	 * @param string   $view     The file name.
+	 * @param iterable $__args   The arguments to be supplied within the file name.
+	 *                           Each array key is converted to a variable with its value attached.
+	 * @param string   $instance The instance suffix to call back upon.
 	 */
-	public function get_view( $view, array $__args = [], $instance = 'main' ) {
+	public function get_view( $view, $__args = [], $instance = 'main' ) {
 
 		//? A faster extract().
 		foreach ( $__args as $__k => $__v ) $$__k = $__v;
@@ -208,8 +211,7 @@ class Core {
 	 * @return string|null The stored secret.
 	 */
 	protected function create_view_secret( $value = null ) {
-		static $secret;
-		return $secret = isset( $value ) ? $value : $secret;
+		return memo( $value );
 	}
 
 	/**
@@ -250,7 +252,10 @@ class Core {
 	 * @return string The file instance case.
 	 */
 	protected function get_view_instance( $base, $instance = 'main' ) {
-		return $base . '_' . str_replace( '-', '_', $instance );
+
+		$instance = str_replace( '-', '_', $instance );
+
+		return "{$base}_{$instance}";
 	}
 
 	/**
@@ -262,13 +267,14 @@ class Core {
 	 * @return array The public hierarchical post types.
 	 */
 	public function get_hierarchical_post_types() {
-		static $types;
-		return $types ?: $types = \get_post_types(
-			[
-				'hierarchical' => true,
-				'public'       => true,
-			],
-			'names'
+		return memo() ?: memo(
+			\get_post_types(
+				[
+					'hierarchical' => true,
+					'public'       => true,
+				],
+				'names'
+			)
 		);
 	}
 
@@ -281,13 +287,14 @@ class Core {
 	 * @return array The public nonhierarchical post types.
 	 */
 	public function get_nonhierarchical_post_types() {
-		static $types;
-		return $types ?: $types = \get_post_types(
-			[
-				'hierarchical' => false,
-				'public'       => true,
-			],
-			'names'
+		return memo() ?: memo(
+			\get_post_types(
+				[
+					'hierarchical' => false,
+					'public'       => true,
+				],
+				'names'
+			)
 		);
 	}
 
@@ -300,12 +307,11 @@ class Core {
 	 * @return bool Whether external redirect is allowed.
 	 */
 	public function allow_external_redirect() {
-		static $cache = null;
 		/**
 		 * @since 2.1.0
 		 * @param bool $allowed Whether external redirect is allowed.
 		 */
-		return isset( $cache ) ? $cache : $cache = (bool) \apply_filters( 'the_seo_framework_allow_external_redirect', true );
+		return memo() ?? memo( (bool) \apply_filters( 'the_seo_framework_allow_external_redirect', true ) );
 	}
 
 	/**
@@ -318,10 +324,7 @@ class Core {
 	 * @return bool True is blog is public.
 	 */
 	public function is_blog_public() {
-
-		static $cache = null;
-
-		return isset( $cache ) ? $cache : $cache = (bool) \get_option( 'blog_public' );
+		return memo() ?? memo( (bool) \get_option( 'blog_public' ) );
 	}
 
 	/**
@@ -359,10 +362,16 @@ class Core {
 	public function get_settings_capability() {
 		/**
 		 * @since 2.6.0
-		 * @todo deprecate 4.2.0, use constant instead.
+		 * @since 4.2.0 Deprecated. Define constant THE_SEO_FRAMEWORK_SETTINGS_CAP instead.
+		 * @deprecated
 		 * @param string $capability The user capability required to adjust settings.
 		 */
-		return (string) \apply_filters( 'the_seo_framework_settings_capability', THE_SEO_FRAMEWORK_SETTINGS_CAP );
+		return (string) \apply_filters_deprecated(
+			'the_seo_framework_settings_capability',
+			[ THE_SEO_FRAMEWORK_SETTINGS_CAP ],
+			'4.2.0 of The SEO Framework',
+			'constant THE_SEO_FRAMEWORK_SETTINGS_CAP'
+		);
 	}
 
 	/**
@@ -385,102 +394,14 @@ class Core {
 	 * @return string The escaped SEO Settings page URL.
 	 */
 	public function get_seo_settings_page_url() {
-
-		if ( ! $this->is_headless['settings'] ) {
-			$url = html_entity_decode( \menu_page_url( $this->seo_settings_page_slug, false ) );
-			return \esc_url( $url, [ 'https', 'http' ] );
-		}
-
-		return '';
-	}
-
-	/**
-	 * Returns the PHP timezone compatible string.
-	 * UTC offsets are unreliable.
-	 *
-	 * @since 2.6.0
-	 *
-	 * @param bool $guess If true, the timezone will be guessed from the
-	 *                    WordPress core gmt_offset option.
-	 * @return string PHP Timezone String. May be empty (thus invalid).
-	 */
-	public function get_timezone_string( $guess = false ) {
-
-		$tzstring = \get_option( 'timezone_string' );
-
-		if ( false !== strpos( $tzstring, 'Etc/GMT' ) )
-			$tzstring = '';
-
-		if ( $guess && empty( $tzstring ) ) {
-			$tzstring = $this->get_tzstring_from_offset( \get_option( 'gmt_offset' ) );
-		}
-
-		return $tzstring;
-	}
-
-	/**
-	 * Fetches the Timezone String from given offset.
-	 *
-	 * @since 2.6.0
-	 * @since 4.0.0 Removed PHP <5.6 support.
-	 *
-	 * @param int $offset The GMT offzet.
-	 * @return string PHP Timezone String.
-	 */
-	protected function get_tzstring_from_offset( $offset = 0 ) {
-		$seconds = round( $offset * HOUR_IN_SECONDS );
-		return timezone_name_from_abbr( '', $seconds, 1 );
-	}
-
-	/**
-	 * Sets and resets the timezone.
-	 *
-	 * NOTE: Always call reset_timezone() ASAP. Don't let changes linger, as they can be destructive.
-	 *
-	 * This exists because WordPress's current_time() adds discrepancies between UTC and GMT.
-	 * This is also far more accurate than WordPress's tiny time table.
-	 *
-	 * @TODO Note that WordPress 5.3 no longer requires this, and that we should rely on wp_date() instead.
-	 *       So, we should remove this dependency ASAP.
-	 *
-	 * @since 2.6.0
-	 * @since 3.0.6 Now uses the old timezone string when a new one can't be generated.
-	 * @since 4.0.4 Now also unsets the stored timezone string on reset.
-	 * @link http://php.net/manual/en/timezones.php
-	 *
-	 * @param string $tzstring Optional. The PHP Timezone string. Best to leave empty to always get a correct one.
-	 * @param bool   $reset Whether to reset to default. Ignoring first parameter.
-	 * @return bool True on success. False on failure.
-	 */
-	public function set_timezone( $tzstring = '', $reset = false ) {
-
-		static $old_tz = null;
-
-		$old_tz = $old_tz ?: date_default_timezone_get() ?: 'UTC';
-
-		if ( $reset ) {
-			$_revert_tz = $old_tz;
-			$old_tz     = null;
-			// phpcs:ignore, WordPress.DateTime.RestrictedFunctions.timezone_change_date_default_timezone_set
-			return date_default_timezone_set( $_revert_tz );
-		}
-
-		if ( empty( $tzstring ) )
-			$tzstring = $this->get_timezone_string( true ) ?: $old_tz;
-
-		// phpcs:ignore, WordPress.DateTime.RestrictedFunctions.timezone_change_date_default_timezone_set
-		return date_default_timezone_set( $tzstring );
-	}
-
-	/**
-	 * Resets the timezone to default or UTC.
-	 *
-	 * @since 2.6.0
-	 *
-	 * @return bool True on success. False on failure.
-	 */
-	public function reset_timezone() {
-		return $this->set_timezone( '', true );
+		return $this->is_headless['settings']
+			? ''
+			: \esc_url(
+				html_entity_decode(
+					\menu_page_url( $this->seo_settings_page_slug, false )
+				),
+				[ 'https', 'http' ]
+			);
 	}
 
 	/**
@@ -488,27 +409,21 @@ class Core {
 	 *
 	 * @since 2.7.0
 	 * @since 4.0.4 Now uses `gmdate()` instead of `date()`.
-	 * @see `$this->set_timezone()`
-	 * @see `$this->reset_timezone()`
 	 *
 	 * @param string $format The datetime format.
 	 * @param string $time The GMT time. Expects timezone to be omitted.
 	 * @return string The converted time. Empty string if no $time is given.
 	 */
 	public function gmt2date( $format = 'Y-m-d', $time = '' ) {
-
-		if ( $time )
-			return gmdate( $format, strtotime( $time . ' GMT' ) );
-
-		return '';
+		return $time ? gmdate( $format, strtotime( $time . ' GMT' ) ) : '';
 	}
 
 	/**
 	 * Returns timestamp format based on timestamp settings.
 	 *
 	 * @since 3.0.0
-	 * @since 4.1.4: 1. Added options-override parameter.
-	 *               1. Added return value filter.
+	 * @since 4.1.4 1. Added options-override parameter.
+	 *              2. Added return value filter.
 	 * @link https://www.w3.org/TR/NOTE-datetime
 	 *
 	 * @param null|bool $override_get_time Whether to override the $get_time from option value.
@@ -516,9 +431,7 @@ class Core {
 	 */
 	public function get_timestamp_format( $override_get_time = null ) {
 
-		$get_time = isset( $override_get_time )
-			? $override_get_time
-			: $this->uses_time_in_timestamp_format();
+		$get_time = $override_get_time ?? $this->uses_time_in_timestamp_format();
 
 		return \apply_filters_ref_array(
 			'the_seo_framework_timestamp_format',
@@ -545,6 +458,7 @@ class Core {
 	 * Unlike PHP's `array_merge_recursive()`, this method doesn't convert non-unique keys as sequential.
 	 *
 	 * A do-while is faster than while. Sorry for the legibility.
+	 * TODO instead of calling thyself, would a goto not be better?
 	 *
 	 * @since 4.1.4
 	 *
@@ -556,8 +470,7 @@ class Core {
 		$i = \count( $arrays );
 
 		if ( 2 === $i ) foreach ( $arrays[1] as $key => $value ) {
-			$arrays[0][ $key ] =
-				isset( $arrays[0][ $key ] ) && \is_array( $arrays[0][ $key ] )
+			$arrays[0][ $key ] = \is_array( $arrays[0][ $key ] ?? null )
 				? $this->array_merge_recursive_distinct( $arrays[0][ $key ], $value )
 				: $value;
 		} else do {
@@ -572,6 +485,7 @@ class Core {
 	 * Shortens string and adds ellipses when over a threshold in length.
 	 *
 	 * @since 3.1.0
+	 * @since 4.2.0 No longer prepends a space before the hellip.
 	 *
 	 * @param string $string The string to test and maybe trim
 	 * @param int    $over   The character limit. Must be over 0 to have effect.
@@ -581,9 +495,8 @@ class Core {
 	 */
 	public function hellip_if_over( $string, $over = 0 ) {
 
-		if ( $over > 0 && \strlen( $string ) > $over ) {
-			$string = substr( $string, 0, abs( $over - 2 ) ) . ' &hellip;';
-		}
+		if ( $over > 0 && \strlen( $string ) > $over )
+			$string = substr( $string, 0, abs( $over - 2 ) ) . '&hellip;';
 
 		return $string;
 	}
@@ -602,72 +515,67 @@ class Core {
 	 * @since 4.0.0 1. Now expects PCRE UTF-8 encoding support.
 	 *              2. Moved input-parameter alterting filters outside of this function.
 	 *              3. Short length now works as intended, instead of comparing as less, it compares as less or equal to.
+	 * @since 4.2.0 Now supports detection of connector-dashes, connector-punctuation, and closing quotes,
+	 *              and recognizes those as whole words.
 	 *
 	 * @param string $string Required. The string to count words in.
-	 * @param int    $dupe_count Minimum amount of words to encounter in the string.
-	 *                      Set to 0 to count all words longer than $short_length.
-	 * @param int    $dupe_short Minimum amount of words to encounter in the string that fall under the
-	 *                           $short_length. Set to 0 to consider all words with $amount.
-	 * @param int    $short_length The maximum string length of a word to pass for $dupe_short
-	 *                             instead of $count. Set to 0 to ignore $count, and use $dupe_short only.
+	 * @param int    $dupe_count       Minimum amount of words to encounter in the string.
+	 *                                 Set to 0 to count all words longer than $short_length.
+	 * @param int    $dupe_short       Minimum amount of words to encounter in the string that fall under the
+	 *                                 $short_length. Set to 0 to consider all words with $amount.
+	 * @param int    $short_length     The maximum string length of a word to pass for $dupe_short
+	 *                                 instead of $count. Set to 0 to ignore $count, and use $dupe_short only.
 	 * @return array Containing arrays of words with their count.
 	 */
 	public function get_word_count( $string, $dupe_count = 3, $dupe_short = 5, $short_length = 3 ) {
 
-		$string = html_entity_decode( $string );
-		$string = \wp_check_invalid_utf8( $string );
+		$string = \wp_check_invalid_utf8( html_entity_decode( $string ) );
 
 		if ( ! $string ) return [];
 
-		static $use_mb;
+		$use_mb = memo( null, 'use_mb' ) ?? memo( \extension_loaded( 'mbstring' ), 'use_mb' );
 
-		isset( $use_mb ) or ( $use_mb = \extension_loaded( 'mbstring' ) );
-
-		// TODO does this test well for "we're"? We haven't had any reports, though.
 		$word_list = preg_split(
-			'/[^\p{L}\p{M}\p{N}\p{Pc}\p{Cc}]+/mu',
+			'/[^\p{Cc}\p{L}\p{N}\p{Pc}\p{Pd}\p{Pf}\'"]+/mu',
 			$use_mb ? mb_strtolower( $string ) : strtolower( $string ),
 			-1,
 			PREG_SPLIT_OFFSET_CAPTURE | PREG_SPLIT_NO_EMPTY
 		);
 
-		$words_too_many = [];
+		if ( ! \count( $word_list ) ) goto end;
 
-		if ( \count( $word_list ) ) :
-			$words = [];
-			foreach ( $word_list as $wli ) {
-				//= { $words[ int Offset ] => string Word }
-				$words[ $wli[1] ] = $wli[0];
+		$words = [];
+
+		foreach ( $word_list as [ $_word, $_position ] )
+			$words[ $_position ] = $_word;
+
+		// We're going to fetch words based on position, and then flip it to become the key.
+		$word_keys = array_flip( array_reverse( $words, true ) );
+
+		foreach ( array_count_values( $words ) as $word => $count ) {
+			if ( ( $use_mb ? mb_strlen( $word ) : \strlen( $word ) ) <= $short_length ) {
+				$assert = $count >= $dupe_short;
+			} else {
+				$assert = $count >= $dupe_count;
 			}
 
-			$word_count = array_count_values( $words );
+			if ( $assert ) {
+				//! Don't use mb_* here. preg_split's offset is in bytes, NOT multibytes.
+				$args = [
+					'pos' => $word_keys[ $word ],
+					'len' => \strlen( $word ),
+				];
 
-			// We're going to fetch words based on position, and then flip it to become the key.
-			$word_keys = array_flip( array_reverse( $words, true ) );
+				$first_encountered_word = substr( $string, $args['pos'], $args['len'] );
 
-			foreach ( $word_count as $word => $count ) {
-				if ( ( $use_mb ? mb_strlen( $word ) : \strlen( $word ) ) <= $short_length ) {
-					$run = $count >= $dupe_short;
-				} else {
-					$run = $count >= $dupe_count;
-				}
-
-				if ( $run ) {
-					//! Don't use mb_* here. preg_split's offset is in bytes, NOT multibytes.
-					$args = [
-						'pos' => $word_keys[ $word ],
-						'len' => \strlen( $word ),
-					];
-
-					$first_encountered_word = substr( $string, $args['pos'], $args['len'] );
-
-					// Found words that are used too frequently.
-					$words_too_many[] = [ $first_encountered_word => $count ];
-				}
+				// phpcs:ignore, VariableAnalysis.CodeAnalysis.VariableAnalysis.UndefinedVariable -- You need more PHP7.
+				$words_too_many[] = [ $first_encountered_word => $count ];
 			}
-		endif;
+		}
 
-		return $words_too_many;
+		end:;
+		// phpcs:ignore, VariableAnalysis.CodeAnalysis.VariableAnalysis.UndefinedVariable -- You don't love PHP7.
+		return $words_too_many ?? [];
 	}
 
 	/**
@@ -676,31 +584,33 @@ class Core {
 	 * @since 2.8.0
 	 * @since 2.9.0 Now adds a little more relative softness based on rel_lum.
 	 * @since 2.9.2 (Typo): Renamed from 'get_relatitve_fontcolor' to 'get_relative_fontcolor'.
-	 * @since 3.0.4 Now uses WCAG's relative luminance formula
+	 * @since 3.0.4 Now uses WCAG's relative luminance formula.
+	 * @since 4.2.0 Optimized code, but it now has some rounding changes at the end. This could
+	 *              offset the returned values by 1/255th.
 	 * @link https://www.w3.org/TR/2008/REC-WCAG20-20081211/#visual-audio-contrast-contrast
 	 * @link https://www.w3.org/WAI/GL/wiki/Relative_luminance
 	 *
 	 * @param string $hex The 3 to 6 character RGB hex. The '#' prefix may be added.
+	 *                    RRGGBBAA is supported, but the Alpha channels won't be returned.
 	 * @return string The hexadecimal RGB relative font color, without '#' prefix.
 	 */
 	public function get_relative_fontcolor( $hex = '' ) {
 
 		$hex = ltrim( $hex, '#' );
 
-		// #rgb = #rrggbb
-		if ( 3 === \strlen( $hex ) )
-			$hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
-
-		$hex = str_split( $hex, 2 );
-
-		// Convert to usable numerics.
-		$r = hexdec( $hex[0] );
-		$g = hexdec( $hex[1] );
-		$b = hexdec( $hex[2] );
+		// Convert hex to usable numerics.
+		[ $r, $g, $b ] = array_map(
+			'hexdec',
+			str_split(
+				// rgb == rrggbb.
+				\strlen( $hex ) >= 6 ? $hex : "$hex[0]$hex[0]$hex[1]$hex[1]$hex[2]$hex[2]",
+				2
+			)
+		);
 
 		$get_relative_luminance = static function( $v ) {
-			//= Convert to 0~1 value.
-			$v /= 255;
+			// Convert to 0~1 value.
+			$v /= 0xFF;
 
 			if ( $v > .03928 ) {
 				$lum = ( ( $v + .055 ) / 1.055 ) ** 2.4;
@@ -710,32 +620,25 @@ class Core {
 			return $lum;
 		};
 
-		// Use sRGB for relative luminance.
-		$sr = 0.2126 * $get_relative_luminance( $r );
-		$sg = 0.7152 * $get_relative_luminance( $g );
-		$sb = 0.0722 * $get_relative_luminance( $b );
+		// Create Relative Luminance via sRGB.
+		$rl = ( 0.2126 * $get_relative_luminance( $r ) )
+			+ ( 0.7152 * $get_relative_luminance( $g ) )
+			+ ( 0.0722 * $get_relative_luminance( $b ) );
 
-		$rel_lum = ( $sr + $sg + $sb );
+		// Build light greyscale. Rounding is required for bitwise operation (PHP8.1+).
+		$gr = round( ( $r * 0.2989 / 8 ) * $rl );
+		$gg = round( ( $g * 0.5870 / 8 ) * $rl );
+		$gb = round( ( $b * 0.1140 / 8 ) * $rl );
 
-		// Build light greyscale.
-		$gr = ( $r * 0.2989 / 8 ) * $rel_lum;
-		$gg = ( $g * 0.5870 / 8 ) * $rel_lum;
-		$gb = ( $b * 0.1140 / 8 ) * $rel_lum;
-
-		//= Invert colors if they hit luminance boundaries.
-		if ( $rel_lum < 0.5 ) {
-			// Build dark greyscale.
-			$gr = 255 - $gr;
-			$gg = 255 - $gg;
-			$gb = 255 - $gb;
+		// Invert colors if they hit this luminance boundary.
+		if ( $rl < 0.5 ) {
+			// Build dark greyscale. bitwise operators...
+			$gr ^= 0xFF;
+			$gg ^= 0xFF;
+			$gb ^= 0xFF;
 		}
 
-		// Build RGB hex.
-		$retr = str_pad( dechex( round( $gr ) ), 2, '0', STR_PAD_LEFT );
-		$retg = str_pad( dechex( round( $gg ) ), 2, '0', STR_PAD_LEFT );
-		$retb = str_pad( dechex( round( $gb ) ), 2, '0', STR_PAD_LEFT );
-
-		return $retr . $retg . $retb;
+		return vsprintf( '%02x%02x%02x', [ $gr, $gg, $gb ] );
 	}
 
 	/**
@@ -759,8 +662,8 @@ class Core {
 			$accent = $this->s_color_hex( $this->get_option( 'sitemap_color_accent' ) );
 
 			$options = [
-				'main'   => $main ? '#' . $main : '',
-				'accent' => $accent ? '#' . $accent : '',
+				'main'   => $main ? "#$main" : '',
+				'accent' => $accent ? "#$accent" : '',
 			];
 
 			$options = array_filter( $options );

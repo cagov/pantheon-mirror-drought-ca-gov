@@ -37,6 +37,7 @@ if (!defined('ABSPATH')) {
 use WPFront\URE\WPFront_User_Role_Editor as WPFURE;
 use WPFront\URE\WPFront_User_Role_Editor_Utils as Utils;
 use WPFront\URE\WPFront_User_Role_Editor_Roles_Helper as RolesHelper;
+use \WPFront\URE\WPFront_User_Role_Editor_Debug;
 
 require_once dirname(__FILE__) . '/template-bulk-edit.php';
 require_once dirname(__FILE__) . '/class-bulk-edit-utils.php';
@@ -71,6 +72,13 @@ if (!class_exists('\WPFront\URE\Bulk_Edit\WPFront_User_Role_Editor_Bulk_Edit')) 
         }
         
         protected function initialize() {
+            $debug = WPFront_User_Role_Editor_Debug::instance();
+            $debug->add_setting('bulk-edit', __('Bulk Edit', 'wpfront-user-role-editor'), 120, __('Disables bulk edit functionality.', 'wpfront-user-role-editor'));
+            
+            if($debug->is_disabled('bulk-edit')) {
+                return;
+            }
+            
             if(!is_admin()) {
                 return;
             }

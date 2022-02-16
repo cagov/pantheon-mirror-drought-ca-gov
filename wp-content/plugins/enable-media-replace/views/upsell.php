@@ -5,6 +5,11 @@ namespace EnableMediaReplace;
 use EnableMediaReplace\ShortPixelLogger\ShortPixelLogger as Log;
 use EnableMediaReplace\Notices\NoticeController as Notices;
 
+if (! apply_filters('emr/upsell', current_user_can('install_plugins')))
+{
+	 return;
+}
+
 	#wp_nonce_field('enable-media-replace');
   $plugins = get_plugins();
 
@@ -102,7 +107,7 @@ use EnableMediaReplace\Notices\NoticeController as Notices;
     </div>
 	<!--- // WPSO -->
 
-		<!--- ENVIRA -->
+		<!--- ENVIRA temprary deactivated
 		<?php if (! $envira_pro_active): ?>
   <div class='envira-shortpixel-install shortpixel-offer'>
 
@@ -149,4 +154,6 @@ use EnableMediaReplace\Notices\NoticeController as Notices;
 	}
     </style>
 	<?php endif; // envira ?>
+-->
+
 </section>

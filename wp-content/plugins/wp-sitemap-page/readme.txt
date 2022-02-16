@@ -1,10 +1,10 @@
 === WP Sitemap Page ===
 Contributors: funnycat
-Donate link: http://www.infowebmaster.fr/dons.php
+Donate link: https://www.infowebmaster.fr/dons.php
 Tags: sitemap, generator, page list, site map, html sitemap, sitemap generator, dynamic sitemap, seo
 Requires at least: 3.0
-Tested up to: 5.6.2
-Stable tag: 1.6.4
+Tested up to: 5.8.1
+Stable tag: 1.9.0
 License: GPLv2 or later
 
 
@@ -101,6 +101,20 @@ If you want to add another language, feel free to [contact me](http://en.tonyarc
 
 == Changelog ==
 
+= 1.9.1 =
+* fix PHP warning message
+= 1.9.0 =
+* security improvement
+= 1.8.0 =
+* security improvement (sanitize data before to save in database)
+= 1.7.0 =
+* fix vulnaribility issue (XSS) + rename the text domain to matche the plugin permalink
+= 1.6.6 =
+* fix vulnaribility issue (XSS) + sanitize data on input field
+= 1.6.6 =
+* fix vulnaribility issue (XSS) + sanitize data on input field
+= 1.6.5 =
+* fix vulnaribility issue (XSS)
 = 1.6.3 and 1.6.4 =
 * compatibility to PHP 8
 = 1.6.1 =

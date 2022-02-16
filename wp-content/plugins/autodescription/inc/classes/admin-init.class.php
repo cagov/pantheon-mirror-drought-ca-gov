@@ -10,7 +10,7 @@ namespace The_SEO_Framework;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2015 - 2021 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2015 - 2022 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -43,7 +43,7 @@ class Admin_Init extends Init {
 	 */
 	public function _init_seo_bar_tables() {
 		if ( $this->get_option( 'display_seo_bar_tables' ) )
-			new Bridges\SeoBar;
+			new Bridges\SEOBar;
 	}
 
 	/**
@@ -68,7 +68,7 @@ class Admin_Init extends Init {
 	 */
 	public function _add_post_state( $states = [], $post = null ) {
 
-		$post_id = isset( $post->ID ) ? $post->ID : false;
+		$post_id = $post->ID ?? false;
 
 		if ( $post_id ) {
 			$search_exclude  = $this->get_option( 'alter_search_query' ) && $this->get_post_meta_item( 'exclude_local_search', $post_id );
@@ -147,7 +147,7 @@ class Admin_Init extends Init {
 	 */
 	public function init_admin_scripts() {
 
-		if ( _has_run( __METHOD__ ) ) return;
+		if ( has_run( __METHOD__ ) ) return;
 
 		Bridges\Scripts::_init();
 	}
@@ -177,15 +177,13 @@ class Admin_Init extends Init {
 	 */
 	public function get_input_guidelines( $locale = null ) {
 
-		static $guidelines = [];
-
 		$locale = $locale ?: \get_locale();
 
 		// Strip the "_formal" and other suffixes. 5 length: xx_YY
 		$locale = substr( $locale, 0, 5 );
 
-		if ( isset( $guidelines[ $locale ] ) )
-			return $guidelines[ $locale ];
+		// phpcs:ignore, WordPress.CodeAnalysis.AssignmentInCondition -- I know.
+		if ( null !== $memo = memo( null, $locale ) ) return $memo;
 
 		// phpcs:disable, WordPress.WhiteSpace.OperatorSpacing.SpacingAfter
 		$character_adjustments = [
@@ -204,7 +202,7 @@ class Admin_Init extends Init {
 		];
 		// phpcs:enable, WordPress.WhiteSpace.OperatorSpacing.SpacingAfter
 
-		$c_adjust = isset( $character_adjustments[ $locale ] ) ? $character_adjustments[ $locale ] : 1;
+		$c_adjust = $character_adjustments[ $locale ] ?? 1;
 
 		$pixel_adjustments = [
 			'ar'    => 760 / 910, // Arabic (العربية)
@@ -215,7 +213,7 @@ class Admin_Init extends Init {
 			'ckb'   => 760 / 910, // Central Kurdish (كوردی)
 		];
 
-		$p_adjust = isset( $pixel_adjustments[ $locale ] ) ? $pixel_adjustments[ $locale ] : 1;
+		$p_adjust = $pixel_adjustments[ $locale ] ?? 1;
 
 		// phpcs:disable, WordPress.Arrays.MultipleStatementAlignment.DoubleArrowNotAligned
 		/**
@@ -223,78 +221,81 @@ class Admin_Init extends Init {
 		 * @param array $guidelines The title and description guidelines.
 		 *              Don't alter the format. Only change the numeric values.
 		 */
-		return $guidelines[ $locale ] = (array) \apply_filters(
-			'the_seo_framework_input_guidelines',
-			[
-				'title' => [
-					'search' => [
-						'chars'  => [
-							'lower'     => (int) ( 25 * $c_adjust ),
-							'goodLower' => (int) ( 35 * $c_adjust ),
-							'goodUpper' => (int) ( 65 * $c_adjust ),
-							'upper'     => (int) ( 75 * $c_adjust ),
+		return memo(
+			(array) \apply_filters(
+				'the_seo_framework_input_guidelines',
+				[
+					'title' => [
+						'search' => [
+							'chars'  => [
+								'lower'     => (int) ( 25 * $c_adjust ),
+								'goodLower' => (int) ( 35 * $c_adjust ),
+								'goodUpper' => (int) ( 65 * $c_adjust ),
+								'upper'     => (int) ( 75 * $c_adjust ),
+							],
+							'pixels' => [
+								'lower'     => (int) ( 200 * $p_adjust ),
+								'goodLower' => (int) ( 280 * $p_adjust ),
+								'goodUpper' => (int) ( 520 * $p_adjust ),
+								'upper'     => (int) ( 600 * $p_adjust ),
+							],
 						],
-						'pixels' => [
-							'lower'     => (int) ( 200 * $p_adjust ),
-							'goodLower' => (int) ( 280 * $p_adjust ),
-							'goodUpper' => (int) ( 520 * $p_adjust ),
-							'upper'     => (int) ( 600 * $p_adjust ),
+						'opengraph' => [
+							'chars'  => [
+								'lower'     => 15,
+								'goodLower' => 25,
+								'goodUpper' => 88,
+								'upper'     => 100,
+							],
+							'pixels' => [],
 						],
-					],
-					'opengraph' => [
-						'chars'  => [
-							'lower'     => 15,
-							'goodLower' => 25,
-							'goodUpper' => 88,
-							'upper'     => 100,
-						],
-						'pixels' => [],
-					],
-					'twitter' => [
-						'chars'  => [
-							'lower'     => 15,
-							'goodLower' => 25,
-							'goodUpper' => 69,
-							'upper'     => 70,
-						],
-						'pixels' => [],
-					],
-				],
-				'description' => [
-					'search' => [
-						'chars'  => [
-							'lower'     => (int) ( 45 * $c_adjust ),
-							'goodLower' => (int) ( 80 * $c_adjust ),
-							'goodUpper' => (int) ( 160 * $c_adjust ),
-							'upper'     => (int) ( 320 * $c_adjust ),
-						],
-						'pixels' => [
-							'lower'     => (int) ( 256 * $p_adjust ),
-							'goodLower' => (int) ( 455 * $p_adjust ),
-							'goodUpper' => (int) ( 910 * $p_adjust ),
-							'upper'     => (int) ( 1820 * $p_adjust ),
+						'twitter' => [
+							'chars'  => [
+								'lower'     => 15,
+								'goodLower' => 25,
+								'goodUpper' => 69,
+								'upper'     => 70,
+							],
+							'pixels' => [],
 						],
 					],
-					'opengraph' => [
-						'chars'  => [
-							'lower'     => 45,
-							'goodLower' => 80,
-							'goodUpper' => 200,
-							'upper'     => 300,
+					'description' => [
+						'search' => [
+							'chars'  => [
+								'lower'     => (int) ( 45 * $c_adjust ),
+								'goodLower' => (int) ( 80 * $c_adjust ),
+								'goodUpper' => (int) ( 160 * $c_adjust ),
+								'upper'     => (int) ( 320 * $c_adjust ),
+							],
+							'pixels' => [
+								'lower'     => (int) ( 256 * $p_adjust ),
+								'goodLower' => (int) ( 455 * $p_adjust ),
+								'goodUpper' => (int) ( 910 * $p_adjust ),
+								'upper'     => (int) ( 1820 * $p_adjust ),
+							],
 						],
-						'pixels' => [],
-					],
-					'twitter' => [
-						'chars'  => [
-							'lower'     => 45,
-							'goodLower' => 80,
-							'goodUpper' => 200,
-							'upper'     => 200,
+						'opengraph' => [
+							'chars'  => [
+								'lower'     => 45,
+								'goodLower' => 80,
+								'goodUpper' => 200,
+								'upper'     => 300,
+							],
+							'pixels' => [],
 						],
-						'pixels' => [],
+						'twitter' => [
+							'chars'  => [
+								'lower'     => 45,
+								'goodLower' => 80,
+								'goodUpper' => 200,
+								'upper'     => 200,
+							],
+							'pixels' => [],
+						],
 					],
-				],
-			]
+				]
+			),
+			$locale
 		);
 		// phpcs:enable, WordPress.Arrays.MultipleStatementAlignment.DoubleArrowNotAligned
 	}
@@ -306,6 +307,7 @@ class Admin_Init extends Init {
 	 *
 	 * @since 3.1.0
 	 * @since 4.0.0 Now added a short leading-dot version for ARIA labels.
+	 * @TODO move this to another object? -> i18n/guidelines
 	 *
 	 * @return array
 	 */
@@ -355,7 +357,7 @@ class Admin_Init extends Init {
 	 *                   valid and generated between 12-24 hours ago.
 	 */
 	public function _check_tsf_ajax_referer( $capability ) {
-		return \check_ajax_referer( 'tsf-ajax-' . $capability, 'nonce', true );
+		return \check_ajax_referer( "tsf-ajax-$capability", 'nonce', true );
 	}
 
 	/**
@@ -364,15 +366,16 @@ class Admin_Init extends Init {
 	 *
 	 * @since 2.2.2
 	 * @since 2.9.2 Added user-friendly exception handling.
-	 * @since 2.9.3 : 1. Query arguments work again (regression 2.9.2).
-	 *                2. Now only accepts http and https protocols.
+	 * @since 2.9.3 1. Query arguments work again (regression 2.9.2).
+	 *              2. Now only accepts http and https protocols.
+	 * @since 4.2.0 Now allows query arguments with value 0|'0'.
 	 *
 	 * @param string $page Menu slug. This slug must exist, or the redirect will loop back to the current page.
 	 * @param array  $query_args Optional. Associative array of query string arguments
 	 *               (key => value). Default is an empty array.
 	 * @return null Return early if first argument is false.
 	 */
-	public function admin_redirect( $page, array $query_args = [] ) {
+	public function admin_redirect( $page, $query_args = [] ) {
 
 		if ( empty( $page ) ) return;
 
@@ -380,11 +383,7 @@ class Admin_Init extends Init {
 		// Might cause security issues... we _must_ exit, always? Show warning?
 		$url = html_entity_decode( \menu_page_url( $page, false ) );
 
-		foreach ( $query_args as $key => $value )
-			if ( empty( $key ) || empty( $value ) )
-				unset( $query_args[ $key ] );
-
-		$target = \add_query_arg( $query_args, $url );
+		$target = \add_query_arg( array_filter( $query_args, 'strlen' ), $url );
 		$target = \esc_url_raw( $target, [ 'https', 'http' ] );
 
 		// Predict white screen:
@@ -395,48 +394,34 @@ class Admin_Init extends Init {
 		 * 1. Change 302 to 500 if you wish to test headers.
 		 * 2. Also force handle_admin_redirect_error() to run.
 		 */
-		$success = \wp_safe_redirect( $target, 302 ); // phpcs:ignore, VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
+		\wp_safe_redirect( $target, 302 );
 
 		// White screen of death for non-debugging users. Let's make it friendlier.
-		if ( $headers_sent )
+		if ( $headers_sent && $target ) {
 			$this->handle_admin_redirect_error( $target );
 
+			$headers_list = headers_list();
+			$location     = sprintf( 'Location: %s', \wp_sanitize_redirect( $target ) );
+
+			// Test if WordPress's redirect header is sent. Bail if true.
+			if ( \in_array( $location, $headers_list, true ) ) exit;
+
+			// phpcs:disable, WordPress.Security.EscapeOutput -- convert_markdown escapes. Added esc_url() for sanity.
+			printf(
+				'<p><strong>%s</strong></p>',
+				$this->convert_markdown(
+					sprintf(
+						/* translators: %s = Redirect URL markdown */
+						\esc_html__( 'There has been an error redirecting. Refresh the page or follow [this link](%s).', 'autodescription' ),
+						\esc_url( $target )
+					),
+					[ 'a' ],
+					[ 'a_internal' => true ]
+				)
+			);
+		}
+
 		exit;
-	}
-
-	/**
-	 * Provides an accessible error for when redirecting fails.
-	 *
-	 * @since 2.9.2
-	 * @see https://developer.wordpress.org/reference/functions/wp_redirect/
-	 *
-	 * @param string $target The redirect target location. Should be escaped.
-	 * @return void
-	 */
-	protected function handle_admin_redirect_error( $target = '' ) {
-
-		if ( ! $target ) return;
-
-		$headers_list = headers_list();
-		$location     = sprintf( 'Location: %s', \wp_sanitize_redirect( $target ) );
-
-		// Test if WordPress's redirect header is sent. Bail if true.
-		if ( \in_array( $location, $headers_list, true ) )
-			return;
-
-		// phpcs:disable, WordPress.Security.EscapeOutput -- convert_markdown escapes. Added esc_url() for sanity.
-		printf( '<p><strong>%s</strong></p>',
-			$this->convert_markdown(
-				sprintf(
-					/* translators: %s = Redirect URL markdown */
-					\esc_html__( 'There has been an error redirecting. Refresh the page or follow [this link](%s).', 'autodescription' ),
-					\esc_url( $target )
-				),
-				[ 'a' ],
-				[ 'a_internal' => true ]
-			)
-		);
-		// phpcs:enable, WordPress.Security.EscapeOutput
 	}
 
 	/**
@@ -468,9 +453,10 @@ class Admin_Init extends Init {
 	 *                              Do not input non-integer values (such as `false`), for those might cause adverse events.
 	 * }
 	 */
-	public function register_dismissible_persistent_notice( $message, $key, array $args = [], array $conditions = [] ) {
+	public function register_dismissible_persistent_notice( $message, $key, $args = [], $conditions = [] ) {
 
-		// We made this mistake ourselves. Let's test against it. Can't wait for PHP 7.1+ support.
+		// We made this mistake ourselves. Let's test against it.
+		// We can't type $key to scalar, for PHP is dumb with that type.
 		if ( ! is_scalar( $key ) || ! \strlen( $key ) ) return;
 
 		// Sanitize the key so that HTML, JS, and PHP can communicate easily via it.
@@ -595,18 +581,17 @@ class Admin_Init extends Init {
 	public function _dismiss_notice() {
 
 		// phpcs:ignore, WordPress.Security.NonceVerification.Missing -- We require the POST data to find locally stored nonces.
-		$key = isset( $_POST['tsf-notice-submit'] ) ? $_POST['tsf-notice-submit'] : '';
+		$key = $_POST['tsf-notice-submit'] ?? '';
+
 		if ( ! $key ) return;
 
 		$notices = $this->get_static_cache( 'persistent_notices', [] );
 		// Notice was deleted already elsewhere, or key was faulty. Either way, ignore--should be self-resolving.
 		if ( empty( $notices[ $key ]['conditions']['capability'] ) ) return;
 
-		// phpcs:ignore, WordPress.Security.NonceVerification.Missing -- We require the POST data to find locally stored nonces.
-		$nonce = isset( $_POST['tsf_notice_nonce'] ) ? $_POST['tsf_notice_nonce'] : '';
-
 		if ( ! \current_user_can( $notices[ $key ]['conditions']['capability'] )
-		|| ! \wp_verify_nonce( $nonce, $this->_get_dismiss_notice_nonce_action( $key ) ) ) {
+		// phpcs:ignore, WordPress.Security.NonceVerification.Missing -- We require the POST data to find locally stored nonces.
+		|| ! \wp_verify_nonce( $_POST['tsf_notice_nonce'] ?? '', $this->_get_dismiss_notice_nonce_action( $key ) ) ) {
 			\wp_die( -1, 403 );
 		}
 

@@ -118,6 +118,9 @@ if (!class_exists('\WPFront\URE\User_Permissions\WPFront_User_Role_Editor_User_P
             return RolesHelper::get_wpfront_help_link($cap);
         }
         
+        public static function get_debug_setting() {
+            return array('key' => 'user-permissions', 'label' => __('User Level Permissions', 'wpfront-user-role-editor'), 'position' => 190, 'description' => __('Disables all user level permissions.', 'wpfront-user-role-editor'));
+        }
     }
     
     WPFront_User_Role_Editor_User_Permissions::load();

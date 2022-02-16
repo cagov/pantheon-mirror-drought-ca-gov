@@ -8,7 +8,7 @@ namespace The_SEO_Framework\Interpreters;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2021 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2021 - 2022 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -29,7 +29,9 @@ namespace The_SEO_Framework\Interpreters;
  * Interprets anything you send here into Markdown. Or so it should.
  *
  * @since 4.1.4
- * @note Use `the_seo_framework()->convert_markdown() for easy access.
+ * @note Use `tsf()->convert_markdown() for easy access.
+ *
+ * @NOTE to self: This is also used in XHTML configurations. Keep it strict!
  *
  * @access protected
  *         Everything in this class is subject to change or deletion.
@@ -85,9 +87,8 @@ final class Markdown {
 
 		$md_types = empty( $convert ) ? $conversions : array_intersect( $conversions, $convert );
 
-		if ( 2 === \count( array_intersect( $md_types, [ 'em', 'strong' ] ) ) ) :
+		if ( isset( $md_types['*'], $md_types['**'] ) )
 			$text = static::strong_em( $text );
-		endif;
 
 		foreach ( $md_types as $type ) :
 			switch ( $type ) :
@@ -136,6 +137,7 @@ final class Markdown {
 	private static function strong_em( $text ) {
 
 		$count = preg_match_all( '/(?:\*{3})([^\*{\3}]+)(?:\*{3})/', $text, $matches, PREG_PATTERN_ORDER );
+
 		for ( $i = 0; $i < $count; $i++ ) {
 			$text = str_replace(
 				$matches[0][ $i ],
@@ -259,6 +261,7 @@ final class Markdown {
 
 		$count = preg_match_all( '/(?:(?:\[{1})([^\]]+)(?:\]{1})(?:\({1})([^\)\(]+)(?:\){1}))/', $text, $matches, PREG_PATTERN_ORDER );
 
+		// Keep this XHTML compatible!
 		$_string = $internal ? '<a href="%s">%s</a>' : '<a href="%s" target="_blank" rel="nofollow noreferrer noopener">%s</a>';
 
 		for ( $i = 0; $i < $count; $i++ ) {

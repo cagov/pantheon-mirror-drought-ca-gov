@@ -6,7 +6,7 @@
 
 namespace The_SEO_Framework;
 
-\defined( 'THE_SEO_FRAMEWORK_PRESENT' ) and \the_seo_framework()->_verify_include_secret( $_secret ) or die;
+\defined( 'THE_SEO_FRAMEWORK_PRESENT' ) and \tsf()->_verify_include_secret( $_secret ) or die;
 
 \add_action( 'woocommerce_init', __NAMESPACE__ . '\\_init_wc_compat' );
 /**
@@ -24,7 +24,7 @@ namespace The_SEO_Framework;
 function _init_wc_compat() {
 	\add_action(
 		'the_seo_framework_do_before_output',
-		function() {
+		static function() {
 			/**
 			 * Removes TSF breadcrumbs. WooCommerce outputs theirs.
 			 */
@@ -34,7 +34,7 @@ function _init_wc_compat() {
 		}
 	);
 
-	$tsf = \the_seo_framework();
+	$tsf = \tsf();
 
 	// Adjust the product link acknowledging the primary category.
 	\add_filter( 'wc_product_post_type_link_product_cat', [ $tsf, '_adjust_post_link_category' ], 10, 3 );
@@ -51,6 +51,30 @@ function _init_wc_compat() {
 	\remove_filter( 'wp_robots', 'wc_page_no_robots' );
 }
 
+/**
+ * Sets the correct shop ID on the shop page.
+ *
+ * @since 4.2.0
+ * @access private
+ *
+ * @param int|WP_Post|null $post Post ID or post object.
+ * @return bool
+ */
+function _is_shop( $post = null ) {
+
+	if ( isset( $post ) ) {
+		$id = \is_int( $post )
+			? $post
+			: ( \get_post( $post )->ID ?? 0 );
+
+		$is_shop = (int) \get_option( 'woocommerce_shop_page_id' ) === $id;
+	} else {
+		$is_shop = ! \is_admin() && \function_exists( 'is_shop' ) && \is_shop();
+	}
+
+	return $is_shop;
+}
+
 \add_filter( 'the_seo_framework_real_id', __NAMESPACE__ . '\\_set_real_id_wc_shop' );
 /**
  * Sets the correct shop ID on the shop page.
@@ -63,7 +87,8 @@ function _init_wc_compat() {
  */
 function _set_real_id_wc_shop( $id ) {
 
-	if ( \the_seo_framework()->is_wc_shop() )
+	// phpcs:ignore, TSF.Performance.Opcodes.ShouldHaveNamespaceEscape -- local func
+	if ( _is_shop() )
 		$id = (int) \get_option( 'woocommerce_shop_page_id' );
 
 	return $id;
@@ -81,7 +106,8 @@ function _set_real_id_wc_shop( $id ) {
  * @return bool
  */
 function _set_shop_singular_archive( $is_singular_archive, $id ) {
-	return $is_singular_archive || \the_seo_framework()->is_wc_shop( $id );
+	// phpcs:ignore, TSF.Performance.Opcodes.ShouldHaveNamespaceEscape -- local func
+	return $is_singular_archive || _is_shop( $id );
 }
 
 \add_filter( 'the_seo_framework_is_shop', __NAMESPACE__ . '\\_set_wc_is_shop', 10, 2 );
@@ -98,19 +124,8 @@ function _set_shop_singular_archive( $is_singular_archive, $id ) {
  * @return bool
  */
 function _set_wc_is_shop( $is_shop, $post ) {
-
-	if ( $is_shop ) return $is_shop;
-
-	if ( isset( $post ) ) {
-		$post = \get_post( $post );
-		$id   = $post ? $post->ID : 0;
-
-		$is_shop = (int) \get_option( 'woocommerce_shop_page_id' ) === $id;
-	} else {
-		$is_shop = ! \is_admin() && \function_exists( 'is_shop' ) && \is_shop();
-	}
-
-	return $is_shop;
+	// phpcs:ignore, TSF.Performance.Opcodes.ShouldHaveNamespaceEscape -- local func
+	return $is_shop || _is_shop( $post );
 }
 
 \add_filter( 'the_seo_framework_is_product', __NAMESPACE__ . '\\_set_wc_is_product', 10, 2 );
@@ -153,7 +168,7 @@ function _set_wc_is_product_admin( $is_product_admin ) {
 
 	if ( $is_product_admin ) return $is_product_admin;
 
-	$tsf = \the_seo_framework();
+	$tsf = \tsf();
 
 	return $tsf->is_singular_admin() && 'product' === $tsf->get_admin_post_type();
 }
@@ -173,9 +188,9 @@ function _set_wc_is_product_admin( $is_product_admin ) {
  *    string 'max_image_preview', ideally be empty or 'max-image-preview:<none|standard|large>'
  *    string 'max_video_preview', ideally be empty or 'max-video-preview:<R>=-1>'
  * }
- * @param array|null $args The query arguments. Contains 'id' and 'taxonomy'.
- *                         Is null when query is autodetermined.
- * @param int <bit>  $ignore The ignore level. {
+ * @param array|null $args    The query arguments. Contains 'id' and 'taxonomy'.
+ *                            Is null when query is autodetermined.
+ * @param int <bit>  $options The generator settings. {
  *    0 = 0b00: Ignore nothing.
  *    1 = 0b01: Ignore protection. (\The_SEO_Framework\ROBOTS_IGNORE_PROTECTION)
  *    2 = 0b10: Ignore post/term setting. (\The_SEO_Framework\ROBOTS_IGNORE_SETTINGS)
@@ -183,12 +198,12 @@ function _set_wc_is_product_admin( $is_product_admin ) {
  * }
  * @return array
  */
-function _set_wc_noindex_defaults( $meta, $args, $ignore ) {
+function _set_wc_noindex_defaults( $meta, $args, $options ) {
 
 	// Nothing to do here...
 	if ( 'noindex' === $meta['noindex'] ) return $meta;
 
-	$tsf = \the_seo_framework();
+	$tsf = \tsf();
 
 	if ( null === $args ) {
 		if ( \is_singular() )
@@ -213,7 +228,7 @@ function _set_wc_noindex_defaults( $meta, $args, $ignore ) {
 	if ( ! \in_array( $page_id, $page_ids, true ) ) return $meta;
 
 	// Set the default.
-	if ( $ignore & \The_SEO_Framework\ROBOTS_IGNORE_SETTINGS ) {
+	if ( $options & \The_SEO_Framework\ROBOTS_IGNORE_SETTINGS ) {
 		$meta['noindex'] = 'noindex';
 	} elseif ( 0 === $tsf->s_qubit( $tsf->get_post_meta_item( '_genesis_noindex', $page_id ) ) ) {
 		$meta['noindex'] = 'noindex';
@@ -249,11 +264,11 @@ function _assert_wc_noindex_defaults_seo_bar( $interpreter ) {
 
 	$index_item                         = &$interpreter::edit_seo_bar_item( 'indexing' );
 	$index_item['status']               =
-		0 !== \the_seo_framework()->s_qubit(
-			\The_SEO_Framework\Builders\SeoBar_Page::get_instance()->get_query_cache()['meta']['_genesis_noindex']
+		0 !== \tsf()->s_qubit(
+			\The_SEO_Framework\Builders\SEOBar\Page::get_instance()->get_query_cache()['meta']['_genesis_noindex']
 		)
-		? $interpreter::STATE_OKAY
-		: $interpreter::STATE_UNKNOWN;
+			? $interpreter::STATE_OKAY
+			: $interpreter::STATE_UNKNOWN;
 	$index_item['assess']['recommends'] = \__( 'WooCommerce recommends not indexing this dynamic page.', 'autodescription' );
 }
 
@@ -261,7 +276,8 @@ function _assert_wc_noindex_defaults_seo_bar( $interpreter ) {
 /**
  * Adjusts image generation parameters.
  *
- * @since 4.0.5 (introduced @ 4.0.0, renamed to prevent conflict)
+ * @since 4.0.5 (introduced @ 4.0.0, renamed to prevent conflict).
+ * @since 4.2.0 Now supports the `$args['pta']` index.
  * @access private
  *
  * @param array      $params : [
@@ -270,7 +286,7 @@ function _assert_wc_noindex_defaults_seo_bar( $interpreter ) {
  *    array   cbs:      The callbacks to parse. Ideally be generators, so we can halt remotely.
  *    array   fallback: The callbacks to parse. Ideally be generators, so we can halt remotely.
  * ];
- * @param array|null $args The query arguments. Contains 'id' and 'taxonomy'.
+ * @param array|null $args The query arguments. Contains 'id', 'taxonomy', and 'pta'.
  *                         Is null when query is autodetermined.
  * @return array $params
  */
@@ -280,7 +296,7 @@ function _adjust_wc_image_generation_params( $params, $args ) {
 	$is_product_category = false;
 
 	if ( null === $args ) {
-		$is_product          = \the_seo_framework()->is_wc_product();
+		$is_product          = \tsf()->is_product();
 		$is_product_category = \function_exists( '\\is_product_category' ) && \is_product_category();
 	} else {
 		if ( $args['taxonomy'] ) {
@@ -288,8 +304,10 @@ function _adjust_wc_image_generation_params( $params, $args ) {
 				$term                = \get_term( $args['id'], $args['taxonomy'] );
 				$is_product_category = $term && \is_product_category( $term );
 			}
+		} elseif ( $args['pta'] ) { // phpcs:ignore, Generic.CodeAnalysis.EmptyStatement.DetectedElseif
+			// TODO ? Which public non-page-PTA does WC have, actually?
 		} else {
-			$is_product = \the_seo_framework()->is_wc_product( $args['id'] );
+			$is_product = \tsf()->is_product( $args['id'] );
 		}
 	}
 
@@ -308,10 +326,11 @@ function _adjust_wc_image_generation_params( $params, $args ) {
  * Generates image URLs and IDs from the WooCommerce product gallary entries.
  *
  * @since 4.0.0
+ * @since 4.2.0 Now supports the `$args['pta']` index.
  * @access private
  * @generator
  *
- * @param array|null $args The query arguments. Accepts 'id' and 'taxonomy'.
+ * @param array|null $args The query arguments. Accepts 'id', 'taxonomy', and 'pta'.
  *                         Leave null to autodetermine query.
  * @param string     $size The size of the image to get.
  * @yield array : {
@@ -321,14 +340,19 @@ function _adjust_wc_image_generation_params( $params, $args ) {
  */
 function _get_product_gallery_image_details( $args = null, $size = 'full' ) {
 
-	$post_id = isset( $args['id'] ) ? $args['id'] : \the_seo_framework()->get_the_real_ID();
-
+	$post_id        = $args['id'] ?? \tsf()->get_the_real_ID();
 	$attachment_ids = [];
 
 	if ( $post_id && \metadata_exists( 'post', $post_id, '_product_image_gallery' ) ) {
-		$product_image_gallery = \get_post_meta( $post_id, '_product_image_gallery', true );
-
-		$attachment_ids = array_map( '\\absint', array_filter( explode( ',', $product_image_gallery ) ) );
+		$attachment_ids = array_map(
+			'absint',
+			array_filter(
+				explode(
+					',',
+					\get_post_meta( $post_id, '_product_image_gallery', true )
+				)
+			)
+		);
 	}
 
 	if ( $attachment_ids ) {
@@ -353,7 +377,7 @@ function _get_product_gallery_image_details( $args = null, $size = 'full' ) {
  * @access private
  * @generator
  *
- * @param array|null $args The query arguments. Accepts 'id' and 'taxonomy'.
+ * @param array|null $args The query arguments. Accepts 'id', 'taxonomy', and 'pta'.
  *                         Leave null to autodetermine query.
  * @param string     $size The size of the image to get.
  * @yield array : {
@@ -363,8 +387,7 @@ function _get_product_gallery_image_details( $args = null, $size = 'full' ) {
  */
 function _get_product_category_thumbnail_image_details( $args = null, $size = 'full' ) {
 
-	$term_id = isset( $args['id'] ) ? $args['id'] : \the_seo_framework()->get_the_real_ID();
-
+	$term_id      = $args['id'] ?? \tsf()->get_the_real_ID();
 	$thumbnail_id = \get_term_meta( $term_id, 'thumbnail_id', true ) ?: 0;
 
 	if ( $thumbnail_id ) {

@@ -119,6 +119,9 @@ if (!class_exists('\WPFront\URE\Media\WPFront_User_Role_Editor_Media_Permissions
             return RolesHelper::get_wpfront_help_link($cap);
         }
         
+        public static function get_debug_setting() {
+            return array('key' => 'media-permissions', 'label' => __('Media Permissions', 'wpfront-user-role-editor'), 'position' => 150, 'description' => __('Disables all media permission capabilities.', 'wpfront-user-role-editor'));
+        }
     }
     
     WPFront_User_Role_Editor_Media_Permissions::load();

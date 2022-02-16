@@ -5,7 +5,7 @@
  * @package micropackage/requirements
  */
 
-namespace BracketSpace\Notification\Vendor\Micropackage\Requirements\Interfaces;
+namespace Micropackage\Requirements\Interfaces;
 
 /**
  * Checkable interface

@@ -7,7 +7,7 @@
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2019 - 2021 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2019 - 2022 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -33,9 +33,8 @@
  * @since 4.1.5 Rewritten to support Gutenberg 11.3.0+ / WP 5.9+
  *
  * @constructor
- * @param {!jQuery} $ jQuery object.
  */
-window.tsfPTGB = function( $ ) {
+window.tsfPTGB = function() {
 
 	/**
 	 * Data property injected by WordPress l10n handler.
@@ -50,7 +49,7 @@ window.tsfPTGB = function( $ ) {
 	 * @since 4.1.5
 	 * @access private
 	 */
-	const supportedTaxonomies = l10n?.taxonomies;
+	const supportedTaxonomies = l10n.taxonomies;
 
 	/**
 	 * @since 4.1.5
@@ -86,14 +85,13 @@ window.tsfPTGB = function( $ ) {
 	 * @param {String} taxonomySlug
 	 * @param {String} what The i18n to get.
 	 */
-	const _geti18n = ( taxonomySlug, what ) => supportedTaxonomies[ taxonomySlug ].i18n[ what ] || '';
+	const _geti18n = ( taxonomySlug, what ) => supportedTaxonomies[ taxonomySlug ]?.i18n[ what ] || '';
 
 	let _registeredFields = {}; // memo. TODO Make Map()? Meh, this gets called like 3 to 5x per page.
 	/**
 	 * @since 4.1.5
 	 * @access private
 	 * @param {String} taxonomySlug
-	 * @return {(<Object<String,Function>)}
 	 */
 	const _primaryTerm = taxonomySlug => {
 
@@ -103,7 +101,7 @@ window.tsfPTGB = function( $ ) {
 		const set = id => +( _dataHolder().value = +id );
 
 		const revalidate = selectedTerms => {
-			let primaryTerm = get();
+			const primaryTerm = get();
 
 			if ( selectedTerms.includes( primaryTerm ) )
 				return primaryTerm;
@@ -112,16 +110,20 @@ window.tsfPTGB = function( $ ) {
 		}
 
 		const register = () => {
-			let wrap = document.getElementById( 'tsf-gutenberg-data-holder' );
+			const wrap = document.getElementById( 'tsf-gutenberg-data-holder' );
 			if ( ! wrap ) return _registeredFields[ taxonomySlug ] = false;
 
-			let template = wp.template( 'tsf-primary-term-selector' )( { taxonomy: supportedTaxonomies[ taxonomySlug ] } );
-			return _registeredFields[ taxonomySlug ] = !! $( template ).appendTo( wrap );
+			wrap.insertAdjacentHTML(
+				'beforeend',
+				wp.template( 'tsf-primary-term-selector' )( { taxonomy: supportedTaxonomies[ taxonomySlug ] } )
+			);
+
+			return _registeredFields[ taxonomySlug ] = true;
 		}
 		const isRegistered = () => _registeredFields[ taxonomySlug ] || false;
 
 		return { get, set, revalidate, register, isRegistered };
-	};
+	}
 
 	/**
 	 * Initializes primary term selection for Gutenberg.
@@ -130,7 +132,6 @@ window.tsfPTGB = function( $ ) {
 	 * @access private
 	 *
 	 * @function
-	 * @return {undefined}
 	 */
 	const _initPrimaryTerm = () => {
 
@@ -301,13 +302,12 @@ window.tsfPTGB = function( $ ) {
 		 * @access protected
 		 *
 		 * @function
-		 * @return {undefined}
 		 */
 		load: () => {
 			document.body.addEventListener( 'tsf-onload', _initPrimaryTerm );
 		}
-	}, {}, {
+	}, {
 		l10n
 	} );
-}( jQuery );
+}();
 window.tsfPTGB.load();

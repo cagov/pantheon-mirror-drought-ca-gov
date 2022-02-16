@@ -10,7 +10,7 @@ namespace The_SEO_Framework;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2015 - 2021 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2015 - 2022 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -38,7 +38,7 @@ class Render extends Admin_Init {
 	 * Returns the document title.
 	 *
 	 * This method serves as a callback for filter `pre_get_document_title`.
-	 * Use the_seo_framework()->get_title() instead.
+	 * Use tsf()->get_title() instead.
 	 *
 	 * @since 3.1.0
 	 * @see $this->get_title()
@@ -69,7 +69,7 @@ class Render extends Admin_Init {
 	 * Returns the document title.
 	 *
 	 * This method serves as a callback for filter `wp_title`.
-	 * Use the_seo_framework()->get_title() instead.
+	 * Use tsf()->get_title() instead.
 	 *
 	 * @since 3.1.0
 	 * @since 4.0.0 Removed extraneous, unused parameters.
@@ -112,14 +112,12 @@ class Render extends Admin_Init {
 	 */
 	public function get_image_from_cache() {
 
-		$url = '';
-
 		foreach ( $this->get_image_details_from_cache( ! $this->get_option( 'multi_og_image' ) ) as $image ) {
 			$url = $image['url'];
 			if ( $url ) break;
 		}
 
-		return $url;
+		return $url ?? '';
 	}
 
 	/**
@@ -132,8 +130,7 @@ class Render extends Admin_Init {
 	 * @return string The cached Twitter card.
 	 */
 	public function get_current_twitter_card_type() {
-		static $cache;
-		return isset( $cache ) ? $cache : $cache = $this->generate_twitter_card_type();
+		return memo() ?? memo( $this->generate_twitter_card_type() );
 	}
 
 	/**
@@ -158,7 +155,7 @@ class Render extends Admin_Init {
 	 * @param bool|string $text     The element's contents, if any.
 	 * @param bool        $new_line Whether to add a new line to the end of the element.
 	 */
-	public function render_element( array $attributes = [], $tag = 'meta', $text = false, $new_line = true ) {
+	public function render_element( $attributes = [], $tag = 'meta', $text = false, $new_line = true ) {
 
 		$attr = '';
 
@@ -817,9 +814,9 @@ class Render extends Admin_Init {
 	 *
 	 * @since 2.2.2
 	 * @since 2.8.0 Returns empty on product pages.
-	 * @since 3.0.0 : 1. Now checks for 0000 timestamps.
-	 *                2. Now uses timestamp formats.
-	 *                3. Now uses GMT time.
+	 * @since 3.0.0 1. Now checks for 0000 timestamps.
+	 *              2. Now uses timestamp formats.
+	 *              3. Now uses GMT time.
 	 *
 	 * @return string The Article Publishing Time meta tag.
 	 */
@@ -861,8 +858,8 @@ class Render extends Admin_Init {
 	 * @since 2.2.2
 	 * @since 2.7.0 Listens to $this->get_the_real_ID() instead of WordPress Core ID determination.
 	 * @since 2.8.0 Returns empty on product pages.
-	 * @since 3.0.0 : 1. Now checks for 0000 timestamps.
-	 *                2. Now uses timestamp formats.
+	 * @since 3.0.0 1. Now checks for 0000 timestamps.
+	 *              2. Now uses timestamp formats.
 	 * @since 4.1.4 No longer renders the Open Graph Updated Time meta tag.
 	 * @see og_updated_time()
 	 *
@@ -955,7 +952,6 @@ class Render extends Admin_Init {
 	 * @return string The LD+json Schema.org scripts.
 	 */
 	public function ld_json() {
-
 		/**
 		 * @since 2.6.0
 		 * @param string $json The JSON output. Must be escaped.
@@ -980,7 +976,6 @@ class Render extends Admin_Init {
 	 * @return string The Google Site Verification code meta tag.
 	 */
 	public function google_site_output() {
-
 		/**
 		 * @since 2.6.0
 		 * @param string $code The Google verification code.
@@ -1008,7 +1003,6 @@ class Render extends Admin_Init {
 	 * @return string The Bing Site Verification Code meta tag.
 	 */
 	public function bing_site_output() {
-
 		/**
 		 * @since 2.6.0
 		 * @param string $code The Bing verification code.
@@ -1036,7 +1030,6 @@ class Render extends Admin_Init {
 	 * @return string The Yandex Site Verification code meta tag.
 	 */
 	public function yandex_site_output() {
-
 		/**
 		 * @since 2.6.0
 		 * @param string $code The Yandex verification code.
@@ -1064,7 +1057,6 @@ class Render extends Admin_Init {
 	 * @return string The Baidu Site Verification code meta tag.
 	 */
 	public function baidu_site_output() {
-
 		/**
 		 * @since 4.0.5
 		 * @param string $code The Baidu verification code.
@@ -1092,7 +1084,6 @@ class Render extends Admin_Init {
 	 * @return string The Pinterest Site Verification code meta tag.
 	 */
 	public function pint_site_output() {
-
 		/**
 		 * @since 2.6.0
 		 * @param string $code The Pinterest verification code.
@@ -1143,20 +1134,19 @@ class Render extends Admin_Init {
 	 * @return array
 	 */
 	public function get_robots_meta() {
-
-		static $cache;
-
-		/**
-		 * @since 2.6.0
-		 * @param array $meta The robots meta.
-		 * @param int   $id   The current post or term ID.
-		 */
-		return isset( $cache ) ? $cache : $cache = (array) \apply_filters_ref_array(
-			'the_seo_framework_robots_meta',
-			[
-				$this->generate_robots_meta(),
-				$this->get_the_real_ID(),
-			]
+		return memo() ?? memo(
+			/**
+			 * @since 2.6.0
+			 * @param array $meta The robots meta.
+			 * @param int   $id   The current post or term ID.
+			 */
+			(array) \apply_filters_ref_array(
+				'the_seo_framework_robots_meta',
+				[
+					$this->generate_robots_meta(),
+					$this->get_the_real_ID(),
+				]
+			)
 		);
 	}
 
@@ -1203,9 +1193,8 @@ class Render extends Admin_Init {
 	 */
 	public function paged_urls() {
 
-		$id = $this->get_the_real_ID();
-
 		$paged_urls = $this->get_paged_urls();
+		$id         = $this->get_the_real_ID();
 
 		/**
 		 * @since 2.6.0
@@ -1256,60 +1245,65 @@ class Render extends Admin_Init {
 	 *
 	 * @since 2.9.2
 	 * @since 4.0.0 Added boot timers.
+	 * @since 4.2.0 1. The annotation is translatable again (regressed in 4.0.0).
+	 *              2. Is now a protected function.
+	 * @access private
 	 *
-	 * @param string $where  Determines the position of the indicator.
-	 *                       Accepts 'before' for before, anything else for after.
-	 * @param int    $timing Determines when the output started.
+	 * @param string $where                 Determines the position of the indicator.
+	 *                                      Accepts 'before' for before, anything else for after.
+	 * @param int    $meta_timer            Total meta time.
+	 * @param int    $bootstrap_timer       Total bootstrap time.
 	 * @return string The SEO Framework's HTML plugin indicator.
 	 */
-	public function get_plugin_indicator( $where = 'before', $timing = 0 ) {
+	protected function get_plugin_indicator( $where = 'before', $meta_timer = 0, $bootstrap_timer = 0 ) {
 
-		static $cache;
+		$cache = memo() ?? memo( [
+			/**
+			 * @since 2.0.0
+			 * @param bool $run Whether to run and show the plugin indicator.
+			 */
+			'run'        => (bool) \apply_filters( 'the_seo_framework_indicator', true ),
+			/**
+			 * @since 2.4.0
+			 * @param bool $show_timer Whether to show the generation time in the indicator.
+			 */
+			'show_timer' => (bool) \apply_filters( 'the_seo_framework_indicator_timing', true ),
+			'annotation' => trim( vsprintf(
+				/* translators: 1 = The SEO Framework, 2 = 'by Sybre Waaijer */
+				\esc_html__( '%1$s %2$s', 'autodescription' ),
+				[
+					'The SEO Framework',
+					/**
+					 * @since 2.4.0
+					 * @param bool $sybre Whether to show the author name in the indicator.
+					 */
+					\apply_filters( 'sybre_waaijer_<3', true ) // phpcs:ignore, WordPress.NamingConventions.ValidHookName -- Easter egg.
+						? \esc_html__( 'by Sybre Waaijer', 'autodescription' )
+						: '',
+				]
+			) ),
+		] );
 
-		if ( ! $cache ) {
-			$cache = [
-				/**
-				 * @since 2.0.0
-				 * @param bool $run Whether to run and show the plugin indicator.
-				 */
-				'run'        => (bool) \apply_filters( 'the_seo_framework_indicator', true ),
-				/**
-				 * @since 2.4.0
-				 * @param bool $sybre Whether to show the author name in the indicator.
-				 */
-				// phpcs:ignore, WordPress.NamingConventions.ValidHookName -- Easter egg.
-				'author'     => (bool) \apply_filters( 'sybre_waaijer_<3', true ) ? \esc_html__( 'by Sybre Waaijer', 'autodescription' ) : '',
-				/**
-				 * @since 2.4.0
-				 * @param bool $show_timer Whether to show the generation time in the indicator.
-				 */
-				'show_timer' => (bool) \apply_filters( 'the_seo_framework_indicator_timing', true ),
-			];
-		}
+		if ( ! $cache['run'] ) return '';
 
-		if ( false === $cache['run'] )
-			return '';
+		switch ( $where ) :
+			case 'before':
+				return "<!-- {$cache['annotation']} -->\n";
 
-		if ( 'before' === $where ) {
-			/* translators: 1 = The SEO Framework, 2 = 'by Sybre Waaijer */
-			$output = sprintf( '%1$s %2$s', 'The SEO Framework', $cache['author'] );
+			case 'after':
+			default:
+				if ( $cache['show_timer'] && $meta_timer && $bootstrap_timer ) {
+					$timers = sprintf(
+						' | %s meta | %s boot',
+						number_format( $meta_timer * 1e3, 2, null, '' ) . 'ms',
+						number_format( $bootstrap_timer * 1e3, 2, null, '' ) . 'ms'
+					);
+				} else {
+					$timers = '';
+				}
 
-			return sprintf( '<!-- %s -->', trim( $output ) ) . PHP_EOL;
-		} else {
-			if ( $cache['show_timer'] && $timing ) {
-				$timers = sprintf(
-					' | %s meta | %s boot',
-					number_format( ( microtime( true ) - $timing ) * 1e3, 2, null, '' ) . 'ms',
-					number_format( _bootstrap_timer() * 1e3, 2, null, '' ) . 'ms'
-				);
-			} else {
-				$timers = '';
-			}
-			/* translators: 1 = The SEO Framework, 2 = 'by Sybre Waaijer */
-			$output = sprintf( '%1$s %2$s', 'The SEO Framework', $cache['author'] ) . $timers;
-
-			return sprintf( '<!-- / %s -->', trim( $output ) ) . PHP_EOL;
-		}
+				return "<!-- / {$cache['annotation']}{$timers} -->\n";
+		endswitch;
 	}
 
 	/**
@@ -1350,21 +1344,23 @@ class Render extends Admin_Init {
 	 *
 	 * @since 2.6.0
 	 * @since 3.1.0 Removed cache.
-	 * @since 3.1.4 : 1. Added filter.
-	 *                2. Reintroduced cache because of filter.
-	 * @TODO add facebook validation.
+	 * @since 3.1.4 1. Added filter.
+	 *              2. Reintroduced cache because of filter.
+	 * @TODO add facebook validation? -> Not all services that use OG tags are called Facebook.
+	 *       And not all of those services require the same standards as Facebook.
 	 *
 	 * @return bool
 	 */
 	public function use_og_tags() {
-		static $cache;
-		/**
-		 * @since 3.1.4
-		 * @param bool $use
-		 */
-		return isset( $cache ) ? $cache : $cache = (bool) \apply_filters(
-			'the_seo_framework_use_og_tags',
-			(bool) $this->get_option( 'og_tags' )
+		return memo() ?? memo(
+			/**
+			 * @since 3.1.4
+			 * @param bool $use
+			 */
+			(bool) \apply_filters(
+				'the_seo_framework_use_og_tags',
+				(bool) $this->get_option( 'og_tags' )
+			)
 		);
 	}
 
@@ -1374,20 +1370,17 @@ class Render extends Admin_Init {
 	 *
 	 * @since 2.6.0
 	 * @since 3.1.0 Removed cache.
-	 * @since 3.1.4 : 1. Added filter.
-	 *                2. Reintroduced cache because of filter.
+	 * @since 3.1.4 1. Added filter.
+	 *              2. Reintroduced cache because of filter.
 	 *
 	 * @return bool
 	 */
 	public function use_facebook_tags() {
-		static $cache;
-		/**
-		 * @since 3.1.4
-		 * @param bool $use
-		 */
-		return isset( $cache ) ? $cache : $cache = (bool) \apply_filters(
-			'the_seo_framework_use_facebook_tags',
-			(bool) $this->get_option( 'facebook_tags' )
+		return memo() ?? memo(
+			(bool) \apply_filters(
+				'the_seo_framework_use_facebook_tags',
+				(bool) $this->get_option( 'facebook_tags' )
+			)
 		);
 	}
 
@@ -1402,14 +1395,11 @@ class Render extends Admin_Init {
 	 * @return bool
 	 */
 	public function use_twitter_tags() {
-		static $cache;
-		/**
-		 * @since 3.1.4
-		 * @param bool $use
-		 */
-		return isset( $cache ) ? $cache : $cache = (bool) \apply_filters(
-			'the_seo_framework_use_twitter_tags',
-			$this->get_option( 'twitter_tags' ) && $this->get_current_twitter_card_type()
+		return memo() ?? memo(
+			(bool) \apply_filters(
+				'the_seo_framework_use_twitter_tags',
+				$this->get_option( 'twitter_tags' ) && $this->get_current_twitter_card_type()
+			)
 		);
 	}
 }

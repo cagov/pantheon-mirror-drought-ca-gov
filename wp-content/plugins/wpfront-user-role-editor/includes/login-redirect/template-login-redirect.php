@@ -54,7 +54,7 @@ if(!class_exists('WPFront\URE\Login_Redirect\WPFront_User_Role_Editor_Login_Redi
                 $list_table->prepare_items();
                 ?>
                 <form action="" method="get" class="search-form">
-                    <input type="hidden" name="page" value="<?php echo LoginRedirect::MENU_SLUG; ?>" />
+                    <input type="hidden" name="page" value="<?php echo esc_attr(LoginRedirect::MENU_SLUG); ?>" />
                     <?php $list_table->search_box(__('Search', 'wpfront-user-role-editor'), 'login-redirect'); ?>
                 </form>
                 <form id="form-login-redirect" method='post'>
@@ -70,7 +70,7 @@ if(!class_exists('WPFront\URE\Login_Redirect\WPFront_User_Role_Editor_Login_Redi
             ?>
             <h2>
                 <?php echo __('Login Redirects', 'wpfront-user-role-editor'); ?>
-                <a href="<?php echo $this->get_add_new_url(); ?>" class="add-new-h2"><?php echo __('Add New', 'wpfront-user-role-editor'); ?></a>
+                <a href="<?php echo esc_attr($this->get_add_new_url()); ?>" class="add-new-h2"><?php echo __('Add New', 'wpfront-user-role-editor'); ?></a>
             </h2>
             <?php
         }

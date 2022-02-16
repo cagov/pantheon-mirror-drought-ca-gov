@@ -34,6 +34,8 @@ if (!defined('ABSPATH')) {
     exit();
 }
 
+use \WPFront\URE\WPFront_User_Role_Editor_Debug;
+
 require_once dirname(__FILE__) . '/template-role-add-edit.php';
 
 if (!class_exists('\WPFront\URE\Roles\WPFront_User_Role_Editor_Role_Add_Edit')) {
@@ -67,6 +69,15 @@ if (!class_exists('\WPFront\URE\Roles\WPFront_User_Role_Editor_Role_Add_Edit')) 
         }
         
         protected function initialize() {
+            $debug = WPFront_User_Role_Editor_Debug::instance();
+            
+            $debug_setting = $this->RolesList->get_debug_setting();
+            $debug->add_setting($debug_setting);
+            
+            if($debug->is_disabled($debug_setting['key'])) {
+                return;
+            }
+            
             add_action('wp_before_admin_bar_render', array($this, 'admin_bar_menu'), 1);
             add_action('admin_init', array($this, 'admin_init'));
             

@@ -13,6 +13,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class WSAL_Utilities_UsersUtils {
 
+	private static $cached_users = array();
+
 	/**
 	 * Local static cache for the value of setting determining the prefered user data to display as label.
 	 *
@@ -69,5 +71,82 @@ class WSAL_Utilities_UsersUtils {
 		}
 
 		return '';
+	}
+
+	/**
+	 * Get the user details for the tooltip.
+	 *
+	 * @param WP_User $user - User data.
+	 *
+	 * @return string HTML representing a tooltip with user's details.
+	 *
+	 * @since 4.3.4.
+	 */
+	public static function get_tooltip_user_content( $user ) {
+
+		if ( ! isset( $user->ID ) ) {
+			return '';
+		}
+
+		$tooltip = '<strong>' . esc_attr__( 'Username: ', 'wp-security-audit-log' ) . '</strong>' . $user->data->user_login . '</br>';
+		$tooltip .= ( ! empty( $user->data->first_name ) ) ? '<strong>' . esc_attr__( 'First name: ', 'wp-security-audit-log' ) . '</strong>' . $user->data->first_name . '</br>' : '';
+		$tooltip .= ( ! empty( $user->data->first_name ) ) ? '<strong>' . esc_attr__( 'Last Name: ', 'wp-security-audit-log' ) . '</strong>' . $user->data->first_name . '</br>' : '';
+		$tooltip .= '<strong>' . esc_attr__( 'Email: ', 'wp-security-audit-log' ) . '</strong>' . $user->data->user_email . '</br>';
+		$tooltip .= '<strong>' . esc_attr__( 'Nickname: ', 'wp-security-audit-log' ) . '</strong>' . $user->data->user_nicename . '</br></br>';
+
+		return $tooltip;
+	}
+
+	/**
+	 * Retrieves user ID using either the username of user ID.
+	 *
+	 * @param int|string $user_login
+	 *
+	 * @return int|null
+	 */
+	public static function swap_login_for_id( $user_login ) {
+
+		if ( isset( self::$cached_users[ $user_login ] ) ) {
+			return self::$cached_users[ $user_login ];
+		}
+
+		global $wpdb;
+		$user_id = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT ID FROM $wpdb->users WHERE user_login = %s OR ID = %d;",
+				$user_login,
+				$user_login
+			)
+		);
+
+		if ( false === $user_id || 0 === strlen( $user_id ) ) {
+			return null;
+
+		}
+
+		self::$cached_users[ $user_login ] = intval( $user_id );
+
+		return self::$cached_users[ $user_login ];
+	}
+
+	/**
+	 * Populates the label showing user roles in audit log, sessions list, etc.
+	 *
+	 * @param string|string[] $roles User roles.
+	 *
+	 * @return string
+	 * @since 4.3.4
+	 */
+	public static function get_roles_label( $roles ) {
+		if ( is_array( $roles ) && count( $roles ) ) {
+			return esc_html( ucwords( implode( ', ', $roles ) ) );
+		}
+
+		if ( is_string( $roles ) && '' != $roles ) {
+			return esc_html( ucwords( str_replace( array( '"', '[', ']' ), ' ', $roles ) ) );
+		}
+
+		return '<i>' . esc_html__( 'Unknown', 'wp-security-audit-log' ) . '</i>';
+
 	}
 }

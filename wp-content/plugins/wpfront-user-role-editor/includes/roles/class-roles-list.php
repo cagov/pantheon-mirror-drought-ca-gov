@@ -663,6 +663,9 @@ if (!class_exists('\WPFront\URE\Roles\WPFront_User_Role_Editor_Roles_List')) {
             $this->UtilsClass::set_help_tab($tabs, $sidebar);
         }
         
+        public static function get_debug_setting() {
+            return array('key' => 'roles', 'label' => __('All Roles & Add New', 'wpfront-user-role-editor'), 'position' => 10, 'description' => __('Disables all roles actions and also users ability to create new role.', 'wpfront-user-role-editor'));
+        }
     }
     
     WPFront_User_Role_Editor_Roles_List::load();

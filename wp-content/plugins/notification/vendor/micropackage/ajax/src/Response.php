@@ -5,7 +5,7 @@
  * @package micropackage/ajax
  */
 
-namespace BracketSpace\Notification\Vendor\Micropackage\Ajax;
+namespace Micropackage\Ajax;
 
 /**
  * Response class

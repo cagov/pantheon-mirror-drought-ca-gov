@@ -77,11 +77,11 @@ if (!class_exists('WPFront\URE\Post_Type\WPFront_User_Role_Editor_Post_Type_Dele
                 <?php
                 $this->title();
                 ?>
-                <form id="form-post-type" method="post" action="<?php echo $this->display['url']; ?>">
+                <form id="form-post-type" method="post" action="<?php echo esc_attr($this->display['url']); ?>">
                     <ol>
                         <?php $this->post_types_display(); ?>
                     </ol>   
-                    <input type="hidden" name="action" value="<?php echo $this->display['action']; ?>" />
+                    <input type="hidden" name="action" value="<?php echo esc_attr($this->display['action']); ?>" />
                     <?php
                     wp_nonce_field('bulk-action-view-post');
                     submit_button($this->display['button_text'], 'button-secondary');
@@ -94,16 +94,19 @@ if (!class_exists('WPFront\URE\Post_Type\WPFront_User_Role_Editor_Post_Type_Dele
         protected function title() {
             ?>
             <h2>
-                <?php echo $this->display['title']; ?>
-                <p><?php echo $this->display['description']; ?></p>
+                <?php echo esc_html($this->display['title']); ?>
+                <p><?php echo esc_html($this->display['description']); ?></p>
             </h2>
             <?php
         }
 
         protected function post_types_display() {
             foreach ($this->post_type_entitties as $entity) {
-                echo "<li>{$entity->label} [{$entity->name}]</li>";
-                echo "<input type='hidden' name='post_types[]' value='{$entity->name}' />";
+                $post_type_label = $entity->label;
+                $post_type_name = $entity->name;
+                
+                echo "<li>".esc_html($post_type_label)." [".esc_html($post_type_name)."]</li>";
+                echo "<input type='hidden' name='post_types[]' value='".esc_attr($post_type_name)."' />";
             }
         }
 

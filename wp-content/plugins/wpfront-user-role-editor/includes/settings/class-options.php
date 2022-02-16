@@ -294,6 +294,11 @@ if (!class_exists('WPFront\URE\Options\WPFront_User_Role_Editor_Options')) {
             
             return $this->get_self_url(['key' => $ctrl->getKey()]);
         }
+        
+        public function admin_print_scripts() {
+            wp_enqueue_script('jquery-ui-core');
+            wp_enqueue_script('jquery-ui-autocomplete');
+        }
     
     }
     

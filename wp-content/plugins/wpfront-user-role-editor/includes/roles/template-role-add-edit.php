@@ -71,8 +71,8 @@ if (!class_exists('WPFront\URE\Roles\WPFront_User_Role_Editor_Role_Add_Edit_View
                     $role_name = $role_data['role_name'];
                     $read_only = $role_data['is_readonly'];
                     ?>
-                    <input type="hidden" id="role-add-edit-role-name" name="role-add-edit-role-name" value="<?php echo $role_name; ?>" />
-                    <input type="hidden" id="role-add-edit-is-readonly" name="role-add-edit-is-readonly" value="<?php echo $read_only; ?>" />
+                    <input type="hidden" id="role-add-edit-role-name" name="role-add-edit-role-name" value="<?php echo esc_attr($role_name); ?>" />
+                    <input type="hidden" id="role-add-edit-is-readonly" name="role-add-edit-is-readonly" value="<?php echo esc_attr($read_only); ?>" />
                 </form>
             </div>
             <?php $this->scripts(); ?>
@@ -127,7 +127,7 @@ if (!class_exists('WPFront\URE\Roles\WPFront_User_Role_Editor_Role_Add_Edit_View
                             </label>
                         </th>
                         <td>
-                            <input name="display_name" type="text" id="display_name" value="<?php echo $this->get_role_display_name(); ?>" aria-required="true" <?php echo $this->is_role_display_name_disabled() ? 'disabled' : ''; ?> />
+                            <input name="display_name" type="text" id="display_name" value="<?php echo esc_attr($this->get_role_display_name()); ?>" aria-required="true" <?php echo $this->is_role_display_name_disabled() ? 'disabled' : ''; ?> />
                         </td>
                     </tr>
                     <tr class="form-field form-required <?php echo $this->is_role_name_valid() ? '' : 'form-invalid' ?>">
@@ -137,7 +137,7 @@ if (!class_exists('WPFront\URE\Roles\WPFront_User_Role_Editor_Role_Add_Edit_View
                             </label>
                         </th>
                         <td>
-                            <input name="role_name" type="text" id="role_name" value="<?php echo $this->get_role_name(); ?>" aria-required="true" <?php echo $this->is_role_name_disabled() ? 'disabled' : ''; ?> />
+                            <input name="role_name" type="text" id="role_name" value="<?php echo esc_attr($this->get_role_name()); ?>" aria-required="true" <?php echo $this->is_role_name_disabled() ? 'disabled' : ''; ?> />
                         </td>
                     </tr>
                 </tbody>
@@ -164,7 +164,7 @@ if (!class_exists('WPFront\URE\Roles\WPFront_User_Role_Editor_Role_Add_Edit_View
                                     <?php
                                     $roles = $this->get_copy_from_roles();
                                     foreach ($roles as $name => $display) {
-                                        printf('<option value="%s">%s</option>', $name, $display);
+                                        printf('<option value="%s">%s</option>', esc_attr($name), esc_html($display));
                                     }
                                     ?>
                                 </select>
@@ -234,13 +234,13 @@ if (!class_exists('WPFront\URE\Roles\WPFront_User_Role_Editor_Role_Add_Edit_View
                 $help_url = apply_filters("wpfront_ure_capability_{$cap}_ui_help_link", $help_url, $cap);
                 ?>
                 <div>
-                    <input type="checkbox" class="allow" id="<?php echo 'cap-' . $cap . '-allow'; ?>" name="capabilities[<?php echo $cap; ?>][allow]" <?php echo $value->disabled ? 'disabled' : '' ?> <?php echo $this->is_cap_granted($cap) ? 'checked' : '' ?> />
-                    <input type="checkbox" class="deny hidden" id="<?php echo 'cap-' . $cap . '-deny'; ?>" name="capabilities[<?php echo $cap; ?>][deny]" <?php echo $value->disabled ? 'disabled' : '' ?> <?php echo $this->is_cap_denied($cap) ? 'checked' : '' ?> />
-                    <label class="cap-label cap-label-<?php echo $cap; ?> <?php echo $enabled ? '' : 'disabled'; ?> <?php echo $this->is_cap_denied($cap) ? 'denied' : '' ?>" data-cap="<?php echo $cap; ?>" title="<?php echo $cap; ?>"><?php echo esc_html($cap); ?></label>
+                    <input type="checkbox" class="allow" id="<?php echo 'cap-' . esc_attr($cap) . '-allow'; ?>" name="capabilities[<?php echo esc_attr($cap); ?>][allow]" <?php echo $value->disabled ? 'disabled' : '' ?> <?php echo $this->is_cap_granted($cap) ? 'checked' : '' ?> />
+                    <input type="checkbox" class="deny hidden" id="<?php echo 'cap-' . esc_attr($cap) . '-deny'; ?>" name="capabilities[<?php echo esc_attr($cap); ?>][deny]" <?php echo $value->disabled ? 'disabled' : '' ?> <?php echo $this->is_cap_denied($cap) ? 'checked' : '' ?> />
+                    <label class="cap-label cap-label-<?php echo esc_attr($cap); ?> <?php echo $enabled ? '' : 'disabled'; ?> <?php echo $this->is_cap_denied($cap) ? 'denied' : '' ?>" data-cap="<?php echo esc_attr($cap); ?>" title="<?php echo esc_attr($cap); ?>"><?php echo esc_html($cap); ?></label>
                     <?php
                     if (!empty($help_url)) {
                         ?>
-                        <a target="_blank" href="<?php echo $help_url; ?>">
+                        <a target="_blank" href="<?php echo esc_attr($help_url); ?>">
                             <i class="fa fa-question-circle-o"></i>
                         </a>
                         <?php
@@ -554,9 +554,9 @@ if (!class_exists('WPFront\URE\Roles\WPFront_User_Role_Editor_Role_Add_Edit_View
 
                             for (m in response) {
                                 if (response[m]) {
-                                    allowed.push('.cap-label-' + m);
+                                    allowed.push('.cap-label-' + $.escapeSelector(m));
                                 } else {
-                                    denied.push('.cap-label-' + m);
+                                    denied.push('.cap-label-' + $.escapeSelector(m));
                                 }
                             }
 

@@ -8,7 +8,7 @@
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2019 - 2021 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2019 - 2022 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -31,18 +31,8 @@
  * @since 4.0.0
  *
  * @constructor
- * @param {!jQuery} $ jQuery object.
  */
-window.tsfLe = function( $ ) {
-
-	/**
-	 * Data property injected by WordPress l10n handler.
-	 *
-	 * @since 4.0.0
-	 * @access public
-	 * @type {(Object<string, *>)|boolean|null} l10n Localized strings
-	 */
-	const l10n = 'undefined' !== typeof tsfLeL10n && tsfLeL10n;
+window.tsfLe = function() {
 
 	let dispatchTimeout;
 	/**
@@ -52,7 +42,6 @@ window.tsfLe = function( $ ) {
 	 * @access private
 	 *
 	 * @function
-	 * @return {undefined}
 	 */
 	const _dispatchUpdate = () => {
 
@@ -70,10 +59,9 @@ window.tsfLe = function( $ ) {
 	 * @access private
 	 *
 	 * @function
-	 * @return {undefined}
 	 */
 	const _updated = () => {
-		tsfTT && tsfTT.triggerReset();
+		tsfTT?.triggerReset();
 	}
 
 	/**
@@ -87,20 +75,11 @@ window.tsfLe = function( $ ) {
 	 */
 	const _setInlinePostValues = id => {
 
-		let dataElement = document.getElementById( `tsfLeData[${id}]` ),
-			data        = void 0;
+		const data = JSON.parse( document.getElementById( `tsfLeData[${id}]` )?.dataset.le || 0 ) || {};
 
-		try {
-			data = JSON.parse( dataElement.dataset.le ) || void 0;
-		} catch( e ) {}
+		for ( const option in data ) {
+			const element = document.getElementById( 'autodescription-quick[%s]'.replace( '%s', option ) );
 
-		if ( ! data ) return;
-
-		let element;
-
-		for ( let option in data ) {
-
-			element = document.getElementById( 'autodescription-quick[%s]'.replace( '%s', option ) );
 			if ( ! element ) continue;
 
 			if ( data[ option ].isSelect ) {
@@ -112,6 +91,9 @@ window.tsfLe = function( $ ) {
 					_default.innerHTML = _default.innerHTML.replace( '%s', tsf.decodeEntities( data[ option ].default ) );
 			} else {
 				element.value = tsf.decodeEntities( data[ option ].value );
+
+				if ( data[ option ].placeholder )
+					element.placeholder = tsf.decodeEntities( data[ option ].placeholder );
 			}
 		}
 	}
@@ -138,16 +120,9 @@ window.tsfLe = function( $ ) {
 	 * @param {string} id
 	 * @return {object}
 	 */
-	const _getPostData = id => {
-		let dataElement = document.getElementById( 'tsfLePostData[' + id + ']' ),
-			data        = void 0;
-
-		try {
-			data = JSON.parse( dataElement.dataset.lePostData ) || void 0;
-		} catch( e ) {}
-
-		return data || {};
-	}
+	const _getPostData = id => JSON.parse(
+		document.getElementById( `tsfLePostData[${id}]` )?.dataset.lePostData || 0
+	) || {};
 
 	/**
 	 * Sets private/protected visibility state.
@@ -157,12 +132,10 @@ window.tsfLe = function( $ ) {
 	 *
 	 * @function
 	 * @param {Event} event
-	 * @return {undefined}
 	 */
 	const _setTitleVisibilityPrefix = event => {
 		let target         = ( event.originalEvent || event ).target,
 			titleId        = target.dataset.tsfTitleId,
-			oldPrefixValue = tsfTitle.getStateOf( titleId, 'prefixValue' ),
 			prefixValue    = '',
 			visibility     = 'public';
 
@@ -187,8 +160,7 @@ window.tsfLe = function( $ ) {
 				break;
 		}
 
-		if ( prefixValue !== oldPrefixValue )
-			tsfTitle.updateStateOf( titleId, 'prefixValue', prefixValue );
+		tsfTitle.updateStateOf( titleId, 'prefixValue', prefixValue );
 	}
 
 	/**
@@ -200,30 +172,28 @@ window.tsfLe = function( $ ) {
 	 *
 	 * @function
 	 * @param {Event} event
-	 * @return {undefined}
 	 */
 	const _setDefaultTitle = event => {
-		let target          = ( event.originalEvent || event ).target,
-			titleId         = target.dataset.tsfTitleId,
-			inputTitle      = 'string' === typeof target.value && target.value.trim() || '',
-			defaultTitle    = tsfTitle.stripTitleTags ? tsf.stripTags( inputTitle ) : inputTitle,
-			oldDefaultTitle = tsfTitle.getStateOf( titleId, 'defaultTitle' ),
-			termPrefix      = 'string' === typeof target.dataset.termPrefix && target.dataset.termPrefix.trim() || '';
+		const target     = ( event.originalEvent || event ).target,
+			  titleId    = target.dataset?.tsfTitleId,
+			  inputTitle = target.value?.trim() || '',
+			  termPrefix = target.dataset?.termPrefix?.trim() || '';
 
-		defaultTitle = defaultTitle || tsfTitle.untitledTitle;
+		let defaultTitle   = tsfTitle.stripTitleTags ? tsf.stripTags( inputTitle ) : inputTitle;
+		    defaultTitle ||= tsfTitle.untitledTitle;
 
 		if ( termPrefix.length ) {
-			if ( tsf.l10n.states.isRTL ) {
-				defaultTitle = defaultTitle + ' ' + termPrefix;
+			if ( window.isRtl ) {
+				defaultTitle = `${defaultTitle} ${termPrefix}`;
 			} else {
-				defaultTitle = termPrefix + ' ' + defaultTitle;
+				defaultTitle = `${termPrefix} ${defaultTitle}`;
 			}
 		}
 
+		// TODO figure out if this is necessary. tsfTitle also escapes...
 		defaultTitle = tsf.escapeString( tsf.decodeEntities( defaultTitle.trim() ) );
 
-		if ( defaultTitle !== oldDefaultTitle )
-			tsfTitle.updateStateOf( titleId, 'defaultTitle', defaultTitle );
+		tsfTitle.updateStateOf( titleId, 'defaultTitle', defaultTitle );
 	}
 
 	/**
@@ -237,28 +207,23 @@ window.tsfLe = function( $ ) {
 	 */
 	const _prepareTitleInput = id => {
 
-		let dataElement = document.getElementById( 'tsfLeTitleData[' + id + ']' ),
-			data        = void 0;
-
-		try {
-			data = JSON.parse( dataElement.dataset.leTitle ) || void 0;
-		} catch( e ) {}
-
-		if ( ! data ) return;
-
 		const titleId    = 'autodescription-quick[doctitle]',
 			  titleInput = document.getElementById( titleId );
 
 		// Reset and rebuild. Map won't be affected.
 		tsfTitle.setInputElement( titleInput );
 
-		tsfTitle.updateStateOf( titleId, 'allowReferenceChange', ! data.refTitleLocked );
-		tsfTitle.updateStateOf( titleId, 'defaultTitle', data.defaultTitle.trim() );
-		tsfTitle.updateStateOf( titleId, 'addAdditions', data.addAdditions );
-		tsfTitle.updateStateOf( titleId, 'additionValue', data.additionValue.trim() );
-		tsfTitle.updateStateOf( titleId, 'additionPlacement', data.additionPlacement );
+		const data = JSON.parse( document.getElementById( `tsfLeTitleData[${id}]` )?.dataset.leTitle || 0 );
 
-		let inlineEdit = document.getElementById( 'edit-' + id );
+		if ( data ) {
+			tsfTitle.updateStateOf( titleId, 'allowReferenceChange', ! data.refTitleLocked );
+			tsfTitle.updateStateOf( titleId, 'defaultTitle', data.defaultTitle.trim() );
+			tsfTitle.updateStateOf( titleId, 'addAdditions', data.addAdditions );
+			tsfTitle.updateStateOf( titleId, 'additionValue', data.additionValue.trim() );
+			tsfTitle.updateStateOf( titleId, 'additionPlacement', data.additionPlacement );
+		}
+
+		let inlineEdit = document.getElementById( `edit-${id}` );
 		// inlineEdit is a wrapper of a clone of a template (#inline-edit). So, we must specifically target the cloned wrapper.
 		if ( inlineEdit ) { // this test should never return false...
 			inlineEdit.querySelectorAll( '[name=post_password]' ).forEach( element => {
@@ -292,7 +257,7 @@ window.tsfLe = function( $ ) {
 			} );
 		}
 
-		tsfTT.triggerReset();
+		tsfTT?.triggerReset();
 	}
 
 	/**
@@ -306,22 +271,17 @@ window.tsfLe = function( $ ) {
 	 */
 	const _prepareDescriptionInput = id => {
 
-		let dataElement = document.getElementById( 'tsfLeDescriptionData[' + id + ']' ),
-			data        = void 0;
-
-		try {
-			data = JSON.parse( dataElement.dataset.leDescription ) || void 0;
-		} catch( e ) {}
-
-		if ( ! data ) return;
-
-		let descId    = 'autodescription-quick[description]',
-			descInput = document.getElementById( descId );
+		const descId    = 'autodescription-quick[description]',
+			  descInput = document.getElementById( descId );
 
 		// Reset and rebuild. Map won't be affected.
 		tsfDescription.setInputElement( descInput );
-		tsfDescription.updateStateOf( descId, 'allowReferenceChange', ! data.refDescriptionLocked );
-		tsfDescription.updateStateOf( descId, 'defaultDescription', data.defaultDescription.trim() );
+
+		const data = JSON.parse( document.getElementById( `tsfLeDescriptionData[${id}]` )?.dataset.leDescription || 0 );
+		if ( data ) {
+			tsfDescription.updateStateOf( descId, 'allowReferenceChange', ! data.refDescriptionLocked );
+			tsfDescription.updateStateOf( descId, 'defaultDescription', data.defaultDescription.trim() );
+		}
 
 		tsfTT.triggerReset();
 	}
@@ -333,7 +293,6 @@ window.tsfLe = function( $ ) {
 	 * @access private
 	 *
 	 * @function
-	 * @return {undefined}
 	 */
 	const _setListeners = () => {
 		document.addEventListener( 'tsfLeDispatchUpdate', _dispatchUpdate );
@@ -354,54 +313,49 @@ window.tsfLe = function( $ ) {
 	 */
 	const _hijackListeners = () => {
 
-		let _oldInlineEditCallback;
+		let _oldInlineEditPost,
+			_oldInlineEditTax;
 
-		if ( window.inlineEditPost ) {
-			_oldInlineEditCallback = 'edit' in window.inlineEditPost && window.inlineEditPost.edit;
+		_oldInlineEditPost = window.inlineEditPost?.edit;
+		if ( _oldInlineEditPost ) {
+			window.inlineEditPost.edit = function( id ) {
+				let ret = _oldInlineEditPost.apply( this, arguments );
 
-			if ( _oldInlineEditCallback ) {
-				window.inlineEditPost.edit = function( id ) {
-					let ret = _oldInlineEditCallback.apply( this, arguments );
+				if ( 'object' === typeof id )
+					id = window.inlineEditPost?.getId( id );
 
-					if ( typeof( id ) === 'object' )
-						id = window.inlineEditPost.getId( id );
+				if ( ! id ) return ret;
 
-					if ( ! id ) return ret;
+				_setInlinePostValues( id );
+				_prepareTitleInput( id );
+				_prepareDescriptionInput( id );
+				window.tsfC?.resetCounterListener();
 
-					_setInlinePostValues( id );
-					_prepareTitleInput( id );
-					_prepareDescriptionInput( id );
-					'tsfC' in window && tsfC.resetCounterListener();
-
-					return ret;
-				}
+				return ret;
 			}
 		}
 
-		if ( window.inlineEditTax ) {
-			_oldInlineEditCallback = 'edit' in window.inlineEditTax && window.inlineEditTax.edit;
+		_oldInlineEditTax = window.inlineEditTax?.edit;
+		if ( _oldInlineEditTax ) {
+			window.inlineEditTax.edit = function( id ) {
+				let ret = _oldInlineEditTax.apply( this, arguments );
 
-			if ( _oldInlineEditCallback ) {
-				window.inlineEditTax.edit = function( id ) {
-					let ret = _oldInlineEditCallback.apply( this, arguments );
+				if ( 'object' === typeof id )
+					id = window.inlineEditTax?.getId( id );
 
-					if ( typeof( id ) === 'object' )
-						id = window.inlineEditTax.getId( id );
+				if ( ! id ) return ret;
 
-					if ( ! id ) return ret;
+				_setInlineTermValues( id );
+				_prepareTitleInput( id );
+				_prepareDescriptionInput( id );
+				window.tsfC?.resetCounterListener();
 
-					_setInlineTermValues( id );
-					_prepareTitleInput( id );
-					_prepareDescriptionInput( id );
-					'tsfC' in window && tsfC.resetCounterListener();
-
-					return ret;
-				}
+				return ret;
 			}
 		}
 	}
 
-	return Object.assign( {
+	return {
 		/**
 		 * Initialises all aspects of the scripts.
 		 * You shouldn't call this.
@@ -410,14 +364,11 @@ window.tsfLe = function( $ ) {
 		 * @access protected
 		 *
 		 * @function
-		 * @return {undefined}
 		 */
 		load: () => {
 			document.body.addEventListener( 'tsf-onload', _setListeners );
 			document.body.addEventListener( 'tsf-onload', _hijackListeners );
 		}
-	}, {}, {
-		l10n
-	} );
-}( jQuery );
+	};
+}();
 window.tsfLe.load();

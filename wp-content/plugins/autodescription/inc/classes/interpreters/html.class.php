@@ -8,7 +8,7 @@ namespace The_SEO_Framework\Interpreters;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2021 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2021 - 2022 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -38,6 +38,30 @@ namespace The_SEO_Framework\Interpreters;
 final class HTML {
 
 	/**
+	 * Helper function that constructs header elements. Does not escape.
+	 *
+	 * @since 4.1.4
+	 *
+	 * @param string $title The header title.
+	 * @return string The header title.
+	 */
+	public static function get_header_title( $title ) {
+		return sprintf( '<h4>%s</h4>', $title );
+	}
+
+	/**
+	 * Helper function that constructs header elements.
+	 *
+	 * @since 4.1.4
+	 *
+	 * @param string $title The header title.
+	 */
+	public static function header_title( $title ) {
+		// phpcs:ignore, WordPress.Security.EscapeOutput.OutputNotEscaped -- it is.
+		echo static::get_header_title( \esc_html( $title ) );
+	}
+
+	/**
 	 * Mark up content with code tags.
 	 * Escapes all HTML, so `<` gets changed to `&lt;` and displays correctly.
 	 *
@@ -60,7 +84,7 @@ final class HTML {
 	 * @return string Content wrapped in code tags.
 	 */
 	public static function code_wrap_noesc( $content ) {
-		return '<code>' . $content . '</code>';
+		return "<code>$content</code>";
 	}
 
 	/**
@@ -85,9 +109,11 @@ final class HTML {
 	 * @param bool   $block Whether to wrap the content in <p> tags.
 	 */
 	public static function description_noesc( $content, $block = true ) {
-		$output = '<span class="description">' . $content . '</span>';
-		// phpcs:ignore, WordPress.Security.EscapeOutput -- Method clearly states it's not escaped.
-		echo $block ? '<p>' . $output . '</p>' : $output;
+		printf(
+			( $block ? '<p>%s</p>' : '%s' ),
+			// phpcs:ignore, WordPress.Security.EscapeOutput -- Method clearly states it's not escaped.
+			"<span class=description>$content</span>"
+		);
 	}
 
 	/**
@@ -112,9 +138,11 @@ final class HTML {
 	 * @param bool   $block Whether to wrap the content in <p> tags.
 	 */
 	public static function attention_noesc( $content, $block = true ) {
-		$output = '<span class="attention">' . $content . '</span>';
-		// phpcs:ignore, WordPress.Security.EscapeOutput -- Method clearly states it's not escaped.
-		echo $block ? '<p>' . $output . '</p>' : $output;
+		printf(
+			( $block ? '<p>%s</p>' : '%s' ),
+			// phpcs:ignore, WordPress.Security.EscapeOutput -- Method clearly states it's not escaped.
+			"<span class=attention>$content</span>"
+		);
 	}
 
 	/**
@@ -139,9 +167,11 @@ final class HTML {
 	 * @param bool   $block Whether to wrap the content in <p> tags.
 	 */
 	public static function attention_description_noesc( $content, $block = true ) {
-		$output = '<span class="description attention">' . $content . '</span>';
-		// phpcs:ignore, WordPress.Security.EscapeOutput -- Method clearly states it's not escaped.
-		echo $block ? '<p>' . $output . '</p>' : $output;
+		printf(
+			( $block ? '<p>%s</p>' : '%s' ),
+			// phpcs:ignore, WordPress.Security.EscapeOutput -- Method clearly states it's not escaped.
+			"<span class=\"description attention\">$content</span>"
+		);
 	}
 
 	/**
@@ -160,11 +190,13 @@ final class HTML {
 		if ( \is_array( $input ) )
 			$input = implode( PHP_EOL, $input );
 
+		$output = "<div class=tsf-fields>$input</div>";
+
 		if ( $echo ) {
 			// phpcs:ignore, WordPress.Security.EscapeOutput -- Escape your $input prior!
-			echo '<div class="tsf-fields">' . $input . '</div>';
+			echo $output;
 		} else {
-			return '<div class="tsf-fields">' . $input . '</div>';
+			return $output;
 		}
 	}
 
@@ -184,7 +216,7 @@ final class HTML {
 
 		if ( $link ) {
 			$output = sprintf(
-				'<a href="%1$s" class="tsf-tooltip-item tsf-help" target="_blank" rel="nofollow noreferrer noopener" title="%2$s" data-desc="%2$s">[?]</a>',
+				'<a href="%1$s" class="tsf-tooltip-item tsf-help" target=_blank rel="nofollow noreferrer noopener" title="%2$s" data-desc="%2$s">[?]</a>',
 				\esc_url( $link, [ 'https', 'http' ] ),
 				\esc_attr( $description )
 			);
@@ -195,7 +227,7 @@ final class HTML {
 			);
 		}
 
-		$output = sprintf( '<span class="tsf-tooltip-wrap">%s</span>', $output );
+		$output = sprintf( '<span class=tsf-tooltip-wrap>%s</span>', $output );
 
 		if ( $echo ) {
 			// phpcs:ignore, WordPress.Security.EscapeOutput
@@ -212,37 +244,25 @@ final class HTML {
 	 * @since 4.1.0 No longer adds an extra space in front of the return value when no data is generated.
 	 * @internal
 	 *
-	 * @param array $data : {
+	 * @param iterable $data : {
 	 *    string $k => mixed $v
 	 * }
-	 * @return string The HTML data attributes, with added space to the start.
+	 * @return string The HTML data attributes, with added space to the start if something's created.
 	 */
-	public static function make_data_attributes( array $data ) {
+	public static function make_data_attributes( $data ) {
 
 		$ret = [];
 
 		foreach ( $data as $k => $v ) {
-			if ( ! is_scalar( $v ) ) {
-				$ret[] = sprintf(
-					'data-%s="%s"',
-					strtolower( preg_replace(
-						'/([A-Z])/',
-						'-$1',
-						preg_replace( '/[^a-z0-9_\-]/i', '', $k )
-					) ), // dash case.
-					htmlspecialchars( json_encode( $v, JSON_UNESCAPED_SLASHES ), ENT_COMPAT, 'UTF-8' )
-				);
-			} else {
-				$ret[] = sprintf(
-					'data-%s="%s"',
-					strtolower( preg_replace(
-						'/([A-Z])/',
-						'-$1',
-						preg_replace( '/[^a-z0-9_\-]/i', '', $k )
-					) ), // dash case.
-					\esc_attr( $v )
-				);
-			}
+			$ret[] = sprintf(
+				'data-%s="%s"',
+				strtolower( preg_replace(
+					'/([A-Z])/',
+					'-$1',
+					preg_replace( '/[^a-z0-9_\-]/i', '', $k )
+				) ), // dash case.
+				is_scalar( $v ) ? \esc_attr( $v ) : htmlspecialchars( json_encode( $v, JSON_UNESCAPED_SLASHES ), ENT_COMPAT, 'UTF-8' )
+			);
 		}
 
 		return $ret ? ' ' . implode( ' ', $ret ) : '';

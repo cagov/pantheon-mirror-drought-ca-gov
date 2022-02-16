@@ -9,7 +9,7 @@ namespace The_SEO_Framework\Bootstrap;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2015 - 2021 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2015 - 2022 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -41,7 +41,7 @@ _deactivation_unset_options_autoload();
  */
 function _deactivation_unset_options_autoload() {
 
-	$the_seo_framework = \the_seo_framework();
+	$the_seo_framework = \tsf();
 
 	if ( $the_seo_framework->loaded ) {
 		$options = $the_seo_framework->get_all_options();

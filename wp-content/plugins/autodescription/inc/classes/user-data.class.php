@@ -10,7 +10,7 @@ namespace The_SEO_Framework;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2015 - 2021 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2015 - 2022 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -55,14 +55,7 @@ class User_Data extends Term_Data {
 	 * @return mixed The user meta item. Null when not found.
 	 */
 	public function get_user_meta_item( $item, $user_id = 0, $use_cache = true ) {
-
-		if ( ! $user_id ) {
-			$meta = $this->get_user_meta( $this->get_user_id(), $use_cache );
-		} else {
-			$meta = $this->get_user_meta( $user_id, $use_cache );
-		}
-
-		return isset( $meta[ $item ] ) ? $meta[ $item ] : null;
+		return $this->get_user_meta( $user_id ?: $this->get_user_id(), $use_cache )[ $item ] ?? null;
 	}
 
 	/**
@@ -83,12 +76,12 @@ class User_Data extends Term_Data {
 	 * Memoizes the return value for the current request.
 	 *
 	 * @since 4.1.4
+	 * @TODO Throw this away? We do not use it... never have.
 	 *
 	 * @return array The current author meta.
 	 */
 	public function get_current_post_author_meta() {
-		static $cache;
-		return isset( $cache ) ? $cache : $cache = $this->get_user_meta( $this->get_current_post_author_id() );
+		return memo() ?? memo( $this->get_user_meta( $this->get_current_post_author_id() ) );
 	}
 
 	/**
@@ -99,7 +92,8 @@ class User_Data extends Term_Data {
 	 * @since 2.8.0 Always returns array, even if no value is assigned.
 	 * @since 4.1.4 1. Now returns default values when custom values are missing.
 	 *              2. Now listens to headlessness.
-	 *              3. Deprecated the second argument, and moved it to the second.
+	 *              3. Deprecated the third argument, and moved it to the second.
+	 * @todo Send deprecation warning for 3rd parameter
 	 *
 	 * @param int  $user_id   The user ID.
 	 * @param bool $use_cache Whether to store and use options from cache, or bypass it.
@@ -112,12 +106,9 @@ class User_Data extends Term_Data {
 
 		$user_id = $user_id ?: $this->get_user_id();
 
-		if ( $use_cache ) {
-			static $cache = [];
-
-			if ( isset( $cache[ $user_id ] ) )
-				return $cache[ $user_id ];
-		}
+		// phpcs:ignore, WordPress.CodeAnalysis.AssignmentInCondition -- I know.
+		if ( $use_cache && null !== $memo = memo( null, $user_id ) )
+			return $memo;
 
 		/**
 		 * We can't trust the filter to always contain the expected keys.
@@ -165,7 +156,8 @@ class User_Data extends Term_Data {
 			]
 		);
 
-		return $cache[ $user_id ] = $meta;
+		// Do not overwrite cache when not requested. Otherwise, we'd have two "initial" states, causing incongruities.
+		return $use_cache ? memo( $meta, $user_id ) : $meta;
 	}
 
 	/**
@@ -210,6 +202,7 @@ class User_Data extends Term_Data {
 	 * Saves user profile fields.
 	 *
 	 * @since 4.1.4
+	 * @since 4.2.0 Now repopulates not-posted user metadata.
 	 * @access private
 	 *
 	 * @param int $user_id The user ID.
@@ -218,20 +211,23 @@ class User_Data extends Term_Data {
 
 		if ( empty( $_POST ) ) return;
 
-		\check_admin_referer( 'update-user_' . $user_id );
+		\check_admin_referer( "update-user_{$user_id}" );
 		if ( ! \current_user_can( 'edit_user', $user_id ) ) return;
 
 		$user = \get_userdata( $user_id );
 
 		if ( ! $user->has_cap( THE_SEO_FRAMEWORK_AUTHOR_INFO_CAP ) ) return;
 
-		$data = (array) $_POST['tsf-user-meta'];
+		$data = \wp_parse_args(
+			(array) $_POST['tsf-user-meta'],
+			$this->get_user_meta( $user_id )
+		);
 
 		$this->save_user_meta( $user_id, $data );
 	}
 
 	/**
-	 * Updates user SEO option.
+	 * Updates user TSF-meta option.
 	 *
 	 * @since 4.1.4
 	 *
@@ -256,19 +252,17 @@ class User_Data extends Term_Data {
 	 * Updates users meta from input.
 	 *
 	 * @since 4.1.4
+	 * @since 4.2.0 No longer returns the update success state.
 	 *
 	 * @param int   $user_id The user ID.
 	 * @param array $data    The data to save.
 	 */
-	public function save_user_meta( $user_id, array $data ) {
+	public function save_user_meta( $user_id, $data ) {
 
 		$user = \get_userdata( $user_id );
 
 		// We could test for !$user, but this is more to the point.
 		if ( empty( $user->ID ) ) return;
-
-		$data = (array) \wp_parse_args( $data, $this->get_user_meta_defaults( $user->ID ) );
-		$data = $this->s_user_meta( $data );
 
 		/**
 		 * @since 4.1.4
@@ -278,12 +272,15 @@ class User_Data extends Term_Data {
 		$data = (array) \apply_filters_ref_array(
 			'the_seo_framework_save_user_data',
 			[
-				$data,
+				$this->s_user_meta( (array) \wp_parse_args(
+					$data,
+					$this->get_user_meta_defaults( $user->ID )
+				) ),
 				$user->ID,
 			]
 		);
 
-		return \update_user_meta( $user->ID, THE_SEO_FRAMEWORK_USER_OPTIONS, $data );
+		\update_user_meta( $user->ID, THE_SEO_FRAMEWORK_USER_OPTIONS, $data );
 	}
 
 	/**
@@ -291,23 +288,17 @@ class User_Data extends Term_Data {
 	 * Memoizes the return value for the current request.
 	 *
 	 * @since 3.0.0
-	 * @since 3.2.2 : 1. Now no longer returns the latest post author ID on home-as-blog pages.
-	 *                2. Now always returns an integer.
+	 * @since 3.2.2 1. Now no longer returns the latest post author ID on home-as-blog pages.
+	 *              2. Now always returns an integer.
 	 *
 	 * @return int Post author ID on success, 0 on failure.
 	 */
 	public function get_current_post_author_id() {
-
-		static $cache;
-
-		if ( isset( $cache ) ) return $cache;
-
-		if ( $this->is_singular() ) {
-			$post  = \get_post( $this->get_the_real_ID() );
-			$cache = isset( $post->post_author ) ? (int) $post->post_author : 0;
-		}
-
-		return $cache ?: ( $cache = 0 );
+		return memo() ?? memo(
+			$this->is_singular()
+				? (int) ( \get_post( $this->get_the_real_ID() )->post_author ?? 0 )
+				: 0
+		);
 	}
 
 	/**
@@ -320,14 +311,12 @@ class User_Data extends Term_Data {
 	 */
 	public function get_user_id() {
 
-		static $user_id = null;
-
-		if ( isset( $user_id ) )
-			return $user_id;
+		// phpcs:ignore, WordPress.CodeAnalysis.AssignmentInCondition -- I know.
+		if ( null !== $memo = memo() ) return $memo;
 
 		$user = \wp_get_current_user();
 
-		return $user_id = $user->exists() ? (int) $user->ID : 0;
+		return memo( $user->exists() ? (int) $user->ID : 0 );
 	}
 
 	/**

@@ -5,7 +5,7 @@
  * @package micropackage/templates
  */
 
-namespace BracketSpace\Notification\Vendor\Micropackage\Templates;
+namespace Micropackage\Templates;
 
 /**
  * Prints the template

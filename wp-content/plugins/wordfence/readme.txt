@@ -3,8 +3,10 @@ Contributors: mmaunder, wfryan, wfmatt, wfmattr
 Tags: security, firewall, malware scanner, web application firewall, two factor authentication, block hackers, country blocking, clean hacked site, blocklist, waf, login security
 Requires at least: 3.9
 Requires PHP: 5.3
-Tested up to: 5.8
-Stable tag: 7.5.5
+Tested up to: 5.9
+Stable tag: 7.5.8
+License: GPLv3
+License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
 Secure your website with the most comprehensive WordPress security plugin. Firewall, malware scan, blocking, live traffic, login security & more.
 
@@ -145,7 +147,7 @@ No. Wordfence Security is extremely fast and uses techniques like caching its ow
 
 = What if my site has already been hacked? =
 
-Wordfence Security is able to repair core files, themes and plugins on sites where security is already compromised. You can follow this guide on [how to clean a hacked website](https://www.wordfence.com/docs/how-to-clean-a-hacked-wordpress-site-using-wordfence/) using Wordfence. However, please note that site security cannot be assured unless you do a full reinstall if your site has been hacked. We recommend you only use Wordfence Security to get your site into a running state in order to recover the data you need to do a full reinstall. If you need help repairing a hacked site, we offer an affordable, high-quality [site cleaning service](https://www.wordfence.com/wordfence-site-cleanings/) that includes a Premium key for a year.
+Wordfence Security is able to repair core files, themes and plugins on sites where security is already compromised. You can follow this guide on [how to clean a hacked website using Wordfence](https://www.wordfence.com/docs/how-to-clean-a-hacked-wordpress-site-using-wordfence/). If you are cleaning your own site after a hack, note that site security cannot be assured unless you do a full reinstall if your site has been hacked. We recommend you only use Wordfence Security to get your site into a running state in order to recover the data you need to do a full reinstall. If you need help with a security issue, check out [Wordfence Care](https://www.wordfence.com/products/wordfence-care/), which offers hands-on support from our team, including dealing with a hacked site. For mission-critical sites, check out [Wordfence Response](https://www.wordfence.com/products/wordfence-response/).
 
 = Does Wordfence Security support IPv6? =
 
@@ -157,15 +159,15 @@ Yes. WordPress Multi-Site is fully supported. Using Wordfence you can scan every
 
 = What support options are available for Wordfence users? =
 
-Providing excellent customer service is very important to us.  We offer help to all our customers whether you are using the Premium or free version of Wordfence.  For help with the free version, you can post in our [forum](https://wordpress.org/support/plugin/wordfence) where we have dedicated staff responding to questions. If you need faster or more in-depth help, Premium customers can submit a [support ticket](https://support.wordfence.com/support/home) to our Premium support team.
+Providing excellent customer service is very important to us. Our free users receive volunteer-level support in our [support forums](https://wordpress.org/support/plugin/wordfence). [Wordfence Premium](https://www.wordfence.com/products/wordfence-premium/) customers get paid ticket-based support. [Wordfence Care](https://www.wordfence.com/products/wordfence-care/) customers receive hands-on support including help with security incidents and a yearly security audit. [Wordfence Response](https://www.wordfence.com/products/wordfence-response/) customers get 24/7/365 support from our incident response team, with a 1 hour response time, and a maximum of 24 hours to resolve a security issue.
 
 = Where can I learn more about WordPress security? =
 
 Designed for every skill level, [The WordPress Security Learning Center](https://www.wordfence.com/learn/) is dedicated to deepening users’ understanding of security best practices by providing free access to entry-level articles, in-depth articles, videos, industry survey results, graphics and more.
 
-= Where can I find the Wordfence Terms of Use and Privacy Policy? =
+= Where can I find the Wordfence Terms of Service and Privacy Policy? =
 
-These are available on our website: [Terms of Use](https://www.wordfence.com/terms-of-use/) and [Privacy Policy](https://www.wordfence.com/privacy-policy/)
+These are available on our website: [Terms of Service](https://www.wordfence.com/terms-of-service/) and [Privacy Policy](https://www.wordfence.com/privacy-policy/)
 
 == Screenshots ==
 
@@ -182,6 +184,17 @@ Secure your website with Wordfence.
 9. Logging in is easy with Wordfence 2FA.
 
 == Changelog ==
+
+= 7.5.8 - February 1, 2022 =
+* Launch of Wordfence Care and Wordfence Response
+
+= 7.5.7 - November 22, 2021 =
+* Improvement: Made preliminary changes for compatibility with PHP 8.1
+* Change: Added GPLv3 license and updated EULA
+
+= 7.5.6 - October 18, 2021 =
+* Fix: Prevented login errors with WooCommerce integration when manual username entry is enabled on the WooCommerce registration form
+* Fix: Corrected theme incompatibilities with WooCommerce integration
 
 = 7.5.5 - August 16, 2021 =
 * Improvement: Enhanced accessibility

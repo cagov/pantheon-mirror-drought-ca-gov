@@ -5,14 +5,21 @@
  * @package micropackage/requirements
  */
 
-namespace BracketSpace\Notification\Vendor\Micropackage\Requirements\Abstracts;
+namespace Micropackage\Requirements\Abstracts;
 
-use BracketSpace\Notification\Vendor\Micropackage\Requirements\Interfaces;
+use Micropackage\Requirements\Interfaces;
 
 /**
  * Checker abstract
  */
 abstract class Checker implements Interfaces\Checkable {
+
+	/**
+	 * Checker name
+	 *
+	 * @var string
+	 */
+	protected $name = '';
 
 	/**
 	 * Error messages

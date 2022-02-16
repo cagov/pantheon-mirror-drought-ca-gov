@@ -6,14 +6,13 @@ $vendorDir = dirname(dirname(__FILE__));
 $baseDir = dirname($vendorDir);
 
 return array(
-    'TypistTech\\Imposter\\Plugin\\' => array($vendorDir . '/typisttech/imposter-plugin/src'),
-    'TypistTech\\Imposter\\' => array($vendorDir . '/typisttech/imposter/src'),
+    'enshrined\\svgSanitize\\' => array($vendorDir . '/enshrined/svg-sanitize/src'),
     'Micropackage\\Templates\\' => array($vendorDir . '/micropackage/templates/src'),
     'Micropackage\\Requirements\\' => array($vendorDir . '/micropackage/requirements/src'),
     'Micropackage\\Internationalization\\' => array($vendorDir . '/micropackage/internationalization/src'),
     'Micropackage\\Filesystem\\' => array($vendorDir . '/micropackage/filesystem/src'),
     'Micropackage\\DocHooks\\' => array($vendorDir . '/micropackage/dochooks/src'),
+    'Micropackage\\Cache\\' => array($vendorDir . '/micropackage/cache/src'),
     'Micropackage\\Ajax\\' => array($vendorDir . '/micropackage/ajax/src'),
-    'BracketSpace\\Notification\\Tests\\' => array($baseDir . '/tests'),
-    'BracketSpace\\Notification\\' => array($baseDir . '/src/classes'),
+    'BracketSpace\\Notification\\' => array($baseDir . '/src'),
 );

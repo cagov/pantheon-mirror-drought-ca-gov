@@ -167,7 +167,7 @@ if (!class_exists('\WPFront\URE\Post_Type\WPFront_User_Role_Editor_Post_Type_Lis
             <th scope="row" class="check-column">
                 <?php if ($item->can_edit) { ?>
                     <label class="screen-reader-text" for="post_type_select" ?></label>
-                    <input type="checkbox" id="post_type_<?php echo $item->name; ?>" name="post_types[]" value="<?php echo esc_attr($item->name); ?>" />
+                    <input type="checkbox" id="post_type_<?php echo esc_attr($item->name); ?>" name="post_types[]" value="<?php echo esc_attr($item->name); ?>" />
                 <?php } ?>
             </th>
             <?php
@@ -179,47 +179,47 @@ if (!class_exists('\WPFront\URE\Post_Type\WPFront_User_Role_Editor_Post_Type_Lis
             <td <?php echo $attributes; ?>>
                 <?php
                 if ($item->can_edit) {
-                    $edit_link = $this->controller->get_edit_url($item->name);
+                    $edit_link = esc_url_raw($this->controller->get_edit_url($item->name));
                     ?>
                     <strong>
-                        <a href="<?php echo $edit_link; ?>" class="edit">
-                            <?php echo $item->name; ?>
+                        <a href="<?php echo esc_attr($edit_link); ?>" class="edit">
+                            <?php echo esc_html($item->name); ?>
                         </a>
                     </strong>
                     <?php
                 } else {
-                    ?> <?php echo $item->name; ?> <?php
+                    ?> <?php echo esc_html($item->name); ?> <?php
                 }
                 $actions = array();
                 if ($item->can_edit) {
                     $edit_link = $this->controller->get_edit_url($item->name);
                     $display = __('Edit', 'wpfront-user-role-editor');
-                    $actions['edit'] = "<a href='$edit_link'>$display</a>";
+                    $actions['edit'] = "<a href='".esc_attr($edit_link)."'>".esc_html($display)."</a>";
                 }
                 if ($item->can_delete) {
                     $delete_link = $this->controller->get_delete_url($item->name);
                     $display = __('Delete', 'wpfront-user-role-editor');
-                    $actions['delete'] = "<a href='$delete_link'>$display</a>";
+                    $actions['delete'] = "<a href='".esc_attr($delete_link)."'>".esc_html($display)."</a>";
                 }
                 if ($item->can_activate) {
                     $activate_link = $this->controller->get_activate_url($item->name);
                     $display = __('Activate', 'wpfront-user-role-editor');
-                    $actions['activate'] = "<a href='$activate_link'>$display</a>";
+                    $actions['activate'] = "<a href='".esc_attr($activate_link)."'>".esc_html($display)."</a>";
                 }
                 if ($item->can_deactivate) {
                     $deactivate_link = $this->controller->get_deactivate_url($item->name);
                     $display = __('Deactivate', 'wpfront-user-role-editor');
-                    $actions['deactivate'] = "<a href='$deactivate_link'>$display</a>";
+                    $actions['deactivate'] = "<a href='".esc_attr($deactivate_link)."'>".esc_html($display)."</a>";
                 }
                 if ($item->can_clone) {
                     $clone_link = $this->controller->get_clone_url($item->name);
                     $display = __('Clone', 'wpfront-user-role-editor');
-                    $actions['clone'] = "<a href='$clone_link'>$display</a>";
+                    $actions['clone'] = "<a href='".esc_attr($clone_link)."'>".esc_html($display)."</a>";
                 }
                 if ($item->can_restore) {
                     $restore_link = $this->controller->get_restore_url($item->name);
                     $display = __('Restore', 'wpfront-user-role-editor');
-                    $actions['restore'] = "<a href='$restore_link'>$display</a>";
+                    $actions['restore'] = "<a href='".esc_attr($restore_link)."'>".esc_html($display)."</a>";
                 }
                 echo $this->row_actions($actions);
                 ?> 
@@ -230,7 +230,7 @@ if (!class_exists('\WPFront\URE\Post_Type\WPFront_User_Role_Editor_Post_Type_Lis
         protected function label_cell($item) {
             ?>
             <td class="label column-label">
-                <?php echo $item->label; ?>
+                <?php echo esc_html($item->label); ?>
             </td> 
             <?php
         }

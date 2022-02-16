@@ -8,7 +8,7 @@ namespace The_SEO_Framework\Bridges;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2019 - 2021 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2019 - 2022 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -24,6 +24,8 @@ namespace The_SEO_Framework\Bridges;
  */
 
 \defined( 'THE_SEO_FRAMEWORK_PRESENT' ) or die;
+
+use function \The_SEO_Framework\memo;
 
 /**
  * Pings search engines.
@@ -110,7 +112,7 @@ final class Ping {
 	 */
 	public static function ping_search_engines() {
 
-		$tsf = \the_seo_framework();
+		$tsf = \tsf();
 
 		if ( $tsf->get_option( 'site_noindex' ) || ! $tsf->is_blog_public() ) return;
 
@@ -164,16 +166,14 @@ final class Ping {
 	 */
 	public static function ping_google() {
 
-		if ( \the_seo_framework()->use_core_sitemaps() ) {
-			$url = \get_sitemap_url( 'index' );
-		} else {
-			$url = \The_SEO_Framework\Bridges\Sitemap::get_instance()->get_expected_sitemap_endpoint_url();
-		}
+		$url = static::get_ping_url();
 
 		if ( ! $url ) return;
 
-		$pingurl = 'https://www.google.com/ping?sitemap=' . rawurlencode( $url );
-		\wp_safe_remote_get( $pingurl, [ 'timeout' => 3 ] );
+		\wp_safe_remote_get(
+			'https://www.google.com/ping?sitemap=' . rawurlencode( $url ),
+			[ 'timeout' => 3 ]
+		);
 	}
 
 	/**
@@ -188,15 +188,32 @@ final class Ping {
 	 */
 	public static function ping_bing() {
 
-		if ( \the_seo_framework()->use_core_sitemaps() ) {
-			$url = \get_sitemap_url( 'index' );
-		} else {
-			$url = \The_SEO_Framework\Bridges\Sitemap::get_instance()->get_expected_sitemap_endpoint_url();
-		}
+		$url = static::get_ping_url();
 
 		if ( ! $url ) return;
 
-		$pingurl = 'https://www.bing.com/ping?sitemap=' . rawurlencode( $url );
-		\wp_safe_remote_get( $pingurl, [ 'timeout' => 3 ] );
+		\wp_safe_remote_get(
+			'https://www.bing.com/ping?sitemap=' . rawurlencode( $url ),
+			[ 'timeout' => 3 ]
+		);
+	}
+
+	/**
+	 * Return the base sitemap's ping URL.
+	 * Memoizes the return value.
+	 *
+	 * @since 4.2.0
+	 *
+	 * @return string The ping URL. Empty string on failure.
+	 */
+	public static function get_ping_url() {
+		return memo() ?? memo(
+			(
+				\tsf()->use_core_sitemaps()
+					? \get_sitemap_url( 'index' )
+					: \The_SEO_Framework\Bridges\Sitemap::get_instance()->get_expected_sitemap_endpoint_url()
+			)
+			?: ''
+		);
 	}
 }

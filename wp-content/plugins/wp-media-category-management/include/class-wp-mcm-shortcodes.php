@@ -6,7 +6,7 @@
  * @author    De B.A.A.T. <wp-mcm@de-baat.nl>
  * @license   GPL-3.0+
  * @link      https://www.de-baat.nl/WP_MCM
- * @copyright 2014 - 2020 De B.A.A.T.
+ * @copyright 2014 - 2021 De B.A.A.T.
  */
 
 class WP_MCM_Shortcodes {

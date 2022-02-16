@@ -8,7 +8,7 @@
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2018 - 2021 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2018 - 2022 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -78,9 +78,8 @@ window.tsfMedia = function( $ ) {
 	 *
 	 * @function
 	 * @param {Event} event
-	 * @return {undefined}
 	 */
-	const _openImageEditor = ( event ) => {
+	const _openImageEditor = event => {
 
 		const button = event.target;
 
@@ -190,7 +189,7 @@ window.tsfMedia = function( $ ) {
 		frame.on( 'skippedcrop', onSkippedCrop );
 
 		const onDone = imageSelection => {
-			button.innerText = l10n.labels[ imageType ].imgChange;
+			button.textContent = l10n.labels[ imageType ].imgChange;
 
 			if ( inputUrl ) {
 				inputUrl.readOnly = true;
@@ -219,14 +218,13 @@ window.tsfMedia = function( $ ) {
 	 */
 	const _appendRemoveButton = ( target, animate ) => {
 
-		const inputId   = target.dataset.inputId || '',
-			  inputType = target.dataset.inputType || '';
+		const inputId   = target.dataset?.inputId,
+			  inputType = target.dataset?.inputType;
 
 		if ( ! inputId || ! inputType ) return;
 
-		const removeButton = document.getElementById( `${inputId}-remove` );
-		// Don't append another one.
-		if ( removeButton ) return;
+		// Don't append another remove button if one's found.
+		if ( document.getElementById( `${inputId}-remove` ) ) return;
 
 		let button = document.createElement( 'button' );
 
@@ -261,7 +259,6 @@ window.tsfMedia = function( $ ) {
 	 *
 	 * @function
 	 * @param {Event} event
-	 * @return {undefined}
 	 */
 	const _removeEditorImage = event => {
 
@@ -287,7 +284,7 @@ window.tsfMedia = function( $ ) {
 			$( inputRemove ).fadeOut( 250, () => {
 				inputRemove.remove();
 
-				inputSelect.innerText = l10n.labels[ imageType ].imgSelect;
+				inputSelect.textContent = l10n.labels[ imageType ].imgSelect;
 				inputSelect.classList.remove( 'disabled' );
 				inputSelect.disabled = false;
 			} );
@@ -345,9 +342,8 @@ window.tsfMedia = function( $ ) {
 				let imgOptions = this.controller.get( 'imgSelectOptions' ),
 					imgSelect;
 
-				if ( typeof imgOptions === 'function' ) {
+				if ( typeof imgOptions === 'function' )
 					imgOptions = imgOptions( this.options.attachment, this.controller );
-				}
 
 				//= Seriously Core team, was this condition too hard to implement?
 				if ( 'undefined' === typeof imgOptions.aspectRatio ) {
@@ -568,7 +564,6 @@ window.tsfMedia = function( $ ) {
 	 * @access private
 	 *
 	 * @param {!jQuery.event} event
-	 * @return {undefined}
 	 */
 	const _updateButtonText = event => {
 		const imageId   = event.target.dataset.id || '',
@@ -581,7 +576,7 @@ window.tsfMedia = function( $ ) {
 		// The image remover is probably handling this entry.
 		if ( inputSelect.disabled ) return;
 
-		inputSelect.innerText = event.target.value.length
+		inputSelect.textContent = event.target.value.length
 			? l10n.labels[ imageType ].imgChange
 			: l10n.labels[ imageType ].imgSelect;
 	}
@@ -594,7 +589,6 @@ window.tsfMedia = function( $ ) {
 	 * @access private
 	 *
 	 * @function
-	 * @return {undefined}
 	 */
 	const _checkImageEditorInput = () => {
 
@@ -708,56 +702,58 @@ window.tsfMedia = function( $ ) {
 
 		let src = event.target.value || event.target.placeholder || '';
 
-		_updateToolTipBuffer[ imageId ] = setTimeout(
-			() => {
-				// The maxWidth is defined at tsfTT.doTooltip(), where the tooltip has 12px padding.
-				// Remove 1 to account for floating point errors.
-				// let maxWidth = 250 - ( 12 * 2 ) - 1 + 'px'; // this is just 225px...
+		const updateToolTip = () => {
+			// The maxWidth is defined at tsfTT.doTooltip(), where the tooltip has 12px padding.
+			// Remove 1 to account for floating point errors.
+			// let maxWidth = 250 - ( 12 * 2 ) - 1 + 'px'; // this is just 225px...
 
-				let // style = `max-width:${maxWidth};max-height:${maxWidth};min-width:60px;min-height:60px;border-radius:3px;display:block;`;
-					style = `max-width:225px;max-height:225px;min-width:60px;min-height:60px;border-radius:3px;display:block;`;
-					// We set min-height and width as that will prevent jumping. Also, those are the absolute-minimum for sharing/schema images.
+			let // style = `max-width:${maxWidth};max-height:${maxWidth};min-width:60px;min-height:60px;border-radius:3px;display:block;`;
+				style = "max-width:225px;max-height:225px;min-width:60px;min-height:60px;border-radius:3px;display:block;";
+				// We set min-height and width as that will prevent jumping. Also, those are the absolute-minimum for sharing/schema images.
 
-				if ( ! src.length ) {
-					if ( pageLoaded ) {
-						// TODO use tsf-fade-out CSS?
-						$( preview ).not( ':hidden' ).fadeOut( 250 );
-					} else {
-						$( preview ).hide();
-					}
-					return;
-				}
-
-				/**
-				 * XSS tests that passed (i.e., no issue), because the --browser-- must (and does) block these:
-				 * - data:text/html;base64,amF2YXNjcmlwdDphbGVydCgnaGknKTs=
-				 * - svg loading with scripts attached (CORB blocks, good. Thank you for bringing attention, Meltdown & Spectr)
-				 *
-				 * CSRF should be blocked by the browser, as well. Otherwise, Authors and Editors are able to execute
-				 * these via the default WordPress editor, already.
-				 *
-				 * URLs that aren't trusted are also filtered via sanitization on save, using `the_seo_framework()->s_url_query()`.
-				 *
-				 * We are NOT creating a document node here, that's something we leave for the tooltip.
-				 */
-				preview.dataset.desc = "<img src='" + tsf.escapeString( src ) + "' style=" + style + " />";
-
+			if ( ! src.length ) {
 				if ( pageLoaded ) {
 					// TODO use tsf-fade-out CSS?
-					$( preview ).not( ':visible' ).fadeIn( 250 );
+					$( preview ).not( ':hidden' ).fadeOut( 250 );
 				} else {
-					$( preview ).show();
+					$( preview ).hide();
 				}
+				return;
+			}
 
-				// Preload image. The same security notes apply as above. Moreover, the Image object escapes:
-				// ( new Image() ).src = '"/><script>alert(\'XSS\');</script>';
-				( new Image() ).src = src;
+			/**
+			 * XSS tests that passed (i.e., no issue), because the --browser-- must (and does) block these:
+			 * - data:text/html;base64,amF2YXNjcmlwdDphbGVydCgnaGknKTs=
+			 * - svg loading with scripts attached (CORB blocks, good. Thank you for bringing attention, Meltdown & Spectr)
+			 *
+			 * CSRF should be blocked by the browser, as well. Otherwise, Authors and Editors are able to execute
+			 * these via the default WordPress editor, already.
+			 *
+			 * URLs that aren't trusted are also filtered via sanitization on save, using `the_seo_framework()->s_url_query()`.
+			 *
+			 * We are NOT creating a document node here, that's something we leave for the tooltip.
+			 */
+			preview.dataset.desc = `<img src=${tsf.escapeString( src )} style="${style}" />`;
 
-				tsfTT.triggerUpdate( preview );
-			},
-			// High timeout: Don't DoS the inputted URL, plus the delay is quite nice.
-			// Also invoke instantly when removing, otherwise it lags behind the removal button's animation
-			pageLoaded && src.length ? 500 : 0
+			if ( pageLoaded ) {
+				// TODO use tsf-fade-out CSS?
+				$( preview ).not( ':visible' ).fadeIn( 250 );
+			} else {
+				$( preview ).show();
+			}
+
+			// Preload image. The same security notes apply as above. Moreover, the Image object escapes:
+			// ( new Image() ).src = '"/><script>alert(\'XSS\');</script>';
+			( new Image() ).src = src;
+
+			tsfTT.triggerUpdate( preview );
+		}
+
+		_updateToolTipBuffer[ imageId ] = setTimeout(
+			updateToolTip,
+			// High timeout: Don't DoS the inputted URL, plus the delay is quite nice. This equals to about 522ms.
+			// Invoke instantly when removing, otherwise it lags behind the removal button's animation.
+			pageLoaded && src.length ? 1000/(115/60) : 0 // Magic number: 115 Keys/Min is considered a "slow" typer. ISBN: 978-3-319-20498-7
 		);
 	}
 
@@ -803,7 +799,6 @@ window.tsfMedia = function( $ ) {
 		 * @access protected
 		 *
 		 * @function
-		 * @return {undefined}
 		 */
 		load: () => {
 			// Initialize image uploader button cache.

@@ -99,8 +99,8 @@ if(!class_exists('WPFront\URE\Assign_Migrate\WPFront_User_Role_Editor_User_Profi
                         ?>
                         <div class="role-container">
                             <label>
-                                <input type="checkbox" name="wpfront-secondary-roles[<?php echo $name; ?>]" <?php echo $checked; ?> />
-                                <?php echo $display; ?>
+                                <input type="checkbox" name="wpfront-secondary-roles[<?php echo esc_attr($name); ?>]" <?php echo $checked; ?> />
+                                <?php echo esc_html($display); ?>
                             </label>
                         </div>
                         <?php

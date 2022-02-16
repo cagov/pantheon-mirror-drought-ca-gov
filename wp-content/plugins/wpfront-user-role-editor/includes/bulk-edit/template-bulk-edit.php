@@ -46,7 +46,7 @@ if(!class_exists('WPFront\URE\Bulk_Edit\WPFront_User_Role_Editor_Bulk_Edit_View'
             <div class="wrap bulk-edit">
                 <?php $this->title(); ?>
                 <form method="get">
-                    <input type="hidden" name="page" value="<?php echo Bulk_Edit::MENU_SLUG; ?>" />
+                    <input type="hidden" name="page" value="<?php echo esc_attr(Bulk_Edit::MENU_SLUG); ?>" />
                     <div class="options">
                         <?php $this->display_options(); ?>
                     </div>
@@ -71,7 +71,7 @@ if(!class_exists('WPFront\URE\Bulk_Edit\WPFront_User_Role_Editor_Bulk_Edit_View'
             foreach ($controllers as $ctlr) {
                 ?>
                 <p>
-                    <label><input type="radio" name="screen" value="<?php echo $ctlr->get_key(); ?>" <?php echo $select ? 'checked' : '' ?> /><?php echo $ctlr->get_option_text(); ?></label>
+                    <label><input type="radio" name="screen" value="<?php echo esc_attr($ctlr->get_key()); ?>" <?php echo $select ? 'checked' : '' ?> /><?php echo esc_html($ctlr->get_option_text()); ?></label>
                 </p>
                 <?php
                 $select = false;

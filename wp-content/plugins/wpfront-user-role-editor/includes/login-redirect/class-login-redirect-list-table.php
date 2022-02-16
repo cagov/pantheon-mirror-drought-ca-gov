@@ -149,15 +149,15 @@ if (!class_exists('\WPFront\URE\Login_Redirect\WPFront_User_Role_Editor_Login_Re
                                 break;
                             
                             case 'priority':
-                                echo "<td $attributes>" . $item->priority . "</td>";
+                                echo "<td $attributes>" . esc_html($item->priority) . "</td>";
                                 break;
 
                             case 'url':
-                                echo "<td $attributes>" . $this->format_url($item->url) . "</td>";
+                                echo "<td $attributes>" . esc_html($this->format_url($item->url)) . "</td>";
                                 break;
 
                             case 'logout_url':
-                                echo "<td $attributes>" . $this->format_url($item->logout_url) . "</td>";
+                                echo "<td $attributes>" . esc_html($this->format_url($item->logout_url)) . "</td>";
                                 break;
 
                             case 'deny_wpadmin':
@@ -178,8 +178,8 @@ if (!class_exists('\WPFront\URE\Login_Redirect\WPFront_User_Role_Editor_Login_Re
         protected function cb_cell($item) {
             ?>
             <th scope="row" class="check-column">
-                <label class="screen-reader-text" for="role_<?php echo $item->role; ?>"><?php echo sprintf(__('Select %s', 'wpfront-user-role-editor'), $item->role_display); ?></label>
-                <input type="checkbox" id="role_<?php echo $item->role; ?>" name="roles[]" value="<?php echo esc_attr($item->role); ?>" />
+                <label class="screen-reader-text" for="role_<?php echo esc_attr($item->role); ?>"><?php echo sprintf(__('Select %s', 'wpfront-user-role-editor'), esc_html($item->role_display)); ?></label>
+                <input type="checkbox" id="role_<?php echo esc_attr($item->role); ?>" name="roles[]" value="<?php echo esc_attr($item->role); ?>" />
             </th>
             <?php
         }
@@ -194,31 +194,31 @@ if (!class_exists('\WPFront\URE\Login_Redirect\WPFront_User_Role_Editor_Login_Re
             <td <?php echo $attributes; ?>>
                 <?php
                 if($can_edit) {
-                    $edit_link = LoginRedirect::instance()->get_edit_url($item->role);
+                    $edit_link = esc_url_raw(LoginRedirect::instance()->get_edit_url($item->role));
                     ?>
                     <strong>
-                        <a href="<?php echo $edit_link; ?>" class="edit">
-                            <?php echo $item->role_display; ?>
+                        <a href="<?php echo esc_attr($edit_link); ?>" class="edit">
+                            <?php echo esc_html($item->role_display); ?>
                         </a>
                     </strong>
                     <?php
                 } else {
                     ?>
                     <strong>
-                        <?php echo $item->role_display; ?>
+                        <?php echo esc_html($item->role_display); ?>
                     </strong>
                     <?php
                 }
                 $actions = array();
                 if ($can_edit) {
-                    $edit_link = LoginRedirect::instance()->get_edit_url($item->role);
+                    $edit_link = esc_url_raw(LoginRedirect::instance()->get_edit_url($item->role));
                     $display = __('Edit', 'wpfront-user-role-editor');
-                    $actions['edit'] = "<a href='$edit_link'>$display</a>";
+                    $actions['edit'] = "<a href='".esc_attr($edit_link)."'>$display</a>";
                 }
                 if (current_user_can('delete_login_redirects')) {
-                    $delete_link = LoginRedirect::instance()->get_delete_url($item->role);
+                    $delete_link = esc_url_raw(LoginRedirect::instance()->get_delete_url($item->role));
                     $display = __('Delete', 'wpfront-user-role-editor');
-                    $actions['delete'] = "<a href='$delete_link'>$display</a>";
+                    $actions['delete'] = "<a href='".esc_attr($delete_link)."'>$display</a>";
                 }
                 echo $this->row_actions($actions);
                 ?>

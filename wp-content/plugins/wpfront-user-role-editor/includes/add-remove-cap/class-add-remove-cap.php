@@ -39,6 +39,8 @@ use WPFront\URE\WPFront_User_Role_Editor as WPFURE;
 use WPFront\URE\WPFront_User_Role_Editor_Utils as Utils;
 use WPFront\URE\WPFront_User_Role_Editor_Roles_Helper as RolesHelper;
 use WPFront\URE\Bulk_Edit\WPFront_User_Role_Editor_Bulk_Edit as BulkEdit;
+use \WPFront\URE\WPFront_User_Role_Editor_Debug;
+
 
 require_once dirname(__FILE__) . '/template-add-remove-cap.php';
 
@@ -75,6 +77,13 @@ if (!class_exists('\WPFront\URE\Bulk_Edit\WPFront_User_Role_Editor_Add_Remove_Ca
         }
 
         protected function _register($controllers) {
+            $debug = WPFront_User_Role_Editor_Debug::instance();
+            $debug->add_setting('add-remove-cap', __('Add or Remove Capability', 'wpfront-user-role-editor'), 20, __('Disables add or remove capability functionality.', 'wpfront-user-role-editor'));
+            
+            if($debug->is_disabled('add-remove-cap')) {
+                return $controllers;
+            }
+            
             if (!$this->in_admin_ui()) {
                 return $controllers;
             }

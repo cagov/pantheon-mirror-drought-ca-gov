@@ -74,16 +74,16 @@ if(!class_exists('WPFront\URE\Restore\WPFront_User_Role_Editor_Restore_View')) {
             ?>
             <tr class="form-field">
                 <th scope="row">
-                    <?php echo $display_name; ?>
+                    <?php echo esc_html($display_name); ?>
                 </th>
                 <td>
-                    <button class="button button-primary restore-role" value="<?php echo $role_name; ?>"><?php echo __('Restore', 'wpfront-user-role-editor'); ?></button>
+                    <button class="button button-primary restore-role" value="<?php echo esc_attr($role_name); ?>"><?php echo __('Restore', 'wpfront-user-role-editor'); ?></button>
                     <div class="restore-role-button-container">
-                        <button class="button restore-role-cancel" value="<?php echo $role_name; ?>"><?php echo __('Cancel', 'wpfront-user-role-editor'); ?></button>
-                        <button class="button restore-role-confirm" value="<?php echo $role_name; ?>"><?php echo __('Confirm', 'wpfront-user-role-editor'); ?></button>
+                        <button class="button restore-role-cancel" value="<?php echo esc_attr($role_name); ?>"><?php echo __('Cancel', 'wpfront-user-role-editor'); ?></button>
+                        <button class="button restore-role-confirm" value="<?php echo esc_attr($role_name); ?>"><?php echo __('Confirm', 'wpfront-user-role-editor'); ?></button>
                     </div>
                     <div class="restore-role-loader">
-                        <img src="<?php echo $this->WPFURE->get_asset_url('images/loading.gif'); ?>" />
+                        <img src="<?php echo esc_attr($this->WPFURE->get_asset_url('images/loading.gif')); ?>" />
                     </div>
                     <div class="restore-role-success">
                         <button class="button button" disabled="true">

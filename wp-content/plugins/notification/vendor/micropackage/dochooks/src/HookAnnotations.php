@@ -12,7 +12,7 @@
  * @package micropackage/dochooks
  */
 
-namespace BracketSpace\Notification\Vendor\Micropackage\DocHooks;
+namespace Micropackage\DocHooks;
 
 /**
  * HookAnnotations class

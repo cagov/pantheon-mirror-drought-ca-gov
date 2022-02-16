@@ -68,7 +68,7 @@ if (!class_exists('WPFront\URE\Taxonomies\WPFront_User_Role_Editor_Taxonomies_Ad
                     $action = $this->controller->get_edit_url($this->taxonomy_data->name);
                 }
                 ?>
-                <form method="post" class="validate" action="<?php echo $action; ?>">
+                <form method="post" class="validate" action="<?php echo esc_attr($action); ?>">
                     <?php $this->create_meta_boxes(); ?>
                     <div id="poststuff">
                         <div id="post-body" class="metabox-holder columns-2" style="display:flow-root">
@@ -617,13 +617,13 @@ if (!class_exists('WPFront\URE\Taxonomies\WPFront_User_Role_Editor_Taxonomies_Ad
             ?>
             <tr class="<?php echo!empty($obj->required) ? 'form-required ' : ''; ?>">
                 <th scope="row">
-                    <?php echo $label; ?>
+                    <?php echo esc_html($label); ?>
                     <?php if (!empty($obj->required)) { ?>
                         <span class="description"> (<?php echo __('required', 'wpfront-user-role-editor'); ?>)</span>
                     <?php } ?>
                 </th>
                 <td>
-                    <input class="regular-text <?php echo $class; ?>" name="<?php echo $name; ?>" type="text" value="<?php echo $value; ?>" <?php echo $attr; ?> />
+                    <input class="regular-text <?php echo $class; ?>" name="<?php echo esc_attr($name); ?>" type="text" value="<?php echo esc_attr($value); ?>" <?php echo $attr; ?> />
                     <?php
                     if (!empty($obj->help)) {
                         $this->echo_help_tooltip($obj->help, $obj->help_current_value);
@@ -647,11 +647,11 @@ if (!class_exists('WPFront\URE\Taxonomies\WPFront_User_Role_Editor_Taxonomies_Ad
                     ?>
                 </th>
                 <td>
-                    <select data-placeholder="<?php echo $placeholder; ?>" name="<?php echo $name; ?>[]" class="chosen-select" multiple>
+                    <select data-placeholder="<?php echo esc_attr($placeholder); ?>" name="<?php echo esc_attr($name); ?>[]" class="chosen-select" multiple>
                         <?php
                         foreach ($options as $value => $label) {
                             $selected = in_array($value, $values) ? 'selected' : '';
-                            echo "<option value='$value' $selected>$label</option>";
+                            echo "<option value='".esc_attr($value)."' $selected>".esc_html($label)."</option>";
                         }
                         ?>
                     </select>
@@ -673,10 +673,10 @@ if (!class_exists('WPFront\URE\Taxonomies\WPFront_User_Role_Editor_Taxonomies_Ad
             ?>
             <tr>
                 <th scope="row">
-                    <?php echo $label; ?>
+                    <?php echo esc_html($label); ?>
                 </th>
                 <td>
-                    <select id="<?php echo $name; ?>" name="<?php echo $name; ?>" class="<?php echo!empty($obj->txt) ? 'has-depends' : ''; ?>" <?php echo $attr; ?> >
+                    <select id="<?php echo esc_attr($name); ?>" name="<?php echo esc_attr($name); ?>" class="<?php echo!empty($obj->txt) ? 'has-depends' : ''; ?>" <?php echo $attr; ?> >
                         <?php
                         foreach ($options as $option) {
                             $selected = $option->value === $value ? 'selected' : '';
@@ -685,8 +685,10 @@ if (!class_exists('WPFront\URE\Taxonomies\WPFront_User_Role_Editor_Taxonomies_Ad
                             } elseif ($option->value === false) {
                                 $option->value = '0';
                             }
-                            echo "<option value='{$option->value}' $selected>{$option->label}</option>";
-                        }
+                            $option_value=esc_attr($option->value);
+                            $option_label=esc_html($option->label);
+                            echo "<option value='$option_value' $selected>$option_label</option>";
+                                                    }
                         ?>
                     </select>
                     <?php
@@ -696,7 +698,7 @@ if (!class_exists('WPFront\URE\Taxonomies\WPFront_User_Role_Editor_Taxonomies_Ad
                             $txt_value = $_POST[$obj->txt['name']];
                         }
                         ?>
-                        <input type="text" name="<?php echo $obj->txt['name']; ?>" placeholder="<?php echo $placeholder; ?>" value="<?php echo $txt_value; ?>" data-depends="<?php echo $name; ?>" data-depends-on="<?php echo $obj->txt['depends_on']; ?>" />
+                        <input type="text" name="<?php echo esc_attr($obj->txt['name']); ?>" placeholder="<?php echo esc_attr($placeholder); ?>" value="<?php echo esc_attr($txt_value); ?>" data-depends="<?php echo esc_attr($name); ?>" data-depends-on="<?php echo esc_attr($obj->txt['depends_on']); ?>" />
                         <?php
                     }
                     ?>

@@ -133,6 +133,10 @@ div.role-add-new div.metabox-holder div.postbox div.main i.fa-question-circle-o 
     font-size: 0.8em;
 }
 
+div.role-add-new div.metabox-holder div.postbox div.main label {
+    max-width: 205px;
+}
+
 div.role-add-new div.footer {
     text-align: center;
 }
@@ -237,6 +241,15 @@ div.wrap.assign-roles div.role-list div.role-list-item,
 div.wrap.migrate-users div.role-list div.role-list-item {
     padding-bottom: 5px;
 }
+
+div.wrap.assign-roles input[name="assign-user"], 
+div.wrap.assign-roles select.primary-role,
+div.wrap.migrate-users select.primary-role,
+div.wrap.migrate-users select#migrate_from_role  {
+    width: 100%;
+    max-width: 25em;
+}
+
 /* assign roles end */
 
 /* import roles start */
@@ -492,7 +505,6 @@ div.wpfront-user-role-editor-post-type-extended-permission-legend {
 /* extended permissions end */
 
 
-
 /* bulk edit start */
 
 div.wrap.bulk-edit div.options p {
@@ -605,7 +617,7 @@ div.wrap.post-type-add-edit ul.chosen-choices {
     flex-wrap: wrap;
 }
 
-/* post type screen start */
+/* post type screen end */
 
 /* taxonomies screen start */
 
@@ -620,7 +632,7 @@ div.wrap.taxonomy-add-edit ul.chosen-choices {
     flex-wrap: wrap;
 }
 
-/* taxonomies screen start */
+/* taxonomies screen end */
 
 .ui-tooltip {
     background: #ffffff;
@@ -637,4 +649,22 @@ div.wrap.taxonomy-add-edit ul.chosen-choices {
 div.thickbox p.error {
     color: red;
 }
+
+/* autocomplete start */
+
+.ui-autocomplete .ui-menu-item {
+    padding: 0;
+    font-size: 15px;
+    line-height:1.5;
+    width: 100%;
+}
+
+.ui-autocomplete .ui-state-hover,  .ui-autocomplete .ui-state-active {
+    color: #ffffff;
+    background-color:  #3399ff;
+    font-weight: normal;
+}
+
+/* autocomplete end */
+
 

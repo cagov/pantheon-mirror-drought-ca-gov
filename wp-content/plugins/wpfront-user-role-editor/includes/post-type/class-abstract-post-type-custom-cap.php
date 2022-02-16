@@ -38,6 +38,7 @@ if (!defined('ABSPATH')) {
 use WPFront\URE\Options\WPFront_User_Role_Editor_Options as Options;
 use WPFront\URE\WPFront_User_Role_Editor_Utils as Utils;
 use WPFront\URE\WPFront_User_Role_Editor_Roles_Helper as RolesHelper;
+use WPFront\URE\WPFront_User_Role_Editor_Debug;
 
 if (!class_exists('\WPFront\URE\Post_Type\WPFront_User_Role_Editor_Post_Type_Custom_Capability')) {
 
@@ -81,7 +82,10 @@ if (!class_exists('\WPFront\URE\Post_Type\WPFront_User_Role_Editor_Post_Type_Cus
         protected abstract function role_default_value_cap($post_type);
         
         protected abstract function can_merge();
+        
+        protected abstract function get_debug_setting();
 
+        
         public static function initialize($controller) {
             foreach (self::$custom_cap_objs as $key => $obj) {
                 $obj->init($controller);
@@ -103,6 +107,14 @@ if (!class_exists('\WPFront\URE\Post_Type\WPFront_User_Role_Editor_Post_Type_Cus
         }
 
         public static function register($key, $objCustomCap) {
+            $debug_setting = $objCustomCap->get_debug_setting();
+            $debug = WPFront_User_Role_Editor_Debug::instance();
+            $debug->add_setting($debug_setting);
+
+            if($debug->is_disabled($debug_setting['key'])) {
+                return;
+            }
+            
             self::$custom_cap_objs[$key] = $objCustomCap;
         }
 
@@ -139,6 +151,12 @@ if (!class_exists('\WPFront\URE\Post_Type\WPFront_User_Role_Editor_Post_Type_Cus
             $this->cap_names[$post_type] = [$cap, $plural_base];
 
             if($this->can_merge()) {
+                if(!isset($args['map_meta_cap'])) {
+                    if ( empty( $args['capabilities'] ) && in_array( $args_local['capability_type'], array( 'post', 'page' ), true ) ) {
+                        $args['map_meta_cap'] = true;
+                    }
+                }
+                
                 $args['capabilities'] = array_merge($args['capabilities'], array($prefix . '_posts' => $cap));
             }
 
@@ -299,6 +317,12 @@ if (!class_exists('\WPFront\URE\Post_Type\WPFront_User_Role_Editor_Post_Type_Cus
             $role_names = RolesHelper::get_roles();
             foreach ($role_names as $role_name) {
                 $role = RolesHelper::get_role($role_name);
+                
+                if($check_cap === true) {
+                    $role->add_cap($cap, true);
+                    continue;
+                }
+                
                 if (isset($role->capabilities[$check_cap])) {
                     if (!isset($role->capabilities[$cap])) {
                         $role->add_cap($cap, $role->capabilities[$check_cap]);

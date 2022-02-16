@@ -50,7 +50,7 @@ if(!class_exists('WPFront\URE\Bulk_Edit\WPFront_User_Role_Editor_Add_Remove_Cap_
             ?>
             <div class="wrap add-remove-capability">
                 <?php $this->title(); ?>
-                <form method="post" class="validate" action="<?php echo Bulk_Edit::instance()->get_screen_url(Add_Remove_Cap::instance()); ?>">
+                <form method="post" class="validate" action="<?php echo esc_attr(Bulk_Edit::instance()->get_screen_url(Add_Remove_Cap::instance())); ?>">
                     <table class="form-table">
                         <tbody>
                             <?php $this->action_row(); ?>
@@ -81,7 +81,7 @@ if(!class_exists('WPFront\URE\Bulk_Edit\WPFront_User_Role_Editor_Add_Remove_Cap_
             if(!empty($this->error)) {
                 Utils::notice_error($this->error);
             } elseif(isset($_GET['changes-saved'])) {
-                Utils::notice_updated($_GET['changes-saved'] . ' ' . __('role(s) updated.', 'wpfront-user-role-editor'));
+                Utils::notice_updated(sprintf(__('%d role(s) updated.', 'wpfront-user-role-editor'), $_GET['changes-saved']));
             }
         }
         
@@ -113,7 +113,7 @@ if(!class_exists('WPFront\URE\Bulk_Edit\WPFront_User_Role_Editor_Add_Remove_Cap_
                     </label>
                 </th>
                 <td>
-                    <input class="regular-text" name="capability" type="text" id="capability" value="<?php echo $this->get_current_capability(); ?>" aria-required="true"  />
+                    <input class="regular-text" name="capability" type="text" id="capability" value="<?php echo esc_attr($this->get_current_capability()); ?>" aria-required="true"  />
                 </td>
             </tr>
             <?php
@@ -152,7 +152,7 @@ if(!class_exists('WPFront\URE\Bulk_Edit\WPFront_User_Role_Editor_Add_Remove_Cap_
                             $admin_role = $this->RolesHelperClass::get_display_name($this->RolesHelperClass::ADMINISTRATOR_ROLE_KEY);
                             if(!empty($admin_role)) {
                                 ?>
-                                <label><input id="chk_admin" type="checkbox" disabled="true" <?php echo $this->get_current_action() === 'add' ? 'checked' : ''; ?> /><?php echo $admin_role; ?></label>
+                                <label><input id="chk_admin" type="checkbox" disabled="true" <?php echo $this->get_current_action() === 'add' ? 'checked' : ''; ?> /><?php echo esc_html($admin_role); ?></label>
                                 <br />
                                 <?php
                             }
@@ -161,7 +161,7 @@ if(!class_exists('WPFront\URE\Bulk_Edit\WPFront_User_Role_Editor_Add_Remove_Cap_
                             $selected_roles = $this->get_current_selected_roles();
                             foreach ($roles as $role_name => $role_display) {
                                 ?>
-                                <label><input type="checkbox" name="selected-roles[<?php echo $role_name; ?>]" <?php echo array_key_exists($role_name, $selected_roles) ? 'checked' : ''; ?> /><?php echo $role_display; ?></label>
+                                <label><input type="checkbox" name="selected-roles[<?php echo esc_attr($role_name); ?>]" <?php echo array_key_exists($role_name, $selected_roles) ? 'checked' : ''; ?> /><?php echo esc_html($role_display); ?></label>
                                 <br />
                                 <?php
                             }

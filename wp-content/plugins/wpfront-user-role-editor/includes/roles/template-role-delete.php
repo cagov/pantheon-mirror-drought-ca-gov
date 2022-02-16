@@ -87,12 +87,12 @@ if(!class_exists('WPFront\URE\Roles\WPFront_User_Role_Editor_Role_Delete_View'))
         }
         
         protected function display_role_data($data) {
-            printf('%s: <strong>%s</strong> [<strong>%s</strong>]', __('Role', 'wpfront-user-role-editor'), $data->name, $data->display_name);
+            printf('%s: <strong>%s</strong> [<strong>%s</strong>]', __('Role', 'wpfront-user-role-editor'), esc_html($data->name), esc_html($data->display_name));
             if(!empty($data->status_message)) {
-                printf(' - <strong>%s</strong>', $data->status_message);
+                printf(' - <strong>%s</strong>', esc_html($data->status_message));
             }
             ?>
-            <input type="hidden" name="delete-roles[<?php echo $data->name; ?>]" value="1" />
+            <input type="hidden" name="delete-roles[<?php echo esc_attr($data->name); ?>]" value="1" />
             <?php
         }
         

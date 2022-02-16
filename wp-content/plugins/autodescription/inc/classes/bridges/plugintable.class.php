@@ -7,7 +7,7 @@ namespace The_SEO_Framework\Bridges;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2021 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2021 - 2022 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -48,12 +48,12 @@ final class PluginTable {
 
 		$tsf_links = [];
 
-		$tsf = \the_seo_framework();
+		$tsf = \tsf();
 
-		if ( $tsf->load_options ) {
+		if ( ! $tsf->is_headless['settings'] ) {
 			$tsf_links['settings'] = sprintf(
 				'<a href="%s">%s</a>',
-				\esc_url( \admin_url( 'admin.php?page=' . $tsf->seo_settings_page_slug ) ),
+				\esc_url( \admin_url( "admin.php?page={$tsf->seo_settings_page_slug}" ) ),
 				\esc_html__( 'Settings', 'autodescription' )
 			);
 		}
@@ -121,7 +121,9 @@ final class PluginTable {
 					'<a href="%s" rel="noreferrer noopener nofollow" target="_blank">%s</a>',
 					[
 						'https://tsf.fyi/extension-manager',
-						$_get_em ? \esc_html_x( 'Get Extension Manager', 'Extension Manager is a product name; do not translate it.', 'autodescription' ) : 'Extension Manager',
+						$_get_em
+							? \esc_html_x( 'Get Extension Manager', 'Extension Manager is a product name; do not translate it.', 'autodescription' )
+							: 'Extension Manager',
 					]
 				),
 			]

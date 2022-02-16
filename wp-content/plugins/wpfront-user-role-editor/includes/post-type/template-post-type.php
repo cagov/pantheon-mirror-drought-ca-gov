@@ -68,7 +68,7 @@ if (!class_exists('WPFront\URE\Post_Type\WPFront_User_Role_Editor_Post_Type_List
                 $list_table->prepare_items();
                 ?>
                 <form action="" method="get" class="search-form">
-                    <input type="hidden" name="page" value="<?php echo $this->controller::MENU_SLUG; ?>" />
+                    <input type="hidden" name="page" value="<?php echo esc_attr($this->controller::MENU_SLUG); ?>" />
                     <?php $list_table->search_box(__('Search', 'wpfront-user-role-editor'), 'post-type'); ?>
                 </form>
                 <form id="form-post-type" method="post">
@@ -87,7 +87,7 @@ if (!class_exists('WPFront\URE\Post_Type\WPFront_User_Role_Editor_Post_Type_List
                 echo __('Post Types', 'wpfront-user-role-editor');
                 if (current_user_can('create_posttypes')) {
                     ?>
-                    <a href="<?php echo $this->controller->get_add_new_url() ?>" class="add-new-h2"><?php echo __('Add New', 'wpfront-user-role-editor'); ?></a>
+                    <a href="<?php echo esc_attr($this->controller->get_add_new_url()) ?>" class="add-new-h2"><?php echo __('Add New', 'wpfront-user-role-editor'); ?></a>
                     <?php
                 }
                 ?>
@@ -104,7 +104,7 @@ if (!class_exists('WPFront\URE\Post_Type\WPFront_User_Role_Editor_Post_Type_List
                     $active_filter = $this->PostType->get_active_list_filter();
                     $filter_data = $this->PostType->get_list_filter_data();
                     foreach ($filter_data as $key => $value) {
-                        $link_data[] = sprintf('<a href="%s" class="%s">%s <span class="count">(%s)</span></a>', $value['url'], ($active_filter == $key ? 'current' : ''), $value['display'], $value['count']);
+                        $link_data[] = sprintf('<a href="%s" class="%s">%s <span class="count">(%s)</span></a>', esc_attr($value['url']), ($active_filter == $key ? 'current' : ''), esc_html($value['display']), esc_html($value['count']));
                     }
                     echo implode('&#160;|&#160;</li><li> ', $link_data);
                     ?>
@@ -120,10 +120,10 @@ if (!class_exists('WPFront\URE\Post_Type\WPFront_User_Role_Editor_Post_Type_List
 
             if (isset($_GET['post-type-activated'])) {
                 $count = $_GET['post-type-activated'];
-                Utils::notice_updated(sprintf(__('%d post type(s) activated successfully.', 'wpfront-user-role-editor'), $count));
+                Utils::notice_updated(sprintf(__('%d post type(s) activated successfully.', 'wpfront-user-role-editor'), intval($count)));
             } elseif (isset($_GET['post-type-deactivated'])) {
                 $count = $_GET['post-type-deactivated'];
-                Utils::notice_updated(sprintf(__('%d post type(s) deactivated successfully.', 'wpfront-user-role-editor'), $count));
+                Utils::notice_updated(sprintf(__('%d post type(s) deactivated successfully.', 'wpfront-user-role-editor'), intval($count)));
             } elseif (!empty($_GET['post-types-deleted'])) {
                 Utils::notice_updated(__('Post type(s) deleted successfully.', 'wpfront-user-role-editor'));
             } elseif (!empty($_GET['post-type-added'])) {

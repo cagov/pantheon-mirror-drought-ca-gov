@@ -10,7 +10,7 @@ namespace The_SEO_Framework;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2015 - 2021 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2015 - 2022 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -51,10 +51,8 @@ class Sanitize extends Admin_Pages {
 	 */
 	protected function verify_seo_settings_nonce() {
 
-		static $validated = null;
-
-		if ( isset( $validated ) )
-			return $validated;
+		// phpcs:ignore, WordPress.CodeAnalysis.AssignmentInCondition -- I know.
+		if ( null !== $memo = memo() ) return $memo;
 
 		/**
 		 * If this page doesn't parse the site options,
@@ -65,17 +63,17 @@ class Sanitize extends Admin_Pages {
 		 */
 		if ( empty( $_POST[ THE_SEO_FRAMEWORK_SITE_OPTIONS ] )
 		|| ! \is_array( $_POST[ THE_SEO_FRAMEWORK_SITE_OPTIONS ] ) )
-			return $validated = false;
+			return memo( false );
 
 		// This is also handled in /wp-admin/options.php. Nevertheless, one might register outside of scope.
 		if ( ! \current_user_can( $this->get_settings_capability() ) )
-			return $validated = false;
+			return memo( false );
 
 		// This is also handled in /wp-admin/options.php. Nevertheless, one might register outside of scope.
 		// This also checks the nonce: `_wpnonce`.
 		\check_admin_referer( THE_SEO_FRAMEWORK_SITE_OPTIONS . '-options' );
 
-		return $validated = true;
+		return memo( true );
 	}
 
 	/**
@@ -141,8 +139,8 @@ class Sanitize extends Admin_Pages {
 	 *
 	 * @since 3.1.0
 	 * @since 4.0.0 Emptied and is no longer enqueued.
-	 * @since 4.1.0 : 1. Added taxonomical robots options backward compat.
-	 *                2. Added the first two parameters.
+	 * @since 4.1.0 1. Added taxonomical robots options backward compat.
+	 *              2. Added the first two parameters.
 	 * @access private
 	 *
 	 * @param mixed $new_value The new, unserialized, and filtered option value.
@@ -151,13 +149,13 @@ class Sanitize extends Admin_Pages {
 	public function _set_backward_compatibility( $new_value ) {
 
 		db_4103:
-		//= Category and Tag robots backward compat.
+		// Category and Tag robots backward compat.
 		foreach ( [ 'noindex', 'nofollow', 'noarchive' ] as $r ) :
 			$robots_option_id   = $this->get_robots_taxonomy_option_id( $r );
-			$new_robots_options = isset( $new_value[ $robots_option_id ] ) ? $new_value[ $robots_option_id ] : [];
+			$new_robots_options = $new_value[ $robots_option_id ] ?? [];
 
-			$new_category_option = isset( $new_robots_options['category'] ) ? $new_robots_options['category'] : 0;
-			$new_tag_option      = isset( $new_robots_options['post_tag'] ) ? $new_robots_options['post_tag'] : 0;
+			$new_category_option = $new_robots_options['category'] ?? 0;
+			$new_tag_option      = $new_robots_options['post_tag'] ?? 0;
 
 			// Don't compare to old option--it's never reliably set; it might skip otherwise, although it's always correct.
 			// Do not resanitize. Others might've overwritten that, let's keep their value.
@@ -178,7 +176,7 @@ class Sanitize extends Admin_Pages {
 	 */
 	public function init_sanitizer_filters() {
 
-		if ( _has_run( __METHOD__ ) ) return;
+		if ( has_run( __METHOD__ ) ) return;
 
 		$this->add_option_filter(
 			's_title_separator',
@@ -199,17 +197,11 @@ class Sanitize extends Admin_Pages {
 		);
 
 		$this->add_option_filter(
-			's_title',
-			THE_SEO_FRAMEWORK_SITE_OPTIONS,
-			[
-				'knowledge_name',
-			]
-		);
-
-		$this->add_option_filter(
 			's_title_raw',
 			THE_SEO_FRAMEWORK_SITE_OPTIONS,
 			[
+				'site_title',
+				'knowledge_name',
 				'homepage_title',
 				'homepage_title_tagline',
 				'homepage_og_title',
@@ -341,7 +333,6 @@ class Sanitize extends Admin_Pages {
 				'sitemaps_output',
 				'sitemaps_robots',
 				'sitemaps_modified',
-				'sitemaps_priority',
 				'sitemap_styles',
 				'sitemap_logo',
 			]
@@ -399,6 +390,14 @@ class Sanitize extends Admin_Pages {
 				$this->get_robots_taxonomy_option_id( 'noindex' ),
 				$this->get_robots_taxonomy_option_id( 'nofollow' ),
 				$this->get_robots_taxonomy_option_id( 'noarchive' ),
+			]
+		);
+
+		$this->add_option_filter(
+			's_all_post_type_archive_meta',
+			THE_SEO_FRAMEWORK_SITE_OPTIONS,
+			[
+				'pta',
 			]
 		);
 
@@ -541,7 +540,7 @@ class Sanitize extends Admin_Pages {
 
 		// Memoize whether a filter has been set for the option already. Should only run once internally.
 		if ( ! isset( $registered[ $option ] ) ) {
-			\add_filter( 'sanitize_option_' . $option, [ $this, 'sanitize' ], 10, 2 );
+			\add_filter( "sanitize_option_{$option}", [ $this, 'sanitize' ], 10, 2 );
 			$registered[ $option ] = true;
 		}
 
@@ -620,8 +619,8 @@ class Sanitize extends Admin_Pages {
 			// Array of suboption values to loop through
 			$old_value = \get_option( $option, [] );
 			foreach ( $filters[ $option ] as $suboption => $filter ) {
-				$old_value[ $suboption ] = isset( $old_value[ $suboption ] ) ? $old_value[ $suboption ] : '';
-				$new_value[ $suboption ] = isset( $new_value[ $suboption ] ) ? $new_value[ $suboption ] : '';
+				$old_value[ $suboption ] = $old_value[ $suboption ] ?? '';
+				$new_value[ $suboption ] = $new_value[ $suboption ] ?? '';
 				$new_value[ $suboption ] = $this->do_filter( $filter, $new_value[ $suboption ], $old_value[ $suboption ], $option, $suboption );
 			}
 			return $new_value;
@@ -684,36 +683,72 @@ class Sanitize extends Admin_Pages {
 		return (array) \apply_filters(
 			'the_seo_framework_available_sanitizer_filters',
 			[
-				's_left_right'          => [ $this, 's_left_right' ],
-				's_left_right_home'     => [ $this, 's_left_right_home' ],
-				's_title_separator'     => [ $this, 's_title_separator' ],
-				's_description'         => [ $this, 's_description' ],
-				's_description_raw'     => [ $this, 's_description_raw' ],
-				's_title'               => [ $this, 's_title' ],
-				's_title_raw'           => [ $this, 's_title_raw' ],
-				's_knowledge_type'      => [ $this, 's_knowledge_type' ],
-				's_alter_query_type'    => [ $this, 's_alter_query_type' ],
-				's_one_zero'            => [ $this, 's_one_zero' ],
-				's_disabled_post_types' => [ $this, 's_disabled_post_types' ],
-				's_disabled_taxonomies' => [ $this, 's_disabled_taxonomies' ],
-				's_post_types'          => [ $this, 's_post_types' ],
-				's_taxonomies'          => [ $this, 's_taxonomies' ],
-				's_numeric_string'      => [ $this, 's_numeric_string' ],
-				's_no_html'             => [ $this, 's_no_html' ],
-				's_no_html_space'       => [ $this, 's_no_html_space' ],
-				's_absint'              => [ $this, 's_absint' ],
-				's_safe_html'           => [ $this, 's_safe_html' ],
-				's_url'                 => [ $this, 's_url' ],
-				's_url_query'           => [ $this, 's_url_query' ],
-				's_facebook_profile'    => [ $this, 's_facebook_profile' ],
-				's_twitter_name'        => [ $this, 's_twitter_name' ],
-				's_twitter_card'        => [ $this, 's_twitter_card' ],
-				's_canonical_scheme'    => [ $this, 's_canonical_scheme' ],
-				's_min_max_sitemap'     => [ $this, 's_min_max_sitemap' ],
-				's_image_preview'       => [ $this, 's_image_preview' ],
-				's_snippet_length'      => [ $this, 's_snippet_length' ],
+				's_left_right'                 => [ $this, 's_left_right' ],
+				's_left_right_home'            => [ $this, 's_left_right_home' ],
+				's_title_separator'            => [ $this, 's_title_separator' ],
+				's_description'                => [ $this, 's_description' ],
+				's_description_raw'            => [ $this, 's_description_raw' ],
+				's_title'                      => [ $this, 's_title' ],
+				's_title_raw'                  => [ $this, 's_title_raw' ],
+				's_knowledge_type'             => [ $this, 's_knowledge_type' ],
+				's_alter_query_type'           => [ $this, 's_alter_query_type' ],
+				's_one_zero'                   => [ $this, 's_one_zero' ],
+				's_disabled_post_types'        => [ $this, 's_disabled_post_types' ],
+				's_disabled_taxonomies'        => [ $this, 's_disabled_taxonomies' ],
+				's_post_types'                 => [ $this, 's_post_types' ],
+				's_taxonomies'                 => [ $this, 's_taxonomies' ],
+				's_all_post_type_archive_meta' => [ $this, 's_all_post_type_archive_meta' ],
+				's_numeric_string'             => [ $this, 's_numeric_string' ],
+				's_no_html'                    => [ $this, 's_no_html' ],
+				's_no_html_space'              => [ $this, 's_no_html_space' ],
+				's_absint'                     => [ $this, 's_absint' ],
+				's_safe_html'                  => [ $this, 's_safe_html' ],
+				's_url'                        => [ $this, 's_url' ],
+				's_url_query'                  => [ $this, 's_url_query' ],
+				's_facebook_profile'           => [ $this, 's_facebook_profile' ],
+				's_twitter_name'               => [ $this, 's_twitter_name' ],
+				's_twitter_card'               => [ $this, 's_twitter_card' ],
+				's_canonical_scheme'           => [ $this, 's_canonical_scheme' ],
+				's_min_max_sitemap'            => [ $this, 's_min_max_sitemap' ],
+				's_image_preview'              => [ $this, 's_image_preview' ],
+				's_snippet_length'             => [ $this, 's_snippet_length' ],
 			]
 		);
+	}
+
+	/**
+	 * Sanitizes post type archive meta.
+	 *
+	 * @since 4.2.0
+	 *
+	 * @param array $data The post type archive meta to sanitize : {
+	 *    string $post_type => array $data
+	 * }
+	 * @return array The sanitized post type archive meta.
+	 */
+	public function s_all_post_type_archive_meta( $data ) {
+
+		if ( ! $data )
+			return [];
+
+		// Do NOT test for post type's existence -- it might be registered incorrectly.
+		// If the metadata yields empty -- do not unset key! It'll override "defaults" that way.
+		foreach ( $data as $_post_type => &$meta )
+			$meta = $this->s_post_type_archive_meta( $meta );
+
+		return $data;
+	}
+
+	/**
+	 * Sanitizes post type archive meta.
+	 *
+	 * @since 4.2.0
+	 *
+	 * @param array $data The post type archive meta to sanitize.
+	 * @return array The sanitized post type archive meta.
+	 */
+	public function s_post_type_archive_meta( $data ) {
+		return $this->s_term_meta( $data ); // Coincidence? I think not.
 	}
 
 	/**
@@ -724,7 +759,7 @@ class Sanitize extends Admin_Pages {
 	 * @param array $data The term meta to sanitize.
 	 * @return array The sanitized term meta.
 	 */
-	public function s_term_meta( array $data ) {
+	public function s_term_meta( $data ) {
 
 		foreach ( $data as $key => &$value ) :
 			switch ( $key ) :
@@ -781,7 +816,7 @@ class Sanitize extends Admin_Pages {
 	 * @param array $data The post meta to sanitize.
 	 * @return array The sanitized post meta.
 	 */
-	public function s_post_meta( array $data ) {
+	public function s_post_meta( $data ) {
 
 		foreach ( $data as $key => &$value ) :
 			switch ( $key ) :
@@ -837,11 +872,12 @@ class Sanitize extends Admin_Pages {
 	 * Sanitizes user meta.
 	 *
 	 * @since 4.1.4
+	 * @since 4.2.0 Now accepts and sanitizes the 'counter_type' index.
 	 *
 	 * @param array $data The user meta to sanitize.
 	 * @return array The sanitized user meta.
 	 */
-	public function s_user_meta( array $data ) {
+	public function s_user_meta( $data ) {
 
 		foreach ( $data as $key => &$value ) :
 			switch ( $key ) :
@@ -851,6 +887,13 @@ class Sanitize extends Admin_Pages {
 
 				case 'twitter_page':
 					$value = $this->s_twitter_name( $value );
+					continue 2;
+
+				case 'counter_type':
+					$value = \absint( $value );
+
+					if ( $value > 3 )
+						$value = 0;
 					continue 2;
 
 				default:
@@ -1006,8 +1049,8 @@ class Sanitize extends Admin_Pages {
 	 * Sanitizes input excerpt.
 	 *
 	 * @since 2.8.0
-	 * @since 2.8.2 : 1. Added $allow_shortcodes parameter.
-	 *                2. Added $escape parameter.
+	 * @since 2.8.2 1. Added $allow_shortcodes parameter.
+	 *              2. Added $escape parameter.
 	 * @since 3.2.4 Now selectively clears tags.
 	 * @since 4.1.0 Moved `figcaption`, `figure`, `footer`, and `tfoot`, from `space` to `clear`.
 	 * @see `$this->strip_tags_cs()`
@@ -1253,9 +1296,8 @@ class Sanitize extends Admin_Pages {
 
 		if ( ! \is_array( $new_values ) ) return [];
 
-		foreach ( $this->get_forced_supported_post_types() as $forced ) {
+		foreach ( $this->get_forced_supported_post_types() as $forced )
 			unset( $new_values[ $forced ] );
-		}
 
 		return $this->s_post_types( $new_values );
 	}
@@ -1274,9 +1316,8 @@ class Sanitize extends Admin_Pages {
 
 		if ( ! \is_array( $new_values ) ) return [];
 
-		foreach ( $new_values as $index => &$value ) {
+		foreach ( $new_values as $index => &$value )
 			$value = $this->s_one_zero( $value );
-		}
 
 		return $new_values;
 	}
@@ -1295,9 +1336,8 @@ class Sanitize extends Admin_Pages {
 
 		if ( ! \is_array( $new_values ) ) return [];
 
-		foreach ( $this->get_forced_supported_taxonomies() as $forced ) {
+		foreach ( $this->get_forced_supported_taxonomies() as $forced )
 			unset( $new_values[ $forced ] );
-		}
 
 		return $this->s_taxonomies( $new_values );
 	}
@@ -1378,7 +1418,6 @@ class Sanitize extends Admin_Pages {
 	 * of entities in HTML input value attributes.
 	 *
 	 * @since 4.0.0
-	 * TODO a better name would've been "esc_attr_revert_amp"...?
 	 *
 	 * @param string $new_value String with possibly ampersands.
 	 * @return string
@@ -1476,10 +1515,10 @@ class Sanitize extends Admin_Pages {
 	 *
 	 * @since 2.2.2
 	 * @since 2.8.0 Method is now public.
-	 * @since 3.0.0 : 1. Now removes '@' from the URL path.
-	 *                2. Now removes spaces and tabs.
-	 * @since 4.0.0 : 1. Now returns empty on lone `@` entries.
-	 *                2. Now returns empty when using only spaces and tabs.
+	 * @since 3.0.0 1. Now removes '@' from the URL path.
+	 *              2. Now removes spaces and tabs.
+	 * @since 4.0.0 1. Now returns empty on lone `@` entries.
+	 *              2. Now returns empty when using only spaces and tabs.
 	 *
 	 * @param string $new_value String with potentially wrong Twitter username.
 	 * @return string String with 'correct' Twitter username
@@ -1500,7 +1539,7 @@ class Sanitize extends Admin_Pages {
 		if ( '@' === $profile ) return '';
 
 		if ( '@' !== substr( $profile, 0, 1 ) )
-			$profile = '@' . $profile;
+			$profile = "@$profile";
 
 		return str_replace( [ ' ', "\t" ], '', $profile );
 	}
@@ -1511,8 +1550,8 @@ class Sanitize extends Admin_Pages {
 	 * @since 2.2.2
 	 * @since 2.8.0 Method is now public.
 	 * @since 3.0.6 Now allows a sole query argument when profile.php is used.
-	 * @since 4.0.0 : 1. No longer returns a plain Facebook URL when the entry path is sanitized to become empty.
-	 *                2. Now returns empty when using only spaces and tabs.
+	 * @since 4.0.0 1. No longer returns a plain Facebook URL when the entry path is sanitized to become empty.
+	 *              2. Now returns empty when using only spaces and tabs.
 	 *
 	 * @param string $new_value String with potentially wrong Facebook profile URL.
 	 * @return string String with 'correct' Facebook profile URL.
@@ -1532,10 +1571,10 @@ class Sanitize extends Admin_Pages {
 
 		if ( ! $path ) return '';
 
-		$link = 'https://www.facebook.com/' . $path;
+		$link = "https://www.facebook.com/{$path}";
 
 		if ( strpos( $link, 'profile.php' ) ) {
-			//= Gets query parameters.
+			// Gets query parameters.
 			parse_str( parse_url( $link, PHP_URL_QUERY ), $r );
 			if ( isset( $r['id'] ) ) {
 				$link = 'https://www.facebook.com/profile.php?id=' . \absint( $r['id'] );
@@ -1598,11 +1637,11 @@ class Sanitize extends Admin_Pages {
 	 * @since 2.2.4
 	 * @since 2.8.0 Method is now public.
 	 * @since 3.0.6 Noqueries is now disabled by default.
-	 * @since 4.0.0 : 1. Removed rudimentary relative URL testing.
-	 *                2. Removed input transformation filters, and with that, removed redundant multisite spam protection.
-	 *                3. Now allows all protocols. Enjoy!
-	 *                4. Now no longer lets through double-absolute URLs (e.g. `https://google.com/https://google.com/path/to/file/`)
-	 *                   when filter `the_seo_framework_allow_external_redirect` is set to false.
+	 * @since 4.0.0 1. Removed rudimentary relative URL testing.
+	 *              2. Removed input transformation filters, and with that, removed redundant multisite spam protection.
+	 *              3. Now allows all protocols. Enjoy!
+	 *              4. Now no longer lets through double-absolute URLs (e.g. `https://google.com/https://google.com/path/to/file/`)
+	 *                 when filter `the_seo_framework_allow_external_redirect` is set to false.
 	 *
 	 * @param string $new_value String with potentially unwanted redirect URL.
 	 * @return string The Sanitized Redirect URL
@@ -1837,7 +1876,7 @@ class Sanitize extends Admin_Pages {
 	/**
 	 * Strips all URLs that are placed on new lines. These are prone to be embeds.
 	 *
-	 * This might leave stray line feeds. Use `the_seo_framework()->s_singleline()` to fix that.
+	 * This might leave stray line feeds. Use `tsf()->s_singleline()` to fix that.
 	 *
 	 * @since 3.1.0
 	 * @see \WP_Embed::autoembed()
@@ -1852,7 +1891,7 @@ class Sanitize extends Admin_Pages {
 	/**
 	 * Strips all URLs that are placed in paragraphs on their own. These are prone to be embeds.
 	 *
-	 * This might leave stray line feeds. Use `the_seo_framework()->s_singleline()` to fix that.
+	 * This might leave stray line feeds. Use `tsf()->s_singleline()` to fix that.
 	 *
 	 * @since 3.1.0
 	 * @see \WP_Embed::autoembed()
@@ -1916,15 +1955,10 @@ class Sanitize extends Admin_Pages {
 			$args = $default_args;
 		} else {
 			foreach ( [ 'space', 'clear' ] as $type ) {
-				if ( isset( $args[ $type ] ) ) {
-					if ( ! $args[ $type ] ) {
-						$args[ $type ] = [];
-					} else {
-						$args[ $type ] = (array) $args[ $type ];
-					}
-				}
+				if ( isset( $args[ $type ] ) )
+					$args[ $type ] = $args[ $type ] ? (array) $args[ $type ] : [];
 			}
-			$args['strip'] = isset( $args['strip'] ) ? $args['strip'] : $default_args['strip'];
+			$args['strip'] = $args['strip'] ?? $default_args['strip'];
 		}
 
 		// Clear first, so there's less to process; then add spaces.
@@ -1933,10 +1967,8 @@ class Sanitize extends Admin_Pages {
 
 			// void = element without content.
 			$void_query = array_intersect( $args[ $type ], $void );
-			// fill = Normal, template, raw text, escapable text, foreign.
+			// fill = <normal | template | raw text | escapable text | foreign> element.
 			$fill_query = array_diff( $args[ $type ], $void );
-
-			$_regex = sprintf( '<(%s)\b[^>]*?>', implode( '|', $args[ $type ] ) );
 
 			if ( $void_query ) {
 				$_regex   = sprintf( '<(%s)\b[^>]*?>', implode( '|', $void_query ) );
@@ -1973,7 +2005,7 @@ class Sanitize extends Admin_Pages {
 	 *    string alt:    The image alt tag,
 	 * }
 	 */
-	public function s_image_details( array $details ) {
+	public function s_image_details( $details ) {
 
 		if ( array_values( $details ) === $details )
 			return $this->s_image_details_deep( $details );
@@ -1986,7 +2018,7 @@ class Sanitize extends Admin_Pages {
 			'alt'    => '',
 		];
 
-		list( $url, $id, $width, $height, $alt ) = array_values( array_merge( $defaults, $details ) );
+		[ $url, $id, $width, $height, $alt ] = array_values( array_merge( $defaults, $details ) );
 
 		if ( ! $url ) return $defaults;
 
@@ -2053,7 +2085,7 @@ class Sanitize extends Admin_Pages {
 	 *    string alt:    The image alt tag,
 	 * }
 	 */
-	public function s_image_details_deep( array $details_array ) {
+	public function s_image_details_deep( $details_array ) {
 
 		$cleaned_details = [];
 
@@ -2099,5 +2131,24 @@ class Sanitize extends Admin_Pages {
 		}
 
 		return \strlen( $var = trim( $value ) );
+	}
+
+	/**
+	 * Sets string value if current variable has no content. Returns boolean value if it has any length.
+	 *
+	 * Can be used to loop via or statements -- here, $title will be set to 'two' if $usertitle is empty:
+	 * e.g. strlen_or_set( $title, trim( $usertitle ) ) || strlen_or_set( $title, 'two' );
+	 *
+	 * @since 4.2.3
+	 * @ignore unused. untested. Creates super-smelly code, but fixes bugs revolving around input '0' or ' '.
+	 *         We'd prefer a native PHP "string has length" comparison operator.
+	 *         I don't believe any language has this. Then again, many languages don't see '0' as false.
+	 *
+	 * @param variable $var   The variable to set. Passed by reference.
+	 * @param string   $value The value to set if $var has no string length.
+	 * @return bool True if content has any length.
+	 */
+	protected function strlen_or_set( &$var, $value ) {
+		return (bool) ( \strlen( $var ) ?: \strlen( $var = $value ) );
 	}
 }

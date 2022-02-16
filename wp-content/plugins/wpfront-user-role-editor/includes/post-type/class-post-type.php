@@ -172,10 +172,10 @@ if (!class_exists('\WPFront\URE\Post_Type\WPFront_User_Role_Editor_Post_Type')) 
             $entity_all = $this->get_all_entities();
             $add_custom_caps = true;
             if (isset($entity_all[$post_type])) {
-                if(empty($args['_builtin']) && $entity_all[$post_type]->status == self::STATUS_INACTIVE) {
+                if (empty($args['_builtin']) && $entity_all[$post_type]->status == self::STATUS_INACTIVE) {
                     $add_custom_caps = false;
                 }
-                
+
                 $saved = $entity_all[$post_type]->post_type_arg;
                 $saved['taxonomies'] = $entity_all[$post_type]->taxonomies;
 
@@ -186,7 +186,7 @@ if (!class_exists('\WPFront\URE\Post_Type\WPFront_User_Role_Editor_Post_Type')) 
                 $args = array_merge($args, $saved);
             }
 
-            if($add_custom_caps) {
+            if ($add_custom_caps) {
                 $args = WPFront_User_Role_Editor_Post_Type_Custom_Capability::register_post_type_args($this, $args, $post_type);
             }
 
@@ -1055,7 +1055,13 @@ if (!class_exists('\WPFront\URE\Post_Type\WPFront_User_Role_Editor_Post_Type')) 
                 $data->source_type = $post_type_obj->_builtin ? self::SOURCE_TYPE_BUILTIN : self::SOURCE_TYPE_OTHER;
                 $taxes = get_object_taxonomies($post_type_obj->name);
                 $data->taxonomies = is_array($taxes) ? $taxes : [];
-                $data->post_type_arg = $this->post_type_args[$name];
+                
+                if (isset($this->post_type_args[$name])) {
+                    $data->post_type_arg = $this->post_type_args[$name];
+                } else {
+                    $data->post_type_arg = array();
+                }
+                
                 $data->entity = null;
 
                 $exiting[$name] = $data;
@@ -1353,6 +1359,10 @@ if (!class_exists('\WPFront\URE\Post_Type\WPFront_User_Role_Editor_Post_Type')) 
         public function admin_print_styles() {
             parent::admin_print_styles();
             wp_enqueue_style('wpfront-user-role-editor-post-types', WPFURE::instance()->get_asset_url('css/chosen/chosen.min.css'), array(), WPFURE::VERSION);
+        }
+        
+        public static function get_debug_setting() {
+            return array('key' => 'post-type', 'label' => __('Post Types', 'wpfront-user-role-editor'), 'position' => 90, 'description' => __('Disables all Post Type functionalities including custom capabilities.', 'wpfront-user-role-editor'));
         }
 
     }

@@ -170,10 +170,10 @@ if (!class_exists('\WPFront\URE\Nav_Menu\WPFront_User_Role_Editor_Nav_Menu_Permi
             <p class="description description-wide">
                 <label><?php echo __('User Restrictions', 'wpfront-user-role-editor'); ?></label>
                 <span class="user-restriction-container">
-                    <label><input class="user-restriction-type" type="radio" name="<?php echo 'user-restriction-type-' . $item_id; ?>" value="<?php echo self::$ALL_USERS; ?>" <?php echo $data->type === self::$ALL_USERS ? 'checked' : ''; ?> /><?php echo __('All Users', 'wpfront-user-role-editor'); ?></label>
-                    <label><input class="user-restriction-type" type="radio" name="<?php echo 'user-restriction-type-' . $item_id; ?>" value="<?php echo self::$LOGGEDIN_USERS; ?>" <?php echo $data->type === self::$LOGGEDIN_USERS ? 'checked' : ''; ?> /><?php echo __('Logged in Users', 'wpfront-user-role-editor'); ?></label>
-                    <label><input class="user-restriction-type" type="radio" name="<?php echo 'user-restriction-type-' . $item_id; ?>" value="<?php echo self::$GUEST_USERS; ?>" <?php echo $data->type === self::$GUEST_USERS ? 'checked' : ''; ?> /><?php echo __('Guest Users', 'wpfront-user-role-editor'); ?></label>
-                    <label><input class="user-restriction-type" type="radio" name="<?php echo 'user-restriction-type-' . $item_id; ?>" value="<?php echo self::$ROLE_USERS; ?>" <?php echo $data->type === self::$ROLE_USERS ? 'checked' : ''; ?> /><?php echo __('Users by Role', 'wpfront-user-role-editor'); ?></label>
+                    <label><input class="user-restriction-type" type="radio" name="<?php echo 'user-restriction-type-' . esc_attr($item_id); ?>" value="<?php echo self::$ALL_USERS; ?>" <?php echo $data->type === self::$ALL_USERS ? 'checked' : ''; ?> /><?php echo __('All Users', 'wpfront-user-role-editor'); ?></label>
+                    <label><input class="user-restriction-type" type="radio" name="<?php echo 'user-restriction-type-' . esc_attr($item_id); ?>" value="<?php echo self::$LOGGEDIN_USERS; ?>" <?php echo $data->type === self::$LOGGEDIN_USERS ? 'checked' : ''; ?> /><?php echo __('Logged in Users', 'wpfront-user-role-editor'); ?></label>
+                    <label><input class="user-restriction-type" type="radio" name="<?php echo 'user-restriction-type-' . esc_attr($item_id); ?>" value="<?php echo self::$GUEST_USERS; ?>" <?php echo $data->type === self::$GUEST_USERS ? 'checked' : ''; ?> /><?php echo __('Guest Users', 'wpfront-user-role-editor'); ?></label>
+                    <label><input class="user-restriction-type" type="radio" name="<?php echo 'user-restriction-type-' . esc_attr($item_id); ?>" value="<?php echo self::$ROLE_USERS; ?>" <?php echo $data->type === self::$ROLE_USERS ? 'checked' : ''; ?> /><?php echo __('Users by Role', 'wpfront-user-role-editor'); ?></label>
                     <span class="roles-container <?php echo $data->type === self::$ROLE_USERS ? '' : 'hidden'; ?>">
                         <?php do_action('wp_nav_menu_item_custom_fields_roles_list', $item_id, $item, $depth, $args); ?>
                     </span>
@@ -395,7 +395,7 @@ if (!class_exists('\WPFront\URE\Nav_Menu\WPFront_User_Role_Editor_Nav_Menu_Permi
             
             $checked = $checked ? 'checked' : '';
             
-            echo "<input type='checkbox' name='$key' $checked />";
+            echo "<input type='checkbox' name='".esc_attr($key)."' $checked />";
         }
         
         public function options_ui_update($key) {
@@ -449,6 +449,10 @@ if (!class_exists('\WPFront\URE\Nav_Menu\WPFront_User_Role_Editor_Nav_Menu_Permi
         
         public static function uninstall() {
             delete_post_meta_by_key(self::$META_DATA_KEY);
+        }
+        
+        public static function get_debug_setting() {
+            return array('key' => 'nav-menu-permissions', 'label' => __('Navigation Menu Permissions', 'wpfront-user-role-editor'), 'position' => 160, 'description' => __('Disables navigation menu permissions functionality.', 'wpfront-user-role-editor'));
         }
         
     }

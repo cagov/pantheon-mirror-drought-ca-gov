@@ -8,7 +8,7 @@ namespace The_SEO_Framework\Builders;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2019 - 2021 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2019 - 2022 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -37,7 +37,7 @@ final class Images {
 	 * @internal
 	 * @var int MAX_CONTENT_IMAGES The maximum number of images to get from the content.
 	 */
-	const MAX_CONTENT_IMAGES = 5;
+	private const MAX_CONTENT_IMAGES = 5;
 
 	/**
 	 * The constructor. Or rather, the lack thereof.
@@ -52,7 +52,7 @@ final class Images {
 	 * @since 4.0.0
 	 * @generator
 	 *
-	 * @param array|null $args The query arguments. Accepts 'id' and 'taxonomy'.
+	 * @param array|null $args The query arguments. Accepts 'id', 'taxonomy', and 'pta'.
 	 *                         Leave null to autodetermine query.
 	 * @param string     $size The size of the image to get.
 	 * @yield array : {
@@ -62,7 +62,7 @@ final class Images {
 	 */
 	public static function get_attachment_image_details( $args = null, $size = 'full' ) {
 
-		$id = isset( $args['id'] ) ? $args['id'] : \the_seo_framework()->get_the_real_ID();
+		$id = $args['id'] ?? \tsf()->get_the_real_ID();
 
 		if ( $id ) {
 			yield [
@@ -83,7 +83,7 @@ final class Images {
 	 * @since 4.0.0
 	 * @generator
 	 *
-	 * @param array|null $args The query arguments. Accepts 'id' and 'taxonomy'.
+	 * @param array|null $args The query arguments. Accepts 'id', 'taxonomy', and 'pta'.
 	 *                         Leave null to autodetermine query.
 	 * @param string     $size The size of the image to get.
 	 * @yield array : {
@@ -93,7 +93,7 @@ final class Images {
 	 */
 	public static function get_featured_image_details( $args = null, $size = 'full' ) {
 
-		$post_id = isset( $args['id'] ) ? $args['id'] : \the_seo_framework()->get_the_real_ID();
+		$post_id = $args['id'] ?? \tsf()->get_the_real_ID();
 		$id      = \get_post_thumbnail_id( $post_id );
 
 		if ( $id ) {
@@ -115,11 +115,13 @@ final class Images {
 	 * @since 4.0.0
 	 * @since 4.0.5 1. Now strips tags before looking for images.
 	 *              2. Now only yields at most 5 images.
+	 * @since 4.2.0 1. Fixed OB1 error causing the first image to be ignored.
+	 *              2. Now supports the `$args['pta']` index.
 	 * @generator
 	 * @TODO consider matching these images with wp-content/uploads items via database calls, which is heavy...
 	 *       Combine query, instead of using WP API? Only do that for the first image, instead?
 	 *
-	 * @param array|null $args The query arguments. Accepts 'id' and 'taxonomy'.
+	 * @param array|null $args The query arguments. Accepts 'id', 'taxonomy', and 'pta'.
 	 *                         Leave null to autodetermine query.
 	 * @param string     $size The size of the image to get.
 	 * @yield array : {
@@ -129,14 +131,14 @@ final class Images {
 	 */
 	public static function get_content_image_details( $args = null, $size = 'full' ) {
 
-		$tsf = \the_seo_framework();
+		$tsf = \tsf();
 
 		if ( null === $args ) {
 			if ( $tsf->is_singular() ) {
 				$content = $tsf->get_post_content();
 			}
 		} else {
-			if ( $args['taxonomy'] ) {
+			if ( $args['taxonomy'] || $args['pta'] ) {
 				$content = '';
 			} else {
 				$content = $tsf->get_post_content( $args['id'] );
@@ -158,7 +160,7 @@ final class Images {
 			);
 			// TODO can we somehow limit this search to static::MAX_CONTENT_IMAGES? -> We could, via preg_match(), but the opcodes won't help.
 			preg_match_all(
-				'/<img[^>]+src=(\"|\')?([^\"\'>\s]+)\1?.*?>/mi',
+				'/<img[^>]+?src=(\"|\')?([^\"\'>\s]+)\1?[^>]*?>/mi',
 				$content,
 				$matches,
 				PREG_SET_ORDER
@@ -166,7 +168,7 @@ final class Images {
 		}
 
 		if ( $matches ) {
-			for ( $i = 0; $i++ < static::MAX_CONTENT_IMAGES; ) {
+			for ( $i = 0; $i < static::MAX_CONTENT_IMAGES; $i++ ) {
 				// Fewer than MAX_CONTENT_IMAGES matched.
 				if ( ! isset( $matches[ $i ][2] ) ) break;
 
@@ -195,7 +197,7 @@ final class Images {
 	 * @since 4.0.0
 	 * @generator
 	 *
-	 * @param array|null $args The query arguments. Accepts 'id' and 'taxonomy'.
+	 * @param array|null $args The query arguments. Accepts 'id', 'taxonomy', and 'pta'.
 	 *                         Leave null to autodetermine query.
 	 * @param string     $size The size of the image to get.
 	 * @yield array : {
@@ -205,7 +207,7 @@ final class Images {
 	 */
 	public static function get_fallback_image_details( $args = null, $size = 'full' ) {
 
-		$tsf = \the_seo_framework();
+		$tsf = \tsf();
 
 		yield [
 			'url' => $tsf->get_option( 'social_image_fb_url' ) ?: '',
@@ -221,7 +223,7 @@ final class Images {
 	 * @since 4.0.0
 	 * @generator
 	 *
-	 * @param array|null $args The query arguments. Accepts 'id' and 'taxonomy'.
+	 * @param array|null $args The query arguments. Accepts 'id', 'taxonomy', and 'pta'.
 	 *                         Leave null to autodetermine query.
 	 * @param string     $size The size of the image to get.
 	 * @yield array : {
@@ -252,7 +254,7 @@ final class Images {
 	 * @since 4.0.0
 	 * @generator
 	 *
-	 * @param array|null $args The query arguments. Accepts 'id' and 'taxonomy'.
+	 * @param array|null $args The query arguments. Accepts 'id', 'taxonomy', and 'pta'.
 	 *                         Leave null to autodetermine query.
 	 * @param string     $size The size of the image to get.
 	 * @yield array : {
@@ -283,7 +285,7 @@ final class Images {
 	 * @since 4.0.0
 	 * @generator
 	 *
-	 * @param array|null $args The query arguments. Accepts 'id' and 'taxonomy'.
+	 * @param array|null $args The query arguments. Accepts 'id', 'taxonomy', and 'pta'.
 	 *                         Leave null to autodetermine query.
 	 * @param string     $size The size of the image to get.
 	 * @yield array : {

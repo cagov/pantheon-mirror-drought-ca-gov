@@ -69,7 +69,7 @@ if(!class_exists('WPFront\URE\Assign_Migrate\WPFront_User_Role_Editor_Assign_Mig
                 $current_role = $this->get_current_primary_role();
                 foreach ($roles as $name => $display) {
                     $selected = $name === $current_role ? 'selected' : '';
-                    echo "<option $selected value='$name'>$display</option>";
+                    echo "<option $selected value='".esc_attr($name)."'>".esc_html($display)."</option>";
                 }
                 ?>
             </select>
@@ -92,8 +92,8 @@ if(!class_exists('WPFront\URE\Assign_Migrate\WPFront_User_Role_Editor_Assign_Mig
                             ?>
                             <div class="role-list-item">
                                 <label>
-                                    <input type="checkbox" name="secondary-roles[<?php echo $name; ?>]" <?php echo $checked; ?> />
-                                    <?php echo $display; ?>
+                                    <input type="checkbox" name="secondary-roles[<?php echo esc_attr($name); ?>]" <?php echo $checked; ?> />
+                                    <?php echo esc_html($display); ?>
                                 </label>
                             </div>
                             <?php

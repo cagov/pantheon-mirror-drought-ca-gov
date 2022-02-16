@@ -10,7 +10,7 @@ namespace The_SEO_Framework;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2015 - 2021 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2015 - 2022 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -50,7 +50,7 @@ class Admin_Pages extends Generate_Ldjson {
 	 */
 	public function add_menu_link() {
 
-		if ( _has_run( __METHOD__ ) ) return;
+		if ( has_run( __METHOD__ ) ) return;
 
 		$menu = [
 			'page_title' => \esc_html__( 'SEO Settings', 'autodescription' ),
@@ -86,8 +86,8 @@ class Admin_Pages extends Generate_Ldjson {
 		);
 
 		// Enqueue scripts
-		\add_action( 'admin_print_scripts-' . $this->seo_settings_page_hook, [ $this, '_init_admin_scripts' ], 11 );
-		\add_action( 'load-' . $this->seo_settings_page_hook, [ $this, '_register_seo_settings_meta_boxes' ] );
+		\add_action( "admin_print_scripts-{$this->seo_settings_page_hook}", [ $this, '_init_admin_scripts' ], 11 );
+		\add_action( "load-{$this->seo_settings_page_hook}", [ $this, '_register_seo_settings_meta_boxes' ] );
 	}
 
 	/**
@@ -110,8 +110,8 @@ class Admin_Pages extends Generate_Ldjson {
 	public function _output_settings_wrap() {
 
 		\add_action(
-			$this->seo_settings_page_hook . '_settings_page_boxes',
-			Bridges\SeoSettings::class . '::_output_columns'
+			"{$this->seo_settings_page_hook}_settings_page_boxes",
+			[ Bridges\SeoSettings::class, '_output_columns' ]
 		);
 
 		Bridges\SeoSettings::_output_wrap();
@@ -139,7 +139,7 @@ class Admin_Pages extends Generate_Ldjson {
 		if ( $show_seobox )
 			\add_action(
 				'add_meta_boxes',
-				Bridges\PostSettings::class . '::_prepare_meta_box'
+				[ Bridges\PostSettings::class, '_prepare_meta_box' ]
 			);
 	}
 
@@ -164,8 +164,8 @@ class Admin_Pages extends Generate_Ldjson {
 		$priority = (int) \apply_filters( 'the_seo_framework_term_metabox_priority', 0 );
 
 		\add_action(
-			$taxonomy . '_edit_form',
-			Bridges\TermSettings::class . '::_prepare_setting_fields',
+			"{$taxonomy}_edit_form",
+			[ Bridges\TermSettings::class, '_prepare_setting_fields' ],
 			$priority,
 			2
 		);
@@ -184,8 +184,8 @@ class Admin_Pages extends Generate_Ldjson {
 		// WordPress made a mess of this. We can't reliably get a user future-proof. Load class for all users; check there.
 		// if ( ! $user->has_cap( THE_SEO_FRAMEWORK_AUTHOR_INFO_CAP ) ) return;
 
-		\add_action( 'show_user_profile', Bridges\UserSettings::class . '::_prepare_setting_fields', 0, 1 );
-		\add_action( 'edit_user_profile', Bridges\UserSettings::class . '::_prepare_setting_fields', 0, 1 );
+		\add_action( 'show_user_profile', [ Bridges\UserSettings::class, '_prepare_setting_fields' ], 0, 1 );
+		\add_action( 'edit_user_profile', [ Bridges\UserSettings::class, '_prepare_setting_fields' ], 0, 1 );
 	}
 
 	/**
@@ -340,7 +340,7 @@ class Admin_Pages extends Generate_Ldjson {
 	 *    'escape' => bool   Optional. Whether to escape the $message. Default true.
 	 * }
 	 */
-	protected function output_dismissible_persistent_notice( $message, $key, array $args ) { // phpcs:ignore,VariableAnalysis.CodeAnalysis
+	protected function output_dismissible_persistent_notice( $message, $key, $args ) { // phpcs:ignore,VariableAnalysis.CodeAnalysis
 		$this->get_view( 'notice/persistent', get_defined_vars() );
 	}
 
@@ -355,9 +355,8 @@ class Admin_Pages extends Generate_Ldjson {
 	 */
 	protected function output_dismissible_persistent_notices() {
 
-		$notices        = $this->get_static_cache( 'persistent_notices', [] );
-		$current_screen = \get_current_screen();
-		$base           = isset( $current_screen->base ) ? $current_screen->base : '';
+		$notices    = $this->get_static_cache( 'persistent_notices', [] );
+		$screenbase = \get_current_screen()->base ?? '';
 
 		// Ideally, we don't want to output more than one on no-js. Alas, we can't anticipate the importance and order of the notices.
 		foreach ( $notices as $key => $notice ) {
@@ -365,8 +364,8 @@ class Admin_Pages extends Generate_Ldjson {
 
 			if ( ! \current_user_can( $cond['capability'] ) ) continue;
 			if ( $cond['user'] && $cond['user'] !== $this->get_user_id() ) continue;
-			if ( $cond['screens'] && ! \in_array( $base, $cond['screens'], true ) ) continue;
-			if ( $cond['excl_screens'] && \in_array( $base, $cond['excl_screens'], true ) ) continue;
+			if ( $cond['screens'] && ! \in_array( $screenbase, $cond['screens'], true ) ) continue;
+			if ( $cond['excl_screens'] && \in_array( $screenbase, $cond['excl_screens'], true ) ) continue;
 
 			if ( -1 !== $cond['timeout'] && $cond['timeout'] < time() ) {
 				$this->clear_persistent_notice( $key );
@@ -384,7 +383,7 @@ class Admin_Pages extends Generate_Ldjson {
 	 * Returns the SEO Bar.
 	 *
 	 * @since 4.0.0
-	 * @uses \The_SEO_Framework\Interpreters\SeoBar::generate_bar();
+	 * @uses \The_SEO_Framework\Interpreters\SEOBar::generate_bar();
 	 *
 	 * @param array $query : {
 	 *   int    $id        : Required. The current post or term ID.
@@ -394,8 +393,8 @@ class Admin_Pages extends Generate_Ldjson {
 	 * }
 	 * @return string The generated SEO bar, in HTML.
 	 */
-	public function get_generated_seo_bar( array $query ) {
-		return Interpreters\SeoBar::generate_bar( $query );
+	public function get_generated_seo_bar( $query ) {
+		return Interpreters\SEOBar::generate_bar( $query );
 	}
 
 	/**
@@ -422,8 +421,8 @@ class Admin_Pages extends Generate_Ldjson {
 	 * @param string $id The input ID.
 	 * @param array  $data The input data.
 	 */
-	public function output_js_title_data( $id, array $data ) {
-		printf(
+	public function output_js_title_data( $id, $data ) {
+		vprintf(
 			implode(
 				'',
 				[
@@ -435,9 +434,30 @@ class Admin_Pages extends Generate_Ldjson {
 					'<span id="tsf-title-data_%1$s" class="hidden wp-exclude-emoji" data-for="%1$s" %2$s></span>',
 				]
 			),
-			\esc_attr( $id ),
-			// phpcs:ignore, WordPress.Security.EscapeOutput -- make_data_attributes escapes.
-			Interpreters\HTML::make_data_attributes( $data )
+			[
+				\esc_attr( $id ),
+				// phpcs:ignore, WordPress.Security.EscapeOutput -- make_data_attributes escapes.
+				Interpreters\HTML::make_data_attributes( $data ),
+			]
+		);
+	}
+
+	/**
+	 * Outputs reference social HTML elements for JavaScript for a specific ID.
+	 *
+	 * @since 4.2.0
+	 *
+	 * @param string       $group    The social input group ID.
+	 * @param array[og,tw] $settings The input settings data.
+	 */
+	public function output_js_social_data( $group, $settings ) {
+		vprintf(
+			'<span id="tsf-social-data_%1$s" class="hidden wp-exclude-emoji" data-group="%1$s" %2$s></span>',
+			[
+				\esc_attr( $group ),
+				// phpcs:ignore, WordPress.Security.EscapeOutput -- make_data_attributes escapes.
+				Interpreters\HTML::make_data_attributes( [ 'settings' => $settings ] ),
+			]
 		);
 	}
 
@@ -464,8 +484,8 @@ class Admin_Pages extends Generate_Ldjson {
 	 * @param string $id   The description input ID.
 	 * @param array  $data The input data.
 	 */
-	public function output_js_description_data( $id, array $data ) {
-		printf(
+	public function output_js_description_data( $id, $data ) {
+		vprintf(
 			implode(
 				'',
 				[
@@ -473,139 +493,11 @@ class Admin_Pages extends Generate_Ldjson {
 					'<span id="tsf-description-data_%1$s" class="hidden wp-exclude-emoji" data-for="%1$s" %2$s ></span>',
 				]
 			),
-			\esc_attr( $id ),
-			// phpcs:ignore, WordPress.Security.EscapeOutput -- make_data_attributes escapes.
-			Interpreters\HTML::make_data_attributes( $data )
+			[
+				\esc_attr( $id ),
+				// phpcs:ignore, WordPress.Security.EscapeOutput -- make_data_attributes escapes.
+				Interpreters\HTML::make_data_attributes( $data ),
+			]
 		);
-	}
-
-	/**
-	 * Calculates the social title and description placeholder values.
-	 * This is intricated, voluminous, and convoluted; but, there's no other way :(
-	 *
-	 * @since 4.0.0
-	 * @since 4.1.0 Now consistently applies escaping and transformation of the titles and descriptions.
-	 *              This was not a security issue, since we always escape properly at output for sanity.
-	 * @access private
-	 * @todo deprecate--let JS handle this.
-	 *
-	 * @param array  $args An array of 'id' and 'taxonomy' values.
-	 * @param string $for  The screen it's for. Accepts 'edit' and 'settings'.
-	 * @return array An array social of titles and descriptions.
-	 */
-	public function _get_social_placeholders( array $args, $for = 'edit' ) {
-
-		$desc_from_custom_field = $this->get_description_from_custom_field( $args, false );
-
-		if ( 'settings' === $for ) {
-			$pm_edit_og_title = $args['id'] ? $this->get_post_meta_item( '_open_graph_title', $args['id'] ) : '';
-			$pm_edit_og_desc  = $args['id'] ? $this->get_post_meta_item( '_open_graph_description', $args['id'] ) : '';
-			$pm_edit_tw_title = $args['id'] ? $this->get_post_meta_item( '_twitter_title', $args['id'] ) : '';
-			$pm_edit_tw_desc  = $args['id'] ? $this->get_post_meta_item( '_twitter_description', $args['id'] ) : '';
-
-			// Gets custom fields from SEO settings.
-			$home_og_title = $this->get_option( 'homepage_og_title' );
-			$home_og_desc  = $this->get_option( 'homepage_og_description' );
-
-			//! OG title generator falls back to meta input. The description does not.
-			$og_tit_placeholder  = $pm_edit_og_title
-								?: $this->get_generated_open_graph_title( $args, false );
-			$og_desc_placeholder = $pm_edit_og_desc
-								?: $desc_from_custom_field
-								?: $this->get_generated_open_graph_description( $args, false );
-
-			//! TW title generator falls back to meta input. The description does not.
-			$tw_tit_placeholder  = $pm_edit_tw_title
-								?: $home_og_title
-								?: $pm_edit_og_title
-								?: $this->get_generated_twitter_title( $args, false );
-			$tw_desc_placeholder = $pm_edit_tw_desc
-								?: $home_og_desc
-								?: $pm_edit_og_desc
-								?: $desc_from_custom_field
-								?: $this->get_generated_twitter_description( $args, false );
-		} elseif ( 'edit' === $for ) {
-			if ( ! $args['taxonomy'] ) {
-				if ( $this->is_static_frontpage( $args['id'] ) ) {
-					// Gets custom fields from SEO settings.
-					$home_desc = $this->get_option( 'homepage_description' );
-
-					$home_og_title = $this->get_option( 'homepage_og_title' );
-					$home_og_desc  = $this->get_option( 'homepage_og_description' );
-					$home_tw_title = $this->get_option( 'homepage_twitter_title' );
-					$home_tw_desc  = $this->get_option( 'homepage_twitter_description' );
-
-					// Gets custom fields from page.
-					$custom_og_title = $this->get_post_meta_item( '_open_graph_title', $args['id'] );
-					$custom_og_desc  = $this->get_post_meta_item( '_open_graph_description', $args['id'] );
-
-					//! OG title generator falls back to meta input. The description does not.
-					$og_tit_placeholder  = $home_og_title
-										?: $this->get_generated_open_graph_title( $args, false );
-					$og_desc_placeholder = $home_og_desc
-										?: $home_desc
-										?: $desc_from_custom_field
-										?: $this->get_generated_open_graph_description( $args, false );
-
-					//! TW title generator falls back to meta input. The description does not.
-					$tw_tit_placeholder  = $home_tw_title
-										?: $home_og_title
-										?: $custom_og_title
-										?: $this->get_generated_twitter_title( $args, false );
-					$tw_desc_placeholder = $home_tw_desc
-										?: $home_og_desc
-										?: $custom_og_desc
-										?: $home_desc
-										?: $desc_from_custom_field
-										?: $this->get_generated_twitter_description( $args, false );
-				} else {
-					// Gets custom fields.
-					$custom_og_title = $this->get_post_meta_item( '_open_graph_title', $args['id'] );
-					$custom_og_desc  = $this->get_post_meta_item( '_open_graph_description', $args['id'] );
-
-					//! OG title generator falls back to meta input. The description does not.
-					$og_tit_placeholder  = $this->get_generated_open_graph_title( $args, false );
-					$og_desc_placeholder = $desc_from_custom_field
-										?: $this->get_generated_open_graph_description( $args, false );
-
-					//! TW title generator falls back to meta input. The description does not.
-					$tw_tit_placeholder  = $custom_og_title
-										?: $this->get_generated_twitter_title( $args, false );
-					$tw_desc_placeholder = $custom_og_desc
-										?: $desc_from_custom_field
-										?: $this->get_generated_twitter_description( $args, false );
-				}
-			} else {
-				$meta = $this->get_term_meta( $args['id'] );
-
-				//! OG title generator falls back to meta input. The description does not.
-				$og_tit_placeholder  = $this->get_generated_open_graph_title( $args, false );
-				$og_desc_placeholder = $desc_from_custom_field
-									?: $this->get_generated_open_graph_description( $args, false );
-
-				//! TW title generator falls back to meta input. The description does not.
-				$tw_tit_placeholder  = $meta['og_title']
-									?: $og_tit_placeholder;
-				$tw_desc_placeholder = $meta['og_description']
-									?: $desc_from_custom_field
-									?: $this->get_generated_twitter_description( $args, false );
-			}
-		} else {
-			$og_tit_placeholder  = '';
-			$tw_tit_placeholder  = '';
-			$og_desc_placeholder = '';
-			$tw_desc_placeholder = '';
-		}
-
-		return [
-			'title'       => [
-				'og'      => $this->escape_title( $og_tit_placeholder ?: '' ),
-				'twitter' => $this->escape_title( $tw_tit_placeholder ?: '' ),
-			],
-			'description' => [
-				'og'      => $this->escape_description( $og_desc_placeholder ?: '' ),
-				'twitter' => $this->escape_description( $tw_desc_placeholder ?: '' ),
-			],
-		];
 	}
 }

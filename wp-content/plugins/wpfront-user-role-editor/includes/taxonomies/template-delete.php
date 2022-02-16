@@ -52,20 +52,20 @@ if (!class_exists('WPFront\URE\Taxonomies\WPFront_User_Role_Editor_Taxonomy_Dele
         public function __construct($controller, $entities, $view = 'delete') {
             $this->controller = $controller;
             $this->taxonomy_entitties = $entities;
-            
+
             $this->display['action'] = $view;
             switch ($view) {
                 case 'restore':
                     $this->display['url'] = $this->controller->get_restore_url(null);
                     $this->display['button_text'] = __('Confirm Restore', 'wpfront-user-role-editor');
-                    $this->display['title'] = __('Restore Taxonomy', 'wpfront-user-role-editor'); 
-                    $this->display['description'] = __('The following taxonomies will be restored.', 'wpfront-user-role-editor'); 
+                    $this->display['title'] = __('Restore Taxonomy', 'wpfront-user-role-editor');
+                    $this->display['description'] = __('The following taxonomies will be restored.', 'wpfront-user-role-editor');
                     break;
-                
+
                 default:
                     $this->display['url'] = $this->controller->get_delete_url(null);
                     $this->display['button_text'] = __('Confirm Delete', 'wpfront-user-role-editor');
-                    $this->display['title'] = __('Delete Taxonomy', 'wpfront-user-role-editor'); 
+                    $this->display['title'] = __('Delete Taxonomy', 'wpfront-user-role-editor');
                     $this->display['description'] = __('The following Taxonomies will be deleted.', 'wpfront-user-role-editor');
                     break;
             }
@@ -77,13 +77,13 @@ if (!class_exists('WPFront\URE\Taxonomies\WPFront_User_Role_Editor_Taxonomy_Dele
                 <?php
                 $this->title();
                 ?>
-                <form id="form-taxonomy" method="post" action="<?php echo $this->display['url']; ?>">
+                <form id="form-taxonomy" method="post" action="<?php echo esc_attr($this->display['url']); ?>">
                     <ol>
                         <?php $this->taxonomy_display(); ?>
                     </ol>   
-                    <input type="hidden" name="action" value="<?php echo $this->display['action']; ?>" />
+                    <input type="hidden" name="action" value="<?php echo esc_attr($this->display['action']); ?>" />
                     <?php
-                    wp_nonce_field('bulk-action-view-taxonomy'); 
+                    wp_nonce_field('bulk-action-view-taxonomy');
                     submit_button($this->display['button_text'], 'button-secondary');
                     ?>
                 </form>
@@ -94,16 +94,19 @@ if (!class_exists('WPFront\URE\Taxonomies\WPFront_User_Role_Editor_Taxonomy_Dele
         protected function title() {
             ?>
             <h2>
-                <?php echo $this->display['title']; ?>
-                <p><?php echo $this->display['description']; ?></p>
+                <?php echo esc_html($this->display['title']); ?>
+                <p><?php echo esc_html($this->display['description']); ?></p>
             </h2>
             <?php
         }
 
         protected function taxonomy_display() {
             foreach ($this->taxonomy_entitties as $entity) {
-                echo "<li>{$entity->label} [{$entity->name}]</li>";
-                echo "<input type='hidden' name='taxonomies[]' value='{$entity->name}' />";
+                $taxonomy_label = $entity->label;
+                $taxonomy_name = $entity->name;
+                
+                echo "<li>".esc_html($taxonomy_label)." [".esc_html($taxonomy_name)."]</li>";
+                echo "<input type='hidden' name='taxonomies[]' value='".esc_attr($taxonomy_name)."' />";
             }
         }
 

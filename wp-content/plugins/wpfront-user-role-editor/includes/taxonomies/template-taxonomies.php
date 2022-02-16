@@ -68,7 +68,7 @@ if (!class_exists('WPFront\URE\Taxonomies\WPFront_User_Role_Editor_Taxonomies_Li
                 $list_table->prepare_items();
                 ?>
                 <form action="" method="get" class="search-form">
-                    <input type="hidden" name="page" value="<?php echo $this->controller::MENU_SLUG; ?>" />
+                    <input type="hidden" name="page" value="<?php echo esc_attr($this->controller::MENU_SLUG); ?>" />
                     <?php $list_table->search_box(__('Search', 'wpfront-user-role-editor'), 'taxonomies'); ?>
                 </form>
                 <form id="form-taxonomy" method="post">
@@ -89,7 +89,7 @@ if (!class_exists('WPFront\URE\Taxonomies\WPFront_User_Role_Editor_Taxonomies_Li
                     $active_filter = $this->controller->get_active_list_filter();
                     $filter_data = $this->controller->get_list_filter_data();
                     foreach ($filter_data as $key => $value) {
-                        $link_data[] = sprintf('<a href="%s" class="%s">%s <span class="count">(%s)</span></a>', $value['url'], ($active_filter == $key ? 'current' : ''), $value['display'], $value['count']);
+                        $link_data[] = sprintf('<a href="%s" class="%s">%s <span class="count">(%s)</span></a>', esc_attr($value['url']), ($active_filter == $key ? 'current' : ''), esc_html($value['display']), esc_html($value['count']));
                     }
                     echo implode('&#160;|&#160;</li><li> ', $link_data);
                     ?>
@@ -105,7 +105,7 @@ if (!class_exists('WPFront\URE\Taxonomies\WPFront_User_Role_Editor_Taxonomies_Li
                 echo __('Taxonomies', 'wpfront-user-role-editor');
                 if (current_user_can('create_taxonomies')) { 
                     ?>
-                    <a href="<?php echo $this->controller->get_add_new_url() ?>" class="add-new-h2"><?php echo __('Add New', 'wpfront-user-role-editor'); ?></a>
+                    <a href="<?php echo esc_attr($this->controller->get_add_new_url()) ?>" class="add-new-h2"><?php echo __('Add New', 'wpfront-user-role-editor'); ?></a>
                     <?php
                 }
                 ?>

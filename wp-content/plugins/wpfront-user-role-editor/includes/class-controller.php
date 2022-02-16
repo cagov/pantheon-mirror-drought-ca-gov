@@ -110,6 +110,19 @@ if (!class_exists('\WPFront\URE\WPFront_User_Role_Editor_Controller')) {
                 }
             }
             
+            if(method_exists(static::class, 'get_debug_setting')) {
+                $debug_values = call_user_func(array(static::class, 'get_debug_setting'));
+                
+                $debug = WPFront_User_Role_Editor_Debug::instance();
+                $debug->add_setting($debug_values['key'], $debug_values['label'], $debug_values['position'], $debug_values['description']);
+                
+                $disabled = $debug->is_disabled($debug_values['key']);
+                
+                if($disabled) {
+                    return;
+                }
+            }
+            
             $key = static::class;
             
             $firstLevel = true;
@@ -151,7 +164,7 @@ if (!class_exists('\WPFront\URE\WPFront_User_Role_Editor_Controller')) {
         protected function set_cap($cap) {
             $this->cap = $cap;
         }
-        
+    
     }
     
 }

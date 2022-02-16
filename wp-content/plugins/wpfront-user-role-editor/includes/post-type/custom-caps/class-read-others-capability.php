@@ -69,11 +69,15 @@ if (!class_exists('\WPFront\URE\Post_Type\Custom_Caps\WPFront_User_Role_Editor_R
          * Returns the cap to check while defining role defaults.
          */
         protected  function role_default_value_cap($post_type){
-            return 'read';
+            return true;
         }
         
         protected function can_merge() {
             return false;
+        }
+        
+        protected function get_debug_setting() {
+            return array('key' => 'read_others-custom-capability', 'label' => __('"read_others" Capabilities', 'wpfront-user-role-editor'), 'position' => 40, 'description' => __('Disables all "read_others_" capabilities.', 'wpfront-user-role-editor'));
         }
 
 

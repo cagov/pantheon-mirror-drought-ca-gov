@@ -6,7 +6,7 @@
  * @author    De B.A.A.T. <wp-mcm@de-baat.nl>
  * @license   GPL-3.0+
  * @link      https://www.de-baat.nl/WP_MCM
- * @copyright 2014 - 2020 De B.A.A.T.
+ * @copyright 2014 - 2021 De B.A.A.T.
  */
 
 /**
@@ -925,15 +925,18 @@ class WP_MCM_Plugin {
 		// Enqueue the media scripts always, not only on post pages.
 		//if ( wp_script_is( 'media-editor' ) && (('upload.php' == $pagenow ) || ('post.php' == $pagenow ) || ('post-new.php' == $pagenow ) )) {
 		//if (true) {
-		if ( ( ('post.php' == $pagenow ) || ('post-new.php' == $pagenow ) )  && (mcm_get_option_bool('wp_mcm_use_gutenberg_filter')) ) {
+		if ( ( ('upload.php' == $pagenow ) || ('post.php' == $pagenow ) || ('post-new.php' == $pagenow ) )  && (mcm_get_option_bool('wp_mcm_use_gutenberg_filter')) ) {
 
 //			$attachment_terms_list = wp_dropdown_categories( $dropdown_options );
 //			$attachment_terms_list = get_terms( $media_taxonomy, array( 'hide_empty' => false ) );
 			$attachment_terms_list = get_terms( $media_taxonomy, $dropdown_options );
 			$this->debugMP('pr',__FUNCTION__ . ' attachment_terms_list = !', $attachment_terms_list );
 
+			// create my own version codes
+			// $my_js_version = date("ymd-Gis", filemtime( WP_MCM_DIR . '/js/wp-mcm-media-views-post.js' ));
+			// wp_enqueue_script( 'mcm-media-views', WP_MCM_URL . '/js/wp-mcm-media-views-post.js', array( 'media-views' ), $my_js_version, false );
 			wp_enqueue_script( 'mcm-media-views', WP_MCM_URL . '/js/wp-mcm-media-views-post.js', array( 'media-views' ), WP_MCM_VERSION, false );
-			//wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/wp-media-category-admin.js', array( 'jquery' ), $this->version, false );
+
 			wp_localize_script(
 				'mcm-media-views',
 				'wpmcm_admin_js',
@@ -1070,7 +1073,7 @@ class WP_MCM_Plugin {
 			'wp-mcm-setting-admin',
 			'wp_mcm_section_id',
 			array(	'field' => 'wp_mcm_toggle_assign',
-					'description' => __(' Show category toggles in list view?', 'wp-media-category-management'),
+					'description' => '' . __('Show category toggles in list view?', 'wp-media-category-management'),
 				)
 		);
 
@@ -1111,7 +1114,7 @@ class WP_MCM_Plugin {
 			'wp-mcm-setting-admin',
 			'wp_mcm_section_id',
 			array(	'field' => 'wp_mcm_custom_taxonomy_name',
-					'description' => __(' What text should be used as <strong>plural</strong> name for the Custom MCM Taxonomy?', 'wp-media-category-management'),
+					'description' => '' . __('What text should be used as <strong>plural</strong> name for the Custom MCM Taxonomy?', 'wp-media-category-management'),
 				)
 		);
 
@@ -1122,7 +1125,7 @@ class WP_MCM_Plugin {
 			'wp-mcm-setting-admin',
 			'wp_mcm_section_id',
 			array(	'field' => 'wp_mcm_custom_taxonomy_name_single',
-					'description' => __(' What text should be used as <strong>singular</strong> name for the Custom MCM Taxonomy?', 'wp-media-category-management'),
+					'description' => '' . __('What text should be used as <strong>singular</strong> name for the Custom MCM Taxonomy?', 'wp-media-category-management'),
 				)
 		);
 
@@ -1133,7 +1136,7 @@ class WP_MCM_Plugin {
 			'wp-mcm-setting-admin',
 			'wp_mcm_section_id',
 			array(	'field' => 'wp_mcm_use_default_category',
-					'description' => __(' Use the default category when adding or editing an attachment?', 'wp-media-category-management'),
+					'description' => '' . __('Use the default category when adding or editing an attachment?', 'wp-media-category-management'),
 				)
 		);
 
@@ -1153,7 +1156,7 @@ class WP_MCM_Plugin {
 			'wp-mcm-setting-admin',
 			'wp_mcm_section_id',
 			array(	'field' => 'wp_mcm_use_post_taxonomy',
-					'description' => __(' Use the category used for posts also explicitly for attachments?', 'wp-media-category-management'),
+					'description' => __('Use the category used for posts also explicitly for attachments?', 'wp-media-category-management'),
 				)
 		);
 
@@ -1164,7 +1167,7 @@ class WP_MCM_Plugin {
 			'wp-mcm-setting-admin',
 			'wp_mcm_section_id',
 			array(	'field' => 'wp_mcm_search_media_library',
-					'description' => __(' Also search the media library for matching titles when searching?', 'wp-media-category-management'),
+					'description' => __('Also search the media library for matching titles when searching?', 'wp-media-category-management'),
 				)
 		);
 
@@ -1193,7 +1196,7 @@ class WP_MCM_Plugin {
 			'wp-mcm-setting-admin',
 			'wp_mcm_section_id',
 			array(	'field' => 'wp_mcm_use_gutenberg_filter',
-					'description' => __(' Use the media filter on Gutenberg blocks for posts and pages?', 'wp-media-category-management'),
+					'description' => '' . __('Use the media filter on Gutenberg blocks for posts and pages?', 'wp-media-category-management'),
 				)
 		);
 
@@ -1211,7 +1214,7 @@ class WP_MCM_Plugin {
 			'wp-mcm-setting-admin',
 			'wp_mcm_section_id',
 			array(	'field' => 'wp_mcm_notice_status',
-					'description' => sprintf(__(' Show the notice message (again)%s?', 'wp-media-category-management'), $notice_date_message ),
+					'description' => sprintf('' . __('Show the notice message (again)%s?', 'wp-media-category-management'), $notice_date_message ),
 				)
 		);
 
@@ -1330,7 +1333,7 @@ class WP_MCM_Plugin {
 		$wp_mcm_debug = mcm_get_option('wp_mcm_debug');
 		$wp_mcm_debug_name = WP_MCM_OPTIONS_NAME . '[wp_mcm_debug]';
 		?><textarea cols="60" rows="4" id="input_wp_mcm_debug" name="<?php echo $wp_mcm_debug_name; ?>"><?php echo $wp_mcm_debug; ?></textarea>
-		<?php  echo __(' Debug info.', 'wp-media-category-management');
+		<?php  echo '' . __('Debug info.', 'wp-media-category-management');
 	}
 
 	public function create_wp_mcm_media_taxonomy_to_use_field(){
@@ -1418,7 +1421,7 @@ class WP_MCM_Plugin {
 			'option_none_value' => '',
 		);
 		wp_dropdown_categories( $dropdown_options );
-		echo __(' Which post category should be used as default?', 'wp-media-category-management');
+		echo '' . __('Which post category should be used as default?', 'wp-media-category-management');
 	}
 
 	public function create_wp_mcm_default_custom_media_category_field(){
@@ -1438,7 +1441,7 @@ class WP_MCM_Plugin {
 			'option_none_value' => '',
 		);
 		wp_dropdown_categories( $dropdown_options );
-		echo __(' Which custom media category should be used as default?', 'wp-media-category-management');
+		echo '' . __('Which custom media category should be used as default?', 'wp-media-category-management');
 	}
 
 	/**

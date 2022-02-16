@@ -49,7 +49,7 @@ if(!class_exists('WPFront\URE\Assign_Migrate\WPFront_User_Role_Editor_Migrate_Vi
                 $this->title();
                 $this->display_notices();
                 ?>
-                <form method="post" action="<?php echo AssignMigrate::instance()->get_self_url(); ?>">
+                <form method="post" action="<?php echo esc_attr(AssignMigrate::instance()->get_self_url()); ?>">
                     <?php
                     $this->form_table();
                     wp_nonce_field('migrate-users');
@@ -114,7 +114,7 @@ if(!class_exists('WPFront\URE\Assign_Migrate\WPFront_User_Role_Editor_Migrate_Vi
                 $current_role = $this->get_current_from_primary_role();
                 foreach ($roles as $name => $display) {
                     $selected = $name === $current_role ? 'selected' : '';
-                    echo "<option $selected value='$name'>$display</option>";
+                    echo "<option $selected value='".esc_attr($name)."'>".esc_html($display)."</option>";
                 }
                 ?>
             </select>

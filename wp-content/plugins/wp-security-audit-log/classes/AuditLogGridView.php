@@ -413,36 +413,16 @@ class WSAL_AuditLogGridView extends WP_List_Table {
 				// Check if the username and user exists.
 				if ( $username && $user ) {
 
-					// Checks for display name.
-					if ( 'display_name' === $this->name_type && ! empty( $user->display_name ) ) {
-						$display_name = $user->display_name;
-					} elseif (
-						'first_last_name' === $this->name_type
-						&& ( ! empty( $user->first_name ) || ! empty( $user->last_name ) )
-					) {
-						$display_name = $user->first_name . ' ' . $user->last_name;
-					} else {
-						$display_name = $user->user_login;
-					}
+					$display_name = WSAL_Utilities_UsersUtils::get_display_label( $this->_plugin, $user );
+					$user_edit_link = admin_url( 'user-edit.php?user_id=' . $user->ID );
+					
+					// Additional user info tooltip.
+					$tooltip = WSAL_Utilities_UsersUtils::get_tooltip_user_content( $user );
 
-					if ( class_exists( 'WSAL_SearchExtension' ) ) {
-						$tooltip = esc_attr__( 'Show me all activity by this User', 'wp-security-audit-log' );
+					$uhtml = '<a class="tooltip" data-tooltip="' . esc_attr( $tooltip ) . '" data-user="' . $user->user_login . '" href="' . $user_edit_link . '" target="_blank">' . esc_html( $display_name ) . '</a>';
 
-						$uhtml = '<a class="search-user" data-tooltip="' . $tooltip . '" data-user="' . $user->user_login . '" href="' . admin_url( 'user-edit.php?user_id=' . $user->ID )
-							. '" target="_blank">' . esc_html( $display_name ) . '</a>';
-					} else {
-						$uhtml = '<a href="' . admin_url( 'user-edit.php?user_id=' . $user->ID )
-						. '" target="_blank">' . esc_html( $display_name ) . '</a>';
-					}
 
-					$roles = $item->GetUserRoles( $this->item_meta[ $item->getId() ] );
-					if ( is_array( $roles ) && count( $roles ) ) {
-						$roles = esc_html( ucwords( implode( ', ', $roles ) ) );
-					} elseif ( is_string( $roles ) && '' != $roles ) {
-						$roles = esc_html( ucwords( str_replace( array( '"', '[', ']' ), ' ', $roles ) ) );
-					} else {
-						$roles = '<i>' . __( 'Unknown', 'wp-security-audit-log' ) . '</i>';
-					}
+					$roles = WSAL_Utilities_UsersUtils::get_roles_label( $item->GetUserRoles() );
 				} elseif ( 'Plugin' == $username ) {
 					$uhtml = '<i>' . __( 'Plugin', 'wp-security-audit-log' ) . '</i>';
 					$roles = '';
@@ -472,7 +452,7 @@ class WSAL_AuditLogGridView extends WP_List_Table {
 
 
 
-				$scip = $item->GetSourceIP( $this->item_meta[ $item->getId() ] );
+				$scip = $item->GetSourceIP();
 				if ( is_string( $scip ) ) {
 					$scip = str_replace( array( '"', '[', ']' ), '', $scip );
 				}

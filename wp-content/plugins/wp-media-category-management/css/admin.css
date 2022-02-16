@@ -91,5 +91,22 @@ div#wp_mcm_table_wrapper {
 }
 /* Fix display attachment-filters */
 .media-frame select.attachment-filters {
-    max-width: 90% !important;
+    /* max-width: calc(48% - 12px) !important; */
+}
+.attachments-browser .media-toolbar-secondary {
+    width: 100%;
+}
+body.block-editor-page.wp-media-category .media-frame select.attachment-filters {
+    width: auto;
+    max-width: 100%;
+}
+body.block-editor-page.wp-media-category .attachments-browser .media-toolbar {
+    margin-bottom: 15px;
+    height: auto;
+}
+body.block-editor-page.wp-media-category .attachments-browser .media-toolbar-secondary {
+    width: 100%;
+}
+body.block-editor-page.wp-media-category .media-toolbar .spinner {
+    display: inline-block;
 }

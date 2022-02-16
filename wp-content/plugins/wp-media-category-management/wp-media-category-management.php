@@ -8,13 +8,13 @@
  * @author    DeBAAT <wp-mcm@de-baat.nl>
  * @license   GPL-3.0+
  * @link      https://www.de-baat.nl/WP_MCM
- * @copyright 2014 - 2020 De B.A.A.T.
+ * @copyright 2014 - 2021 De B.A.A.T.
  * 
  * @wordpress-plugin
  * Plugin Name: WP Media Category Management
  * Plugin URI:  https://www.de-baat.nl/WP_MCM
  * Description: A plugin to provide bulk category management functionality for media in WordPress sites.
- * Version:     1.9.7
+ * Version:     1.9.8.1
  * Author:      DeBAAT <wp-mcm@de-baat.nl>
  * Author URI:  https://www.de-baat.nl/WP_MCM
  * Text Domain: wp-media-category-management
@@ -29,7 +29,7 @@ if ( ! defined( 'WPINC' ) ) {
 }
 
 define( 'WP_MCM_LINK',					'https://www.de-baat.nl/WP_MCM' );
-define( 'WP_MCM_VERSION',				'1.9.7' );
+define( 'WP_MCM_VERSION',				'1.9.8.1' );
 define( 'WP_MCM_OPTIONS_NAME',			'wp-media-category-management-options' ); // Option name for save settings
 define( 'WP_MCM_OPTION_NONE',			'uncategorized' );
 define( 'WP_MCM_POST_TAXONOMY',			'category' );

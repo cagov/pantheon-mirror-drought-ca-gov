@@ -7,7 +7,7 @@
 // phpcs:disable, VariableAnalysis.CodeAnalysis.VariableAnalysis.UndefinedVariable -- includes.
 // phpcs:disable, WordPress.WP.GlobalVariablesOverride -- This isn't the global scope.
 
-defined( 'THE_SEO_FRAMEWORK_PRESENT' ) and the_seo_framework()->_verify_include_secret( $_secret ) or die;
+defined( 'THE_SEO_FRAMEWORK_PRESENT' ) and tsf()->_verify_include_secret( $_secret ) or die;
 
 $this->the_seo_framework_debug and $timer_start = microtime( true );
 
@@ -22,7 +22,7 @@ if ( $this->the_seo_framework_debug ) {
 
 $sitemap_bridge->output_sitemap_urlset_open_tag();
 
-$sitemap_base = new The_SEO_Framework\Builders\Sitemap_Base;
+$sitemap_base = new The_SEO_Framework\Builders\Sitemap\Base;
 // phpcs:ignore, WordPress.Security.EscapeOutput
 echo $sitemap_base->generate_sitemap( $sitemap_id );
 

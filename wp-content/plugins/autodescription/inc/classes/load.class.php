@@ -11,7 +11,7 @@ namespace The_SEO_Framework;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2015 - 2021 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2015 - 2022 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -84,29 +84,29 @@ final class Load extends Cache {
 	 */
 	public function __construct() {
 
-		if ( _has_run( __METHOD__ ) ) {
+		if ( has_run( __METHOD__ ) ) {
 			// Don't construct twice, warn developer.
-			$this->_doing_it_wrong( __METHOD__, 'Do not instance this class. Use function <code>the_seo_framework()</code> instead.', '3.1.0' );
+			$this->_doing_it_wrong( __METHOD__, 'Do not instance this class. Use function <code>tsf()</code> instead.', '3.1.0' );
 			return null;
 		}
 
-		//= Setup debug vars before initializing anything else.
+		// Setup debug vars before initializing anything else.
 		$this->init_debug_vars();
 
 		if ( $this->the_seo_framework_debug ) {
-			$debug_instance = Debug::get_instance();
+			$debug_instance = Internal\Debug::get_instance();
 
 			\add_action( 'the_seo_framework_do_before_output', [ $debug_instance, '_set_debug_query_output_cache' ] );
 			\add_action( 'admin_footer', [ $debug_instance, '_debug_output' ] );
 			\add_action( 'wp_footer', [ $debug_instance, '_debug_output' ] );
 		}
 
-		//= Register the capabilities early.
+		// Register the capabilities early.
 		\add_filter( 'option_page_capability_' . THE_SEO_FRAMEWORK_SITE_OPTIONS, [ $this, 'get_settings_capability' ] );
 
 		$this->pretty_permalinks = '' !== \get_option( 'permalink_structure' );
 
-		//= Load plugin at init 0.
+		// Load plugin at init 0.
 		\add_action( 'init', [ $this, 'init_the_seo_framework' ], 0 );
 
 		$this->is_headless = [
@@ -122,7 +122,7 @@ final class Load extends Cache {
 			'constant THE_SEO_FRAMEWORK_HEADLESS'
 		) ) \defined( 'THE_SEO_FRAMEWORK_HEADLESS' ) or \define( 'THE_SEO_FRAMEWORK_HEADLESS', true );
 
-		//= A headless boi is a good boi. Far less annoying, they are.
+		// A headless boi is a good boi. Far less annoying, they are.
 		if ( \defined( 'THE_SEO_FRAMEWORK_HEADLESS' ) ) {
 			$this->is_headless = [
 				'meta'     => true,
@@ -147,7 +147,7 @@ final class Load extends Cache {
 
 		$this->the_seo_framework_debug = \defined( 'THE_SEO_FRAMEWORK_DEBUG' ) && THE_SEO_FRAMEWORK_DEBUG ?: $this->the_seo_framework_debug;
 		if ( $this->the_seo_framework_debug )
-			\The_SEO_Framework\Debug::_set_instance( $this->the_seo_framework_debug );
+			Internal\Debug::_set_instance( $this->the_seo_framework_debug );
 
 		$this->the_seo_framework_use_transients = \defined( 'THE_SEO_FRAMEWORK_DISABLE_TRANSIENTS' ) && THE_SEO_FRAMEWORK_DISABLE_TRANSIENTS ? false : $this->the_seo_framework_use_transients;
 
@@ -207,6 +207,11 @@ final class Load extends Cache {
 			// Easy Digital Downloads.
 			$this->_include_compat( 'edd', 'plugin' );
 		}
+
+		if ( $this->detect_plugin( [ 'constants' => [ 'ELEMENTOR_VERSION' ] ] ) ) {
+			// Elementor
+			$this->_include_compat( 'elementor', 'plugin' );
+		}
 	}
 
 	/**
@@ -222,7 +227,8 @@ final class Load extends Cache {
 	 * @param string $replacement Optional. The function that should have been called. Default null.
 	 */
 	public function _deprecated_function( $function, $version, $replacement = null ) { // phpcs:ignore -- Wrong asserts, copied method name.
-		Debug::get_instance()->_deprecated_function( $function, $version, $replacement ); // phpcs:ignore -- Wrong asserts, copied method name.
+		// phpcs:ignore -- Wrong asserts, copied method name.
+		Internal\Debug::get_instance()->_deprecated_function( $function, $version, $replacement );
 	}
 
 	/**
@@ -238,7 +244,8 @@ final class Load extends Cache {
 	 * @param string $version  The version of WordPress where the message was added.
 	 */
 	public function _doing_it_wrong( $function, $message, $version = null ) { // phpcs:ignore -- Wrong asserts, copied method name.
-		Debug::get_instance()->_doing_it_wrong( $function, $message, $version ); // phpcs:ignore -- Wrong asserts, copied method name.
+		// phpcs:ignore -- Wrong asserts, copied method name.
+		Internal\Debug::get_instance()->_doing_it_wrong( $function, $message, $version );
 	}
 
 	/**
@@ -252,6 +259,6 @@ final class Load extends Cache {
 	 * @param string $message A message explaining what has been done incorrectly.
 	 */
 	public function _inaccessible_p_or_m( $p_or_m, $message = '' ) {
-		Debug::get_instance()->_inaccessible_p_or_m( $p_or_m, $message );
+		Internal\Debug::get_instance()->_inaccessible_p_or_m( $p_or_m, $message );
 	}
 }

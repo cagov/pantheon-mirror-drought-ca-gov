@@ -64,13 +64,13 @@ if (!class_exists('WPFront\URE\Roles\WPFront_User_Role_Editor_Options_View')) {
                             $url = '#!';
                         }
                         ?>
-                        <a class="<?php echo $class; ?>" href="<?php echo $url; ?>"><?php echo $ctrl->getTitle(); ?></a>
+                        <a class="<?php echo esc_attr($class); ?>" href="<?php echo esc_attr($url); ?>"><?php echo esc_html($ctrl->getTitle()); ?></a>
                         <?php 
                     } 
                     ?>
                 </nav>
                 <div>
-                    <form method="post" action="<?php echo $parent->getControllerUrl($current); ?>">
+                    <form method="post" action="<?php echo esc_attr($parent->getControllerUrl($current)); ?>">
                         <?php wp_nonce_field('save-settings'); ?>
                         <div class="inside">
                             <?php echo $current->view_callback(); ?>

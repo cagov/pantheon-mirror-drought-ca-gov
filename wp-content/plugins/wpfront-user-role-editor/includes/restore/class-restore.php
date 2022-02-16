@@ -302,6 +302,9 @@ if (!class_exists('\WPFront\URE\Restore\WPFront_User_Role_Editor_Restore')) {
             return $this->Options->get_option_boolean('remove_nonstandard_capabilities_restore', true);
         }
 
+        public static function get_debug_setting() {
+            return array('key' => 'restore', 'label' => __('Restore', 'wpfront-user-role-editor'), 'position' => 50, 'description' =>  __('Disables users ability to restore WordPress built-in roles.', 'wpfront-user-role-editor'));
+        }
     }
 
     WPFront_User_Role_Editor_Restore::load();

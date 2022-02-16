@@ -131,6 +131,7 @@ class WSAL_ViewManager {
 		}
 	}
 
+
 	/**
 	 * Display notice if user is using older version of WFCM
 	 */

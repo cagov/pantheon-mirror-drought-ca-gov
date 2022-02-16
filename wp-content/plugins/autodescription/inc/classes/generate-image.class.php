@@ -10,7 +10,7 @@ namespace The_SEO_Framework;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2015 - 2021 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2015 - 2022 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -54,8 +54,7 @@ class Generate_Image extends Generate_Url {
 	 * }
 	 */
 	public function get_image_details_from_cache( $single = false ) {
-		static $cache = [];
-		return isset( $cache[ $single ] ) ? $cache[ $single ] : $cache[ $single ] = $this->get_image_details( null, $single );
+		return memo( null, $single ) ?? memo( $this->get_image_details( null, $single ), $single );
 	}
 
 	/**
@@ -63,8 +62,9 @@ class Generate_Image extends Generate_Url {
 	 *
 	 * @since 4.0.0
 	 * @since 4.0.5 The output is now filterable.
+	 * @since 4.2.0 Now supports the `$args['pta']` index.
 	 *
-	 * @param array|null $args    The query arguments. Accepts 'id' and 'taxonomy'.
+	 * @param array|null $args    The query arguments. Accepts 'id', 'taxonomy', and 'pta'.
 	 *                            Leave null to autodetermine query.
 	 * @param bool       $single  Whether to fetch one image, or multiple.
 	 * @param string     $context The filter context. Default 'social'.
@@ -94,6 +94,7 @@ class Generate_Image extends Generate_Url {
 
 		/**
 		 * @since 4.0.5
+		 * @since 4.2.0 Now supports the `$args['pta']` index.
 		 * @param array      $details The image details array, sequential: int => {
 		 *    string url:    The image URL,
 		 *    int    id:     The image ID,
@@ -101,7 +102,7 @@ class Generate_Image extends Generate_Url {
 		 *    int    height: The image height in pixels,
 		 *    string alt:    The image alt tag,
 		 * }
-		 * @param array|null $args    The query arguments. Accepts 'id' and 'taxonomy'.
+		 * @param array|null $args    The query arguments. Accepts 'id', 'taxonomy', and 'pta'.
 		 *                            Is null when query is autodetermined.
 		 * @param bool       $single  Whether to fetch one image, or multiple.
 		 * @param string     $context The filter context. Default 'social'.
@@ -123,8 +124,9 @@ class Generate_Image extends Generate_Url {
 	 * Returns single custom field image details.
 	 *
 	 * @since 4.0.0
+	 * @since 4.2.0 Now supports the `$args['pta']` index.
 	 *
-	 * @param array|null $args   The query arguments. Accepts 'id' and 'taxonomy'.
+	 * @param array|null $args   The query arguments. Accepts 'id', 'taxonomy', and 'pta'.
 	 *                           Leave null to autodetermine query.
 	 * @param bool       $single Whether to fetch one image, or multiple. Unused, reserved.
 	 * @param bool       $clean  Whether to clean the image, like stripping duplicates and erroneous items.
@@ -153,8 +155,9 @@ class Generate_Image extends Generate_Url {
 	 * Returns single or multiple generates image details.
 	 *
 	 * @since 4.0.0
+	 * @since 4.2.0 Now supports the `$args['pta']` index.
 	 *
-	 * @param array|null $args    The query arguments. Accepts 'id' and 'taxonomy'.
+	 * @param array|null $args    The query arguments. Accepts 'id', 'taxonomy', and 'pta'.
 	 *                            Leave null to autodetermine query.
 	 * @param bool       $single  Whether to fetch one image, or multiple.
 	 * @param string     $context The filter context. Default 'social'.
@@ -184,6 +187,7 @@ class Generate_Image extends Generate_Url {
 	 * Returns single custom field image details from query.
 	 *
 	 * @since 4.0.0
+	 * @since 4.2.0 Can now return post type archive images from settings.
 	 *
 	 * @return array The image details array, sequential: int => {
 	 *    string url:    The image URL,
@@ -223,6 +227,11 @@ class Generate_Image extends Generate_Url {
 				'url' => $this->get_term_meta_item( 'social_image_url' ),
 				'id'  => $this->get_term_meta_item( 'social_image_id' ),
 			];
+		} elseif ( \is_post_type_archive() ) {
+			$details = [
+				'url' => $this->get_post_type_archive_meta_item( 'social_image_url' ),
+				'id'  => $this->get_post_type_archive_meta_item( 'social_image_id' ),
+			];
 		} else {
 			$details = [
 				'url' => '',
@@ -246,6 +255,7 @@ class Generate_Image extends Generate_Url {
 	 * Returns single custom field image details from arguments.
 	 *
 	 * @since 4.0.0
+	 * @since 4.2.0 Now supports the `$args['pta']` index.
 	 *
 	 * @param array $args The query arguments. Must have 'id' and 'taxonomy'.
 	 * @return array The image details array, sequential: int => {
@@ -262,6 +272,11 @@ class Generate_Image extends Generate_Url {
 			$details = [
 				'url' => $this->get_term_meta_item( 'social_image_url', $args['id'] ),
 				'id'  => $this->get_term_meta_item( 'social_image_id', $args['id'] ),
+			];
+		} elseif ( $args['pta'] ) {
+			$details = [
+				'url' => $this->get_post_type_archive_meta_item( 'social_image_url', $args['pta'] ),
+				'id'  => $this->get_post_type_archive_meta_item( 'social_image_id', $args['pta'] ),
 			];
 		} else {
 			if ( $this->is_static_frontpage( $args['id'] ) ) {
@@ -305,8 +320,9 @@ class Generate_Image extends Generate_Url {
 	 *
 	 * @since 4.0.0
 	 * @since 4.1.1 Now only the 'social' context will fetch images from the content.
+	 * @since 4.2.0 Now supports the `$args['pta']` index.
 	 *
-	 * @param array|null $args    The query arguments. Accepts 'id' and 'taxonomy'.
+	 * @param array|null $args    The query arguments. Accepts 'id', 'taxonomy', and 'pta'.
 	 *                            Leave null to autodetermine query.
 	 * @param string     $context The filter context. Default 'social'.
 	 *                            May be (for example) 'breadcrumb' or 'article' for structured data.
@@ -322,23 +338,20 @@ class Generate_Image extends Generate_Url {
 	 */
 	public function get_image_generation_params( $args = null, $context = 'social' ) {
 
-		if ( null !== $args )
-			$this->fix_generation_args( $args );
-
 		$builder = Builders\Images::class;
 
 		if ( null === $args ) {
 			if ( $this->is_singular() ) {
 				if ( $this->is_attachment() ) {
 					$cbs = [
-						'attachment' => "$builder::get_attachment_image_details",
+						'attachment' => [ $builder, 'get_attachment_image_details' ],
 					];
 				} else {
 					$cbs = [
-						'featured' => "$builder::get_featured_image_details",
+						'featured' => [ $builder, 'get_featured_image_details' ],
 					];
 					if ( 'social' === $context ) {
-						$cbs['content'] = "$builder::get_content_image_details";
+						$cbs['content'] = [ $builder, 'get_content_image_details' ];
 					}
 				}
 			} elseif ( $this->is_term_meta_capable() ) {
@@ -347,19 +360,21 @@ class Generate_Image extends Generate_Url {
 				$cbs = [];
 			}
 		} else {
-			if ( $args['taxonomy'] ) {
+			$this->fix_generation_args( $args );
+
+			if ( $args['taxonomy'] || $args['pta'] ) {
 				$cbs = [];
 			} else {
 				if ( \wp_attachment_is_image( $args['id'] ) ) {
 					$cbs = [
-						'attachment' => "$builder::get_attachment_image_details",
+						'attachment' => [ $builder, 'get_attachment_image_details' ],
 					];
 				} else {
 					$cbs = [
-						'featured' => "$builder::get_featured_image_details",
+						'featured' => [ $builder, 'get_featured_image_details' ],
 					];
 					if ( 'social' === $context ) {
-						$cbs['content'] = "$builder::get_content_image_details";
+						$cbs['content'] = [ $builder, 'get_content_image_details' ];
 					}
 				}
 			}
@@ -367,10 +382,10 @@ class Generate_Image extends Generate_Url {
 
 		if ( 'social' === $context ) {
 			$fallback = [
-				'settings' => "$builder::get_fallback_image_details",
-				'header'   => "$builder::get_theme_header_image_details",
-				'logo'     => "$builder::get_site_logo_image_details",
-				'icon'     => "$builder::get_site_icon_image_details",
+				'settings' => [ $builder, 'get_fallback_image_details' ],
+				'header'   => [ $builder, 'get_theme_header_image_details' ],
+				'logo'     => [ $builder, 'get_site_logo_image_details' ],
+				'icon'     => [ $builder, 'get_site_icon_image_details' ],
 			];
 		} else {
 			$fallback = [];
@@ -378,13 +393,14 @@ class Generate_Image extends Generate_Url {
 
 		/**
 		 * @since 4.0.0
+		 * @since 4.2.0 Now supports the `$args['pta']` index.
 		 * @param array      $params  : [
 		 *    string  size:     The image size to use.
 		 *    boolean multi:    Whether to allow multiple images to be returned. This may be overwritten by generators to 'false'.
 		 *    array   cbs:      The callbacks to parse. Ideally be generators, so we can halt remotely.
 		 *    array   fallback: The callbacks to parse. Ideally be generators, so we can halt remotely.
 		 * ];
-		 * @param array|null $args    The query arguments. Contains 'id' and 'taxonomy'.
+		 * @param array|null $args    The query arguments. Contains 'id', 'taxonomy', and 'pta'.
 		 *                            Is null when query is autodetermined.
 		 * @param string     $context The filter context. Default 'social'.
 		 *                            May be (for example) 'breadcrumb' or 'article' for structured data.
@@ -409,7 +425,7 @@ class Generate_Image extends Generate_Url {
 	 *
 	 * @since 4.0.0
 	 *
-	 * @param array|null $args    The query arguments. Accepts 'id' and 'taxonomy'.
+	 * @param array|null $args    The query arguments. Accepts 'id', 'taxonomy', and 'pta'.
 	 *                            Leave null to autodetermine query.
 	 * @param bool       $single  Whether to fetch one image, or multiple.
 	 * @param string     $context The context of the image generation, albeit 'social', 'schema', etc.
@@ -438,7 +454,7 @@ class Generate_Image extends Generate_Url {
 	 * @since 4.0.0
 	 *
 	 * @param array      $cbs    The callbacks to parse. Ideally be generators, so we can halt early.
-	 * @param array|null $args   The query arguments. Accepts 'id' and 'taxonomy'.
+	 * @param array|null $args   The query arguments. Accepts 'id', 'taxonomy', and 'pta'.
 	 *                           Leave null to autodetermine query.
 	 * @param string     $size   The image size to use.
 	 * @param bool       $single Whether to fetch one image, or multiple.
@@ -459,8 +475,9 @@ class Generate_Image extends Generate_Url {
 			// This is one of the slowest calls in this plugin on PHP 5.6. However, PHP 7.0 optimized cuf(a). Neglegible.
 			foreach ( \call_user_func_array( $cb, [ $args, $size ] ) as $details ) {
 				if ( $details['url'] && $this->s_url_query( $details['url'] ) ) {
-					$items[ $i++ ] = $this->merge_extra_image_details( $details, $size );
+					$items[ $i ] = $this->merge_extra_image_details( $details, $size );
 					if ( $single ) break 2;
+					$i++;
 				}
 			}
 		}
@@ -486,7 +503,7 @@ class Generate_Image extends Generate_Url {
 	 *    string alt:    The image alt tag,
 	 * }
 	 */
-	public function merge_extra_image_details( array $details, $size = 'full' ) {
+	public function merge_extra_image_details( $details, $size = 'full' ) {
 
 		$details += $this->get_image_dimensions( $details['id'], $details['url'], $size );
 		$details += [ 'alt' => $this->get_image_alt_tag( $details['id'] ) ];
@@ -517,7 +534,7 @@ class Generate_Image extends Generate_Url {
 		];
 
 		if ( $image ) {
-			list( $src, $width, $height ) = $image;
+			[ $src, $width, $height ] = $image;
 
 			$test_src = \esc_url_raw( $this->set_url_scheme( $src, 'https' ), [ 'https', 'http' ] );
 			$test_url = \esc_url_raw( $this->set_url_scheme( $url, 'https' ), [ 'https', 'http' ] );

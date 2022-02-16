@@ -68,7 +68,7 @@ if (!class_exists('WPFront\URE\Post_Type\WPFront_User_Role_Editor_Post_Type_Add_
                     $action = $this->controller->get_edit_url($this->post_type_data->name);
                 }
                 ?>
-                <form method="post" class="validate" action="<?php echo $action; ?>">
+                <form method="post" class="validate" action="<?php echo esc_attr($action); ?>">
                     <?php $this->create_meta_boxes(); ?>
                     <div id="poststuff">
                         <div id="post-body" class="metabox-holder columns-2" style="display:flow-root">
@@ -746,8 +746,8 @@ if (!class_exists('WPFront\URE\Post_Type\WPFront_User_Role_Editor_Post_Type_Add_
                         $prop_value = $value;
                     }
                 }
-                
-                if(empty($prop_value)) {
+
+                if (empty($prop_value)) {
                     $prop_value = $this->get_property_value($name);
                 }
                 $prop_current_value = $this->get_current_property_value($name);
@@ -844,13 +844,13 @@ if (!class_exists('WPFront\URE\Post_Type\WPFront_User_Role_Editor_Post_Type_Add_
             ?>
             <tr class="<?php echo!empty($obj->required) ? 'form-required ' : ''; ?>">
                 <th scope="row">
-            <?php echo $label; ?>
-            <?php if (!empty($obj->required)) { ?>
+                    <?php echo esc_html($label); ?>
+                    <?php if (!empty($obj->required)) { ?>
                         <span class="description"> (<?php echo __('required', 'wpfront-user-role-editor'); ?>)</span>
-            <?php } ?>
+                    <?php } ?>
                 </th>
                 <td>
-                    <input id="<?php echo $name; ?>" class="regular-text <?php echo $class; ?>" name="<?php echo $name; ?>" type="text" value="<?php echo $value; ?>" <?php echo $attr; ?> />
+                    <input id="<?php echo esc_attr($name); ?>" class="regular-text <?php echo $class; ?>" name="<?php echo esc_attr($name); ?>" type="text" value="<?php echo esc_attr($value); ?>" <?php echo $attr; ?> />
                     <?php
                     if (!empty($obj->help)) {
                         $this->echo_help_tooltip($obj->help, $obj->help_current_value);
@@ -858,50 +858,52 @@ if (!class_exists('WPFront\URE\Post_Type\WPFront_User_Role_Editor_Post_Type_Add_
                     ?>
                 </td>
             </tr>
-                    <?php
-                }
+            <?php
+        }
 
-                protected function dropdown_row($label, $name, $options, $value, $obj) {
-                    $attr = '';
-                    $placeholder = '';
-                    if (!empty($obj->attr)) {
-                        $attr .= $obj->attr . ' ';
-                    }
-                    if ($name === 'show_in_menu') {
-                        $placeholder = __('top level menu', 'wpfront-user-role-editor');
-                    }
-                    if ($name === 'has_archive' || $name === 'query_var') {
-                        if (isset($this->post_type_obj->name)) {
-                            $placeholder = $this->post_type_obj->name;
-                        }
-                    }
-                    ?>             
+        protected function dropdown_row($label, $name, $options, $value, $obj) {
+            $attr = '';
+            $placeholder = '';
+            if (!empty($obj->attr)) {
+                $attr .= $obj->attr . ' ';
+            }
+            if ($name === 'show_in_menu') {
+                $placeholder = __('top level menu', 'wpfront-user-role-editor');
+            }
+            if ($name === 'has_archive' || $name === 'query_var') {
+                if (isset($this->post_type_obj->name)) {
+                    $placeholder = $this->post_type_obj->name;
+                }
+            }
+            ?>             
             <tr>
                 <th scope="row">
-            <?php echo $label; ?>
+                    <?php echo esc_html($label); ?>
                 </th>
                 <td>
-                    <select name="<?php echo $name; ?>" class="<?php echo!empty($obj->txt) ? 'has-depends' : ''; ?>" <?php echo $attr; ?> >
-            <?php
-            foreach ($options as $option) {
-                $selected = $option->value === $value ? 'selected' : '';
-                if ($option->value === true) {
-                    $option->value = '1';
-                } elseif ($option->value === false) {
-                    $option->value = '0';
-                }
-                echo "<option value='{$option->value}' $selected>{$option->label}</option>";
-            }
-            ?>
-                    </select>   
+                    <select name="<?php echo esc_attr($name); ?>" class="<?php echo!empty($obj->txt) ? 'has-depends' : ''; ?>" <?php echo $attr; ?> >
                         <?php
-                        if (!empty($obj->txt)) {
-                            $txt_value = $obj->txt['value'];
-                            if (!empty($_POST['submit'])) { //on a POST with validation error, display POSTed value.
-                                $txt_value = $_POST[$obj->txt['name']];
+                        foreach ($options as $option) {
+                            $selected = $option->value === $value ? 'selected' : '';
+                            if ($option->value === true) {
+                                $option->value = '1';
+                            } elseif ($option->value === false) {
+                                $option->value = '0';
                             }
-                            ?>
-                        <input type="text" name="<?php echo $obj->txt['name']; ?>" placeholder="<?php echo $placeholder; ?>" value="<?php echo $txt_value; ?>" data-depends="<?php echo $name; ?>" data-depends-on="<?php echo $obj->txt['depends_on']; ?>" />
+                            $option_value = esc_attr($option->value);
+                            $option_label = esc_html($option->label);
+                            echo "<option value='$option_value' $selected>$option_label</option>";
+                        }
+                        ?>
+                    </select>   
+                    <?php
+                    if (!empty($obj->txt)) {
+                        $txt_value = $obj->txt['value'];
+                        if (!empty($_POST['submit'])) { //on a POST with validation error, display POSTed value.
+                            $txt_value = $_POST[$obj->txt['name']];
+                        }
+                        ?>
+                        <input type="text" name="<?php echo esc_attr($obj->txt['name']); ?>" placeholder="<?php echo esc_attr($placeholder); ?>" value="<?php echo esc_attr($txt_value); ?>" data-depends="<?php echo esc_attr($name); ?>" data-depends-on="<?php echo esc_attr($obj->txt['depends_on']); ?>" />
                         <?php
                     }
                     ?>
@@ -911,45 +913,45 @@ if (!class_exists('WPFront\URE\Post_Type\WPFront_User_Role_Editor_Post_Type_Add_
                     }
                     ?>
             </tr>
-                    <?php
-                }
+            <?php
+        }
 
-                protected function multilist_row($label, $name, $values, $options, $obj) {
-                    if (empty($values)) {
-                        $values = [];
-                    }
-                    ?>
+        protected function multilist_row($label, $name, $values, $options, $obj) {
+            if (empty($values)) {
+                $values = [];
+            }
+            ?>
             <tr>
                 <th scope="row">
-            <?php
-            echo $label;
-            $placeholder = __('Choose From Options', 'wpfront-user-role-editor');
-            ?>
+                    <?php
+                    echo esc_html($label);
+                    $placeholder = __('Choose From Options', 'wpfront-user-role-editor');
+                    ?>
                 </th>
                 <td>
-                    <select data-placeholder="<?php echo $placeholder; ?>" name="<?php echo $name; ?>[]" class="chosen-select" multiple>
-                    <?php
-                    foreach ($options as $value => $label) {
-                        $selected = in_array($value, $values) ? 'selected' : '';
-                        echo "<option value='$value' $selected>$label</option>";
-                    }
-                    ?>
-                    </select>
+                    <select data-placeholder="<?php echo esc_attr($placeholder); ?>" name="<?php echo esc_attr($name); ?>[]" class="chosen-select" multiple>
                         <?php
-                        if (!empty($obj->help)) {
-                            $this->echo_help_tooltip($obj->help, $obj->help_current_value);
+                        foreach ($options as $value => $label) {
+                            $selected = in_array($value, $values) ? 'selected' : '';
+                            echo "<option value='".esc_attr($value)."' $selected>".esc_html($label)."</option>";
                         }
                         ?>
-            </tr>
+                    </select>
                     <?php
-                }
-
-                protected function echo_help_tooltip($pretext, $current_value) {
-                    $title = esc_attr($pretext);
-                    if (!empty($this->post_type_obj)) {
-                        $title .= '<br />' . esc_attr(sprintf(__('Current value is "<b>%s</b>"', 'wpfront-user-role-editor'), $current_value));
+                    if (!empty($obj->help)) {
+                        $this->echo_help_tooltip($obj->help, $obj->help_current_value);
                     }
                     ?>
+            </tr>
+            <?php
+        }
+
+        protected function echo_help_tooltip($pretext, $current_value) {
+            $title = esc_attr($pretext);
+            if (!empty($this->post_type_obj)) {
+                $title .= '<br />' . esc_attr(sprintf(__('Current value is "<b>%s</b>"', 'wpfront-user-role-editor'), $current_value));
+            }
+            ?>
             <i class="fa fa-question-circle-o" title="<?php echo $title; ?>"></i>
             <?php
         }

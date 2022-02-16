@@ -636,6 +636,9 @@ if (!class_exists('\WPFront\URE\Login_Redirect\WPFront_User_Role_Editor_Login_Re
             $this->UtilsClass::set_help_tab($tabs, $sidebar);
         }
         
+        public static function get_debug_setting() {
+            return array('key' => 'login-redirect', 'label' =>  __('Login Redirect', 'wpfront-user-role-editor'), 'position' => 60, 'description' => __('Disables the login redirect functionality.', 'wpfront-user-role-editor'));
+        }
     }
     
     WPFront_User_Role_Editor_Login_Redirect::load();

@@ -77,8 +77,8 @@ if(!class_exists('WPFront\URE\Login_Redirect\WPFront_User_Role_Editor_Login_Redi
         protected function roles_display() {
             foreach ($this->roles as $role) {
                 $display = LoginRedirect::instance()->get_role_display($role);
-                echo "<li><strong>$display</strong> [$role]</li>";
-                echo "<input type='hidden' name='bulk-delete[$role]' />";
+                echo "<li><strong>".esc_html($display)."</strong> [".esc_html($role)."]</li>";
+                echo "<input type='hidden' name='bulk-delete[".esc_attr($role)."]' />";
             }
         }
     }

@@ -8,7 +8,7 @@ namespace The_SEO_Framework\Builders\CoreSitemaps;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2020 - 2021 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2020 - 2022 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -38,22 +38,25 @@ class Taxonomies extends \WP_Sitemaps_Taxonomies {
 	 * Gets a URL list for a taxonomy sitemap.
 	 *
 	 * @since 4.1.2
+	 * @since 4.2.0 Renamed `$taxonomy` to `$object_subtype` to match parent class
+	 *              for PHP 8 named parameter support. (Backport WP 5.9)
 	 * @source \WP_Sitemaps_Taxonomies\get_url_list()
 	 * @TEMP https://wordpress.slack.com/archives/CTKTGNJJW/p1604995479019700
 	 * @link <https://core.trac.wordpress.org/ticket/51860>
+	 * @link <https://core.trac.wordpress.org/changeset/51787>
 	 *
-	 * @param int    $page_num Page of results.
-	 * @param string $taxonomy Optional. Taxonomy name. Default empty.
+	 * @param int    $page_num       Page of results.
+	 * @param string $object_subtype Optional. Taxonomy name. Default empty.
 	 * @return array Array of URLs for a sitemap.
 	 */
-	public function get_url_list( $page_num, $taxonomy = '' ) {
-
+	public function get_url_list( $page_num, $object_subtype = '' ) {
+		// Restores the more descriptive, specific name for use within this method.
+		$taxonomy        = $object_subtype;
 		$supported_types = $this->get_object_subtypes();
 
 		// Bail early if the queried taxonomy is not supported.
-		if ( ! isset( $supported_types[ $taxonomy ] ) ) {
+		if ( ! isset( $supported_types[ $taxonomy ] ) )
 			return [];
-		}
 
 		/**
 		 * Filters the taxonomies URL list before it is generated.
@@ -74,9 +77,8 @@ class Taxonomies extends \WP_Sitemaps_Taxonomies {
 			$page_num
 		);
 
-		if ( null !== $url_list ) {
+		if ( null !== $url_list )
 			return $url_list;
-		}
 
 		$url_list = [];
 
@@ -90,37 +92,34 @@ class Taxonomies extends \WP_Sitemaps_Taxonomies {
 
 		$taxonomy_terms = new \WP_Term_Query( $args );
 
-		if ( ! empty( $taxonomy_terms->terms ) ) {
-			foreach ( $taxonomy_terms->terms as $term ) {
-				/**
-				 * @augmented This if-statement prevents including the term in the sitemap when conditions apply.
-				 */
-				if ( ! $main->is_term_included_in_sitemap( $term, $taxonomy ) )
-					continue;
+		foreach ( $taxonomy_terms->terms ?? [] as $term ) :
+			/**
+			 * @augmented This if-statement prevents including the term in the sitemap when conditions apply.
+			 */
+			if ( ! $main->is_term_included_in_sitemap( $term, $taxonomy ) )
+				continue;
 
-				$term_link = \get_term_link( $term, $taxonomy );
+			$term_link = \get_term_link( $term, $taxonomy );
 
-				if ( \is_wp_error( $term_link ) ) {
-					continue;
-				}
+			if ( \is_wp_error( $term_link ) )
+				continue;
 
-				$sitemap_entry = [
-					'loc' => $term_link,
-				];
+			$sitemap_entry = [
+				'loc' => $term_link,
+			];
 
-				/**
-				 * Filters the sitemap entry for an individual term.
-				 *
-				 * @since WP Core 5.5.0
-				 *
-				 * @param array   $sitemap_entry Sitemap entry for the term.
-				 * @param WP_Term $term          Term object.
-				 * @param string  $taxonomy      Taxonomy name.
-				 */
-				$sitemap_entry = \apply_filters( 'wp_sitemaps_taxonomies_entry', $sitemap_entry, $term, $taxonomy );
-				$url_list[]    = $sitemap_entry;
-			}
-		}
+			/**
+			 * Filters the sitemap entry for an individual term.
+			 *
+			 * @since WP Core 5.5.0
+			 *
+			 * @param array   $sitemap_entry Sitemap entry for the term.
+			 * @param WP_Term $term          Term object.
+			 * @param string  $taxonomy      Taxonomy name.
+			 */
+			$sitemap_entry = \apply_filters( 'wp_sitemaps_taxonomies_entry', $sitemap_entry, $term, $taxonomy );
+			$url_list[]    = $sitemap_entry;
+		endforeach;
 
 		return $url_list;
 	}

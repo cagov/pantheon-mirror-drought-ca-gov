@@ -8,7 +8,7 @@ namespace The_SEO_Framework\Bridges;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2021 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2021 - 2022 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -42,18 +42,20 @@ final class AJAX {
 	 *
 	 * @since 4.1.0
 	 * @since 4.1.4 Moved to \The_SEO_Framework\Bridges\AJAX and made static.
+	 * @since 4.2.0 Now cleans response header.
 	 * Security check OK.
 	 * @access private
 	 */
 	public static function _wp_ajax_dismiss_notice() {
 
+		$tsf = \tsf();
+		$tsf->clean_response_header();
+
 		// phpcs:ignore, WordPress.Security.NonceVerification.Missing -- We require the POST data to find locally stored nonces.
-		$key = isset( $_POST['tsf_dismiss_key'] ) ? $_POST['tsf_dismiss_key'] : '';
+		$key = $_POST['tsf_dismiss_key'] ?? '';
 
 		if ( ! $key )
 			\wp_send_json_error( null, 400 );
-
-		$tsf = \the_seo_framework();
 
 		$notices = $tsf->get_static_cache( 'persistent_notices', [] );
 		if ( empty( $notices[ $key ]['conditions']['capability'] ) ) {
@@ -74,27 +76,22 @@ final class AJAX {
 	 *
 	 * @since 3.1.0 Introduced in 2.6.0, but the name changed.
 	 * @since 4.1.4 Moved to \The_SEO_Framework\Bridges\AJAX and made static.
+	 * @since 4.2.0 1. Now uses wp.ajax instead of $.ajax.
+	 *              2. No longer tests if settings-saving was successful.
 	 * @securitycheck 3.0.0 OK.
 	 * @access private
 	 */
 	public static function _wp_ajax_update_counter_type() {
 
-		$tsf = \the_seo_framework();
+		$tsf = \tsf();
+		$tsf->clean_response_header();
 
 		// phpcs:disable, WordPress.Security.NonceVerification -- _check_tsf_ajax_referer() does this.
 		$tsf->_check_tsf_ajax_referer( 'edit_posts' );
 
-		// Remove output buffer. TODO why don't we do this consistently??
-		$tsf->clean_response_header();
-
 		// If current user isn't allowed to edit posts, don't do anything and kill PHP.
-		if ( ! \current_user_can( 'edit_posts' ) ) {
-			// Encode and echo results. Requires JSON decode within JS.
-			\wp_send_json( [
-				'type'  => 'failure',
-				'value' => '',
-			] );
-		}
+		if ( ! \current_user_can( 'edit_posts' ) )
+			\wp_send_json_error();
 
 		/**
 		 * Count up, reset to 0 if needed. We have 4 options: 0, 1, 2, 3
@@ -111,16 +108,13 @@ final class AJAX {
 			$value = 0;
 
 		// Update the option and get results of action.
-		$type = $tsf->update_user_option( 0, 'counter_type', $value ) ? 'success' : 'error';
-
-		$results = [
-			'type'  => $type,
-			'value' => $value,
-		];
+		$tsf->update_single_user_meta_item( $tsf->get_user_id(), 'counter_type', $value );
 
 		// Encode and echo results. Requires JSON decode within JS.
-		\wp_send_json( $results );
-
+		\wp_send_json_success( [
+			'type'  => 'success',
+			'value' => $value,
+		] );
 		// phpcs:enable, WordPress.Security.NonceVerification
 	}
 
@@ -142,13 +136,17 @@ final class AJAX {
 	 *
 	 * @since 3.1.0 Introduced in 2.9.0, but the name changed.
 	 * @since 4.1.4 Moved to \The_SEO_Framework\Bridges\AJAX and made static.
+	 * @since 4.2.0 Now cleans response header.
 	 * @securitycheck 3.0.0 OK.
 	 * @access private
 	 */
 	public static function _wp_ajax_crop_image() {
 
+		$tsf = \tsf();
+		$tsf->clean_response_header();
+
 		// phpcs:disable, WordPress.Security.NonceVerification -- _check_tsf_ajax_referer does this.
-		\the_seo_framework()->_check_tsf_ajax_referer( 'upload_files' );
+		$tsf->_check_tsf_ajax_referer( 'upload_files' );
 
 		if ( ! \current_user_can( 'upload_files' ) || ! isset( $_POST['id'], $_POST['context'], $_POST['cropDetails'] ) )
 			\wp_send_json_error();
@@ -156,7 +154,7 @@ final class AJAX {
 		$attachment_id = \absint( $_POST['id'] );
 
 		$context = str_replace( '_', '-', \sanitize_key( $_POST['context'] ) );
-		$data    = array_map( '\\absint', $_POST['cropDetails'] );
+		$data    = array_map( 'absint', $_POST['cropDetails'] );
 		$cropped = \wp_crop_image( $attachment_id, $data['x1'], $data['y1'], $data['width'], $data['height'], $data['dst_width'], $data['dst_height'] );
 
 		if ( ! $cropped || \is_wp_error( $cropped ) )
@@ -235,26 +233,21 @@ final class AJAX {
 	 *
 	 * @since 4.0.0
 	 * @since 4.1.4 Moved to \The_SEO_Framework\Bridges\AJAX and made static.
+	 * @since 4.2.0 Now uses wp.ajax, instead of $.ajax
 	 * @access private
 	 */
 	public static function _wp_ajax_get_post_data() {
 
-		$tsf = \the_seo_framework();
+		$tsf = \tsf();
+		$tsf->clean_response_header();
 
 		// phpcs:disable, WordPress.Security.NonceVerification -- _check_tsf_ajax_referer() does this.
 		$tsf->_check_tsf_ajax_referer( 'edit_posts' );
 
-		// Clear output buffer.
-		$tsf->clean_response_header();
-
 		$post_id = \absint( $_POST['post_id'] );
 
-		if ( ! $post_id || ! \current_user_can( 'edit_post', $post_id ) ) {
-			\wp_send_json( [
-				'type' => 'failure',
-				'data' => [],
-			] );
-		}
+		if ( ! $post_id || ! \current_user_can( 'edit_post', $post_id ) )
+			\wp_send_json_error();
 
 		$_get_defaults = [
 			'seobar'          => false,
@@ -270,17 +263,14 @@ final class AJAX {
 				array_intersect_key(
 					array_merge(
 						$_get_defaults,
-						(array) ( isset( $_POST['get'] ) ? $_POST['get'] : [] )
+						(array) ( $_POST['get'] ?? [] )
 					),
 					$_get_defaults
 				)
 			)
 		);
 
-		$_generator_args = [
-			'id'       => $post_id,
-			'taxonomy' => '',
-		];
+		$_generator_args = [ 'id' => $post_id ];
 
 		$data = [];
 
@@ -296,23 +286,27 @@ final class AJAX {
 					switch ( $g ) {
 						case 'metadescription':
 							if ( $tsf->is_static_frontpage( $post_id ) ) {
-								// phpcs:disable, WordPress.WhiteSpace.PrecisionAlignment
 								$data[ $g ] = $tsf->get_option( 'homepage_description' )
 										   ?: $tsf->get_generated_description( $_generator_args, false );
-								// phpcs:enable, WordPress.WhiteSpace.PrecisionAlignment
 							} else {
 								$data[ $g ] = $tsf->get_generated_description( $_generator_args, false );
 							}
 							break;
 						case 'ogdescription':
-							// phpcs:ignore, VariableAnalysis.CodeAnalysis.VariableAnalysis.UndefinedVariable -- Smart loop.
-							$_social_ph = isset( $_social_ph ) ? $_social_ph : $tsf->_get_social_placeholders( $_generator_args );
-							$data[ $g ] = $_social_ph['description']['og'];
+							if ( $tsf->is_static_frontpage( $post_id ) ) {
+								$data[ $g ] = $tsf->get_option( 'homepage_description' )
+										   ?: $tsf->get_generated_open_graph_description( $_generator_args, false );
+							} else {
+								$data[ $g ] = $tsf->get_generated_open_graph_description( $_generator_args, false );
+							}
 							break;
 						case 'twdescription':
-							// phpcs:ignore, VariableAnalysis.CodeAnalysis.VariableAnalysis.UndefinedVariable -- Smart loop.
-							$_social_ph = isset( $_social_ph ) ? $_social_ph : $tsf->_get_social_placeholders( $_generator_args );
-							$data[ $g ] = $_social_ph['description']['twitter'];
+							if ( $tsf->is_static_frontpage( $post_id ) ) {
+								$data[ $g ] = $tsf->get_option( 'homepage_description' )
+										   ?: $tsf->get_generated_twitter_description( $_generator_args, false );
+							} else {
+								$data[ $g ] = $tsf->get_generated_twitter_description( $_generator_args, false );
+							}
 							break;
 					}
 
@@ -321,11 +315,9 @@ final class AJAX {
 
 				case 'imageurl':
 					if ( $tsf->is_static_frontpage( $post_id ) && $tsf->get_option( 'homepage_social_image_url' ) ) {
-						$image_details = current( $tsf->get_image_details( $_generator_args, true, 'social', true ) );
-						$data[ $g ]    = isset( $image_details['url'] ) ? $image_details['url'] : '';
+						$data[ $g ] = current( $tsf->get_image_details( $_generator_args, true, 'social', true ) )['url'] ?? '';
 					} else {
-						$image_details = current( $tsf->get_generated_image_details( $_generator_args, true, 'social', true ) );
-						$data[ $g ]    = isset( $image_details['url'] ) ? $image_details['url'] : '';
+						$data[ $g ] = current( $tsf->get_generated_image_details( $_generator_args, true, 'social', true ) )['url'] ?? '';
 					}
 					break;
 
@@ -334,12 +326,10 @@ final class AJAX {
 			}
 		endforeach;
 
-		\wp_send_json( [
-			'type'      => 'success',
+		\wp_send_json_success( [
 			'data'      => $data,
 			'processed' => $get,
 		] );
-
 		// phpcs:enable, WordPress.Security.NonceVerification
 	}
 }

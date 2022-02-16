@@ -129,7 +129,7 @@ if(!class_exists('WPFront\URE\Login_Redirect\WPFront_User_Role_Editor_Login_Redi
                                 if($name == $current_role) {
                                     $selected = 'selected';
                                 }
-                                echo "<option value='$name' data-allowed='$role->allowed' $selected>$role->display_name</option>";
+                                echo "<option value='".esc_attr($name)."' data-allowed='".esc_attr($role->allowed)."' $selected>".esc_html($role->display_name)."</option>";
                             }
                             ?>
                         </select>
@@ -139,7 +139,7 @@ if(!class_exists('WPFront\URE\Login_Redirect\WPFront_User_Role_Editor_Login_Redi
                         <select name="role" id="login-redirect-role" disabled="true">
                             <?php
                             $display_name = LoginRedirect::instance()->get_role_display($this->role_entity->role);
-                            echo "<option>$display_name</option>";
+                            echo "<option>".esc_html($display_name)."</option>";
                             ?>
                         </select>
                         <?php
@@ -157,7 +157,7 @@ if(!class_exists('WPFront\URE\Login_Redirect\WPFront_User_Role_Editor_Login_Redi
                     <?php echo __('Priority', 'wpfront-user-role-editor'); ?><span class="description"> (<?php echo __('required', 'wpfront-user-role-editor'); ?>)</span>
                 </th>
                 <td>
-                    <input id="login-redirect-priority" class="small-text" name="priority" type="number" value="<?php echo $this->get_current_priority(); ?>" aria-required="true"  />
+                    <input id="login-redirect-priority" class="small-text" name="priority" type="number" value="<?php echo esc_attr($this->get_current_priority()); ?>" aria-required="true"  />
                 </td>
             </tr>
             <?php
@@ -170,7 +170,7 @@ if(!class_exists('WPFront\URE\Login_Redirect\WPFront_User_Role_Editor_Login_Redi
                     <?php echo __('Login Redirect URL', 'wpfront-user-role-editor'); ?><span class="description"> (<?php echo __('required', 'wpfront-user-role-editor'); ?>)</span>
                 </th>
                 <td>
-                    <input id="login-redirect-url" class="regular-text" name="url" type="text" value="<?php echo $this->get_current_url(); ?>" aria-required="true"  />
+                    <input id="login-redirect-url" class="regular-text" name="url" type="text" value="<?php echo esc_attr($this->get_current_url()); ?>" aria-required="true"  />
                     <br />
                     <span class="description">[<?php echo __('Relative to home URL (recommended) or absolute URL.', 'wpfront-user-role-editor'); ?>]</span>
                 </td>
@@ -185,7 +185,7 @@ if(!class_exists('WPFront\URE\Login_Redirect\WPFront_User_Role_Editor_Login_Redi
                     <?php echo __('Logout Redirect URL', 'wpfront-user-role-editor'); ?>
                 </th>
                 <td>
-                    <input class="regular-text" name="logout_url" type="text" value="<?php echo $this->get_current_logout_url(); ?>" aria-required="true"  />
+                    <input class="regular-text" name="logout_url" type="text" value="<?php echo esc_attr($this->get_current_logout_url()); ?>" aria-required="true"  />
                     <br />
                     <span class="description">[<?php echo __('Relative to home URL (recommended) or absolute URL.', 'wpfront-user-role-editor'); ?>]</span>
                 </td>

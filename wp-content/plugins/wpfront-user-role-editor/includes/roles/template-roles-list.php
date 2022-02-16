@@ -103,7 +103,7 @@ if(!class_exists('WPFront\URE\Roles\WPFront_User_Role_Editor_Roles_List_View')) 
                     $active_filter = $this->get_active_list_filter();
                     $filter_data = $this->RolesList->get_list_filter_data();
                     foreach ($filter_data as $key => $value) {
-                        $link_data[] = sprintf('<a href="%s" class="%s">%s <span class="count">(%s)</span></a>', $value['url'], ($active_filter == $key ? 'current' : ''), $value['display'], $value['count']);
+                        $link_data[] = sprintf('<a href="%s" class="%s">%s <span class="count">(%s)</span></a>', esc_attr($value['url']), ($active_filter == $key ? 'current' : ''), esc_html($value['display']), esc_html($value['count']));
                     }
                     echo implode('&#160;|&#160;</li><li> ', $link_data);
                     ?>
@@ -116,7 +116,7 @@ if(!class_exists('WPFront\URE\Roles\WPFront_User_Role_Editor_Roles_List_View')) 
             ?>
             <p class = "search-box">
                 <label class = "screen-reader-text" for = "role-search-input"><?php echo __('Search Roles', 'wpfront-user-role-editor') . ':'; ?></label>
-                <input type="search" id="role-search-input" name="s" value="<?php echo $this->get_search_term(); ?>">
+                <input type="search" id="role-search-input" name="s" value="<?php echo esc_attr($this->get_search_term()); ?>">
                 <input type="submit" name="search-submit" id="search-submit" class="button" value="<?php echo __('Search Roles', 'wpfront-user-role-editor'); ?>">
             </p>
             <?php
@@ -173,7 +173,7 @@ if(!class_exists('WPFront\URE\Roles\WPFront_User_Role_Editor_Roles_List_View')) 
                         <th scope="col" id="%1$s" class="manage-column column-%1$s num">
                             <a><span>%2$s</span></a>
                         </th>
-                        ', $key, $value);
+                        ', esc_attr($key), esc_html($value));
                 }
                 ?>
             </tr>
@@ -209,8 +209,8 @@ if(!class_exists('WPFront\URE\Roles\WPFront_User_Role_Editor_Roles_List_View')) 
             ?>
             <th scope="row" class="check-column">
                 <?php if($is_editable) { ?>
-                    <label class="screen-reader-text" for="cb-select-<?php echo $role_name; ?>"><?php echo sprintf(__('Select %s', 'wpfront-user-role-editor'), $display_name) ?></label>
-                    <input type="checkbox" name="selected-roles[<?php echo $role_name; ?>]" id="cb-select-<?php echo $role_name; ?>" />
+                    <label class="screen-reader-text" for="cb-select-<?php echo esc_attr($role_name); ?>"><?php echo sprintf(__('Select %s', 'wpfront-user-role-editor'), esc_html($display_name)) ?></label>
+                    <input type="checkbox" name="selected-roles[<?php echo esc_attr($role_name); ?>]" id="cb-select-<?php echo esc_html($role_name); ?>" />
                 <?php } ?>
             </th>
             <?php
@@ -218,10 +218,10 @@ if(!class_exists('WPFront\URE\Roles\WPFront_User_Role_Editor_Roles_List_View')) 
         
         protected function cell_display_name($role_name, $value) {
             $display_name = $value['display_name'];
-            $edit_url = $value['edit_url'];
+            $edit_url = esc_url_raw(($value['edit_url']));
             $is_editable = $value['is_editable'];
-            $delete_url = $value['delete_url'];
-            $set_default_url = $value['set_default_url'];
+            $delete_url = esc_url_raw($value['delete_url']);
+            $set_default_url = esc_url_raw($value['set_default_url']);
             ?>
             <td class="displayname column-displayname">
                 <strong>
@@ -229,7 +229,7 @@ if(!class_exists('WPFront\URE\Roles\WPFront_User_Role_Editor_Roles_List_View')) 
                     if (empty($edit_url))
                         echo $display_name;
                     else
-                        printf('<a href="%s">%s</a>', $edit_url, $display_name);
+                        printf('<a href="%s">%s</a>', esc_attr($edit_url), esc_html($display_name));
                     ?>
                 </strong>
                 <br />
@@ -244,10 +244,10 @@ if(!class_exists('WPFront\URE\Roles\WPFront_User_Role_Editor_Roles_List_View')) 
                 <?php
                 $links = array();
                 if (!empty($edit_url)) {
-                    $links[] = sprintf('<span class="edit"><a href="%s">%s</a></span>', $edit_url, ($is_editable ? __('Edit', 'wpfront-user-role-editor') : __('View', 'wpfront-user-role-editor')));
+                    $links[] = sprintf('<span class="edit"><a href="%s">%s</a></span>', esc_attr($edit_url), ($is_editable ? __('Edit', 'wpfront-user-role-editor') : __('View', 'wpfront-user-role-editor')));
                 }
                 if (!empty($delete_url)) {
-                    $links[] = sprintf('<span class="delete"><a href="%s">%s</a></span>', $delete_url, __('Delete', 'wpfront-user-role-editor'));
+                    $links[] = sprintf('<span class="delete"><a href="%s">%s</a></span>', esc_attr($delete_url), __('Delete', 'wpfront-user-role-editor'));
                 }
                 if (!empty($set_default_url)) {
                     $text = __('Default', 'wpfront-user-role-editor');
@@ -256,7 +256,7 @@ if(!class_exists('WPFront\URE\Roles\WPFront_User_Role_Editor_Roles_List_View')) 
                     } else {
                         $text = '+' . $text;
                     }
-                    $links[] = sprintf('<span class="set-default"><a href="%s">%s</a></span>', $set_default_url, $text);
+                    $links[] = sprintf('<span class="set-default"><a href="%s">%s</a></span>', esc_attr($set_default_url), esc_html($text));
                 }
                 $custom_links = apply_filters('role_row_actions', array(), get_role($role_name));
                 foreach ($custom_links as $link_key => $link_value) {
@@ -271,7 +271,7 @@ if(!class_exists('WPFront\URE\Roles\WPFront_User_Role_Editor_Roles_List_View')) 
         protected function cell_role_name($role_name, $value) {
             ?>
             <td class="rolename column-rolename">
-                <?php echo $role_name; ?>
+                <?php echo esc_html($role_name); ?>
             </td>
             <?php
         }
@@ -305,7 +305,7 @@ if(!class_exists('WPFront\URE\Roles\WPFront_User_Role_Editor_Roles_List_View')) 
         protected function cell_user_count($user_count) {
             ?>
             <td class="usercount column-usercount num">
-                <?php echo $user_count; ?>
+                <?php echo esc_html($user_count); ?>
             </td>
             <?php
         }
@@ -313,7 +313,7 @@ if(!class_exists('WPFront\URE\Roles\WPFront_User_Role_Editor_Roles_List_View')) 
         protected function cell_caps_count($caps_count) {
             ?>
             <td class="capscount column-capscount num">
-                <?php echo $caps_count; ?>
+                <?php echo esc_html($caps_count); ?>
             </td>
             <?php
         }
