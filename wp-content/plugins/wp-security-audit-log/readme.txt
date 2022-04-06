@@ -5,8 +5,8 @@ License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl.html
 Tags: activity log, wordpress activity logs, security audit log, audit log, user tracking, security event log, audit trail, wordpress security monitor, wordpress admin, wordpress admin monitoring, user activity, admin, multisite, SMS alerts, wordpress monitoring, email notification, wordpress email alerts, tracking, user tracking, user activity report, wordpress audit trail
 Requires at least: 5.0
-Tested up to: 5.9
-Stable tag: 4.3.6
+Tested up to: 5.9.1
+Stable tag: 4.4.1
 Requires PHP: 7.0
 
 The #1 user-rated activity log plugin. Keep a comprehensive log of the changes that happen on your site with this easy to use plugin.
@@ -162,7 +162,7 @@ WP Activity Log can keep also a detailed log of changes that happen on other plu
 * [Why WP Activity Log](https://wpactivitylog.com/why-wp-activity-log/?utm_source=wordpress.org&utm_medium=referral&utm_campaign=WSAL&utm_content=plugin+repos+description)
 * [WordPress Multisite Features](https://wpactivitylog.com/support/kb/activity-log-multisite-network-features/?utm_source=wordpress.org&utm_medium=referral&utm_campaign=WSAL&utm_content=plugin+repos+description)
 * [The WP Activity Log plugin website](https://wpactivitylog.com/?utm_source=wordpress.org&utm_medium=referral&utm_campaign=WSAL&utm_content=plugin+repos+description)
-* [Activity logs for MainWP](https://wpactivitylog.com/extensions/mainwp-activity-log/?utm_source=wordpress.org&utm_medium=referral&utm_campaign=WSAL&utm_content=plugin+repos+description)
+* [The definitive WordPress security guide](hhttps://www.wpwhitesecurity.com/wordpress-security/?utm_source=wordpress.org&utm_medium=referral&utm_campaign=WSAL&utm_content=plugin+repos+description)
 
 #### WP Activity Log in your language!
 We need help translating the plugin and the activity log events. Please visit the [WordPress Translate Project](https://translate.wordpress.org/projects/wp-plugins/wp-security-audit-log/) to translate the plugin. Drop us an email on support@wpwhitesecurity.com to get mentioned in the list of translators below.
@@ -208,11 +208,15 @@ Please refer to our [support pages](https://wpactivitylog.com/support/?utm_sourc
 
 == Changelog ==
 
-= 4.3.6 (2022-02-15) =
-Release notes: the improvements in this update are required to prepare for WP Activity Log 4.4. Therefore it is important to install this update before you update to version 4.4.
+= 4.4.1 (2022-03-23) =
 
-* **Improvements**
-	* Removed opcache purging.
-	* Improved error handling during plugin upgrade.
+Release notes: [Out now: Activity Log for MainWP 2.0 & WP Activity Log 4.4.1](https://wpactivitylog.com/activity-log-mainwp-2-0/)
+
+* **Improvements & changes**
+	* All of the plugin's code is now using the WordPress coding standards.
+	* Removed the reporting and search code from the free edition plugin that was used by the MainWP extension.
+	
+* **Bug fixes**
+	* Fixed: PHP fatal error when index.php file is saved in the custom sensors directory.
 
 Refer to the [complete plugin changelog](https://wpactivitylog.com/support/kb/plugin-changelog/?utm_source=wordpress.org&utm_medium=referral&utm_campaign=WSAL&utm_content=plugin+repos+description) for more detailed information about what was new, improved and fixed in previous versions of the WP Activity Log plugin.

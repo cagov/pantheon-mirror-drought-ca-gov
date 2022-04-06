@@ -40,7 +40,7 @@ class WSAL_Models_Query {
 	 *
 	 * @var array
 	 */
-	protected $orderBy = array();
+	protected $order_by = array();
 
 	/**
 	 * Offset.
@@ -75,14 +75,14 @@ class WSAL_Models_Query {
 	 *
 	 * @var mixed
 	 */
-	protected $searchCondition = null;
+	protected $search_condition = null;
 
 	/**
 	 * Use Default Adapter.
 	 *
 	 * @var bool
 	 */
-	protected $useDefaultAdapter = false;
+	protected $use_default_adapter = false;
 
 	/**
 	 * Method: Constructor.
@@ -97,14 +97,15 @@ class WSAL_Models_Query {
 	 *
 	 * @return WSAL_Connector_ConnectorInterface
 	 */
-	public function getConnector() {
+	public function get_connector() {
 		if ( ! empty( $this->connector ) ) {
 			return $this->connector;
 		}
-		if ( $this->useDefaultAdapter ) {
-			$this->connector = WSAL_Connector_ConnectorFactory::GetDefaultConnector();
+
+		if ( $this->use_default_adapter ) {
+			$this->connector = WSAL_Connector_ConnectorFactory::get_default_connector();
 		} else {
-			$this->connector = WSAL_Connector_ConnectorFactory::GetConnector();
+			$this->connector = WSAL_Connector_ConnectorFactory::get_connector();
 		}
 		return $this->connector;
 	}
@@ -112,10 +113,10 @@ class WSAL_Models_Query {
 	/**
 	 * Gets the adapter.
 	 *
-	 * @return WSAL_Adapters_MySQL_Query
+	 * @return WSAL_Adapters_QueryInterface
 	 */
-	public function getAdapter() {
-		return $this->getConnector()->getAdapter( 'Query' );
+	public function get_adapter() {
+		return $this->get_connector()->get_adapter( 'Query' );
 	}
 
 	/**
@@ -124,7 +125,7 @@ class WSAL_Models_Query {
 	 * @param mixed $column - Column value.
 	 * @return self
 	 */
-	public function addColumn( $column ) {
+	public function add_column( $column ) {
 		$this->columns[] = $column;
 		return $this;
 	}
@@ -134,7 +135,7 @@ class WSAL_Models_Query {
 	 *
 	 * @return self
 	 */
-	public function clearColumns() {
+	public function clear_columns() {
 		$this->columns = array();
 		return $this;
 	}
@@ -144,7 +145,7 @@ class WSAL_Models_Query {
 	 *
 	 * @return array $columns
 	 */
-	public function getColumns() {
+	public function get_columns() {
 		return $this->columns;
 	}
 
@@ -154,7 +155,7 @@ class WSAL_Models_Query {
 	 * @param array $columns - Columns values.
 	 * @return self
 	 */
-	public function setColumns( $columns ) {
+	public function set_columns( $columns ) {
 		$this->columns = $columns;
 		return $this;
 	}
@@ -166,7 +167,7 @@ class WSAL_Models_Query {
 	 * @param mixed  $value - Condition value.
 	 * @return self
 	 */
-	public function addCondition( $field, $value ) {
+	public function add_condition( $field, $value ) {
 		$this->conditions[ $field ] = $value;
 		return $this;
 	}
@@ -176,7 +177,7 @@ class WSAL_Models_Query {
 	 *
 	 * @param array $add_conditions - Multi conditions.
 	 */
-	public function addORCondition( $add_conditions ) {
+	public function add_or_condition( $add_conditions ) {
 		$this->conditions[] = $add_conditions;
 	}
 
@@ -185,7 +186,7 @@ class WSAL_Models_Query {
 	 *
 	 * @return self
 	 */
-	public function clearConditions() {
+	public function clear_conditions() {
 		$this->conditions = array();
 		return $this;
 	}
@@ -195,20 +196,22 @@ class WSAL_Models_Query {
 	 *
 	 * @return array $conditions
 	 */
-	public function getConditions() {
+	public function get_conditions() {
 		return $this->conditions;
 	}
 
 	/**
 	 * Add order by.
 	 *
-	 * @param string  $field - Field name.
+	 * @param string  $field         - Field name.
 	 * @param boolean $is_descending - (Optional) Ascending/descending.
+	 *
 	 * @return self
 	 */
-	public function addOrderBy( $field, $is_descending = false ) {
-		$order = ($is_descending) ? 'DESC' : 'ASC';
-		$this->orderBy[ $field ] = $order;
+	public function add_order_by( $field, $is_descending = false ) {
+		$order                    = ( $is_descending ) ? 'DESC' : 'ASC';
+		$this->order_by[ $field ] = $order;
+
 		return $this;
 	}
 
@@ -217,8 +220,8 @@ class WSAL_Models_Query {
 	 *
 	 * @return self
 	 */
-	public function clearOrderBy() {
-		$this->orderBy = array();
+	public function clear_order_by() {
+		$this->order_by = array();
 		return $this;
 	}
 
@@ -227,8 +230,8 @@ class WSAL_Models_Query {
 	 *
 	 * @return array $orderBy
 	 */
-	public function getOrderBy() {
-		return $this->orderBy;
+	public function get_order_by() {
+		return $this->order_by;
 	}
 
 	/**
@@ -237,7 +240,7 @@ class WSAL_Models_Query {
 	 * @param string $from_data_set - Data set.
 	 * @return self
 	 */
-	public function addFrom( $from_data_set ) {
+	public function add_from( $from_data_set ) {
 		$this->from[] = $from_data_set;
 		return $this;
 	}
@@ -247,7 +250,7 @@ class WSAL_Models_Query {
 	 *
 	 * @return self
 	 */
-	public function clearFrom() {
+	public function clear_from() {
 		$this->from = array();
 		return $this;
 	}
@@ -257,7 +260,7 @@ class WSAL_Models_Query {
 	 *
 	 * @return string $from data set
 	 */
-	public function getFrom() {
+	public function get_from() {
 		return $this->from;
 	}
 
@@ -266,7 +269,7 @@ class WSAL_Models_Query {
 	 *
 	 * @return mixed
 	 */
-	public function getLimit() {
+	public function get_limit() {
 		return $this->limit;
 	}
 
@@ -276,7 +279,7 @@ class WSAL_Models_Query {
 	 * @param mixed $limit - The limit.
 	 * @return self
 	 */
-	public function setLimit( $limit ) {
+	public function set_limit( $limit ) {
 		$this->limit = $limit;
 		return $this;
 	}
@@ -286,7 +289,7 @@ class WSAL_Models_Query {
 	 *
 	 * @return mixed
 	 */
-	public function getOffset() {
+	public function get_offset() {
 		return $this->offset;
 	}
 
@@ -296,7 +299,7 @@ class WSAL_Models_Query {
 	 * @param mixed $offset - The offset.
 	 * @return self
 	 */
-	public function setOffset( $offset ) {
+	public function set_offset( $offset ) {
 		$this->offset = $offset;
 		return $this;
 	}
@@ -307,8 +310,8 @@ class WSAL_Models_Query {
 	 * @param mixed $value - Condition.
 	 * @return self
 	 */
-	public function addSearchCondition( $value ) {
-		$this->searchCondition = $value;
+	public function add_search_condition( $value ) {
+		$this->search_condition = $value;
 		return $this;
 	}
 
@@ -317,8 +320,8 @@ class WSAL_Models_Query {
 	 *
 	 * @return self
 	 */
-	public function getSearchCondition() {
-		return $this->searchCondition;
+	public function get_search_condition() {
+		return $this->search_condition;
 	}
 
 	/**
@@ -326,7 +329,7 @@ class WSAL_Models_Query {
 	 *
 	 * @return boolean
 	 */
-	public function hasMetaJoin() {
+	public function has_meta_join() {
 		return $this->meta_join;
 	}
 
@@ -335,8 +338,49 @@ class WSAL_Models_Query {
 	 *
 	 * @return self
 	 */
-	public function addMetaJoin() {
+	public function add_meta_join() {
 		$this->meta_join = true;
 		return $this;
+	}
+
+	/**
+	 * Deprecated placeholder function.
+	 *
+	 * @return WSAL_Adapters_QueryInterface
+	 * @see    WSAL_Models_Query::get_adapter()
+	 *
+	 * @deprecated 4.4.1 Replaced by function get_adapter.
+	 */
+	public function getAdapter() {
+		return $this->get_adapter();
+	}
+
+	/**
+	 * Deprecated placeholder function.
+	 *
+	 * @param string  $field         - Field name.
+	 * @param boolean $is_descending - (Optional) Ascending/descending.
+	 *
+	 * @return self
+	 * @see    WSAL_Models_Query::add_order_by()
+	 *
+	 * @deprecated 4.4.1 Replaced by function add_order_by.
+	 */
+	public function addOrderBy( $field, $is_descending = false ) {
+		return $this->add_order_by( $field, $is_descending );
+	}
+
+	/**
+	 * Deprecated placeholder function.
+	 *
+	 * @param mixed $limit - The limit.
+	 *
+	 * @return self
+	 * @see    WSAL_Models_Query::set_limit()
+	 *
+	 * @deprecated 4.4.1 Replaced by function set_limit.
+	 */
+	public function setLimit( $limit ) {
+		return $this->set_limit( $limit );
 	}
 }

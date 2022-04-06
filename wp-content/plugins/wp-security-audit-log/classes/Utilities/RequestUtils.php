@@ -1,4 +1,15 @@
 <?php
+/**
+ * Utility class for handling request inputs.
+ *
+ * @package wsal
+ * @since 4.1.4
+ */
+
+// Exit if accessed directly.
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
 /**
  * Utility class for handling request inputs.
@@ -7,8 +18,14 @@
  * @since 4.1.4
  */
 class WSAL_Utilities_RequestUtils {
+
+	/**
+	 * Filters request data.
+	 *
+	 * @return array Filtered request data.
+	 */
 	public static function get_filtered_request_data() {
-		$result = [];
+		$result = array();
 
 		$get_data = filter_input_array( INPUT_GET );
 		if ( is_array( $get_data ) ) {
@@ -45,5 +62,16 @@ class WSAL_Utilities_RequestUtils {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Check if the float is IPv4 instead.
+	 *
+	 * @param float $ip_address - Number to check.
+	 *
+	 * @return bool result validation
+	 */
+	public static function is_ip_address( $ip_address ) {
+		return filter_var( $ip_address, FILTER_VALIDATE_IP ) !== false;
 	}
 }

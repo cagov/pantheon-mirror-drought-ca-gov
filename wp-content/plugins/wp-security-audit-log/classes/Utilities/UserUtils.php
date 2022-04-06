@@ -1,4 +1,10 @@
 <?php
+/**
+ * User utility class.
+ *
+ * @package wsal
+ * @since 4.3.0
+ */
 
 // Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
@@ -13,18 +19,25 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class WSAL_Utilities_UsersUtils {
 
+	/**
+	 * Local user cache. Keys are usernames and values are user IDs.
+	 *
+	 * @var array
+	 */
 	private static $cached_users = array();
 
 	/**
-	 * Local static cache for the value of setting determining the prefered user data to display as label.
+	 * Local static cache for the value of setting determining the preferred user data to display as label.
 	 *
 	 * @var string
 	 */
 	private static $user_label_setting;
 
 	/**
+	 * Build the correct label to display for a given user.
+	 *
 	 * @param WpSecurityAuditLog $plugin Instance of WpSecurityAuditLog.
-	 * @param WP_User $user WordPress user object.
+	 * @param WP_User            $user   WordPress user object.
 	 *
 	 * @return string
 	 * @since 4.3.0
@@ -39,10 +52,15 @@ class WSAL_Utilities_UsersUtils {
 		}
 
 		if ( 'first_last_name' === self::$user_label_setting && ( ! empty( $user->first_name ) || ! empty( $user->last_name ) ) ) {
-			return trim( implode( ' ', [
-				$user->first_name,
-				$user->last_name
-			] ) );
+			return trim(
+				implode(
+					' ',
+					array(
+						$user->first_name,
+						$user->last_name,
+					)
+				)
+			);
 		}
 
 		return $user->user_login;
@@ -57,7 +75,7 @@ class WSAL_Utilities_UsersUtils {
 	 *
 	 * @since 4.3.1 Made the meta attribute mandatory, changed to static and moved from occurrence to alert.
 	 */
-	public static function GetUsername( $meta = null ) {
+	public static function get_username( $meta = null ) {
 		if ( ! is_array( $meta ) ) {
 			return '';
 		}
@@ -88,11 +106,25 @@ class WSAL_Utilities_UsersUtils {
 			return '';
 		}
 
-		$tooltip = '<strong>' . esc_attr__( 'Username: ', 'wp-security-audit-log' ) . '</strong>' . $user->data->user_login . '</br>';
+		$tooltip  = '<strong>' . esc_attr__( 'Username: ', 'wp-security-audit-log' ) . '</strong>' . $user->data->user_login . '</br>';
 		$tooltip .= ( ! empty( $user->data->first_name ) ) ? '<strong>' . esc_attr__( 'First name: ', 'wp-security-audit-log' ) . '</strong>' . $user->data->first_name . '</br>' : '';
 		$tooltip .= ( ! empty( $user->data->first_name ) ) ? '<strong>' . esc_attr__( 'Last Name: ', 'wp-security-audit-log' ) . '</strong>' . $user->data->first_name . '</br>' : '';
 		$tooltip .= '<strong>' . esc_attr__( 'Email: ', 'wp-security-audit-log' ) . '</strong>' . $user->data->user_email . '</br>';
 		$tooltip .= '<strong>' . esc_attr__( 'Nickname: ', 'wp-security-audit-log' ) . '</strong>' . $user->data->user_nicename . '</br></br>';
+
+		/**
+		 * WSAL Filter: `wsal_additional_user_tooltip_content'
+		 *
+		 * Allows 3rd parties to append HTML to the user tooltip content in audit log viewer.
+		 *
+		 * @since 4.4.0
+		 *
+		 * @param string $content Blank string to append to.
+		 * @param object  $user  - User object.
+		 */
+		$additional_content = apply_filters( 'wsal_additional_user_tooltip_content', '', $user );
+
+		$tooltip .= $additional_content;
 
 		return $tooltip;
 	}
@@ -100,7 +132,7 @@ class WSAL_Utilities_UsersUtils {
 	/**
 	 * Retrieves user ID using either the username of user ID.
 	 *
-	 * @param int|string $user_login
+	 * @param int|string $user_login User login or ID.
 	 *
 	 * @return int|null
 	 */
@@ -111,7 +143,7 @@ class WSAL_Utilities_UsersUtils {
 		}
 
 		global $wpdb;
-		$user_id = $wpdb->get_var(
+		$user_id = $wpdb->get_var( // phpcs:ignore
 			$wpdb->prepare(
 				"SELECT ID FROM $wpdb->users WHERE user_login = %s OR ID = %d;",
 				$user_login,
@@ -142,11 +174,10 @@ class WSAL_Utilities_UsersUtils {
 			return esc_html( ucwords( implode( ', ', $roles ) ) );
 		}
 
-		if ( is_string( $roles ) && '' != $roles ) {
+		if ( is_string( $roles ) && '' !== $roles ) {
 			return esc_html( ucwords( str_replace( array( '"', '[', ']' ), ' ', $roles ) ) );
 		}
 
 		return '<i>' . esc_html__( 'Unknown', 'wp-security-audit-log' ) . '</i>';
-
 	}
 }

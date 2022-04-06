@@ -4,8 +4,9 @@
  *
  * Content sensor class file.
  *
- * @since 1.0.0
- * @package wsal
+ * @since      1.0.0
+ * @package    wsal
+ * @subpackage sensors
  */
 
 // Exit if accessed directly.
@@ -20,7 +21,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  * 5019 A plugin created a post
  * 5025 A plugin deleted a post
  *
- * @package wsal
+ * @package    wsal
+ * @subpackage sensors
  */
 class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 
@@ -29,42 +31,42 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 	 *
 	 * @var stdClass
 	 */
-	protected $_old_post = null;
+	protected $old_post = null;
 
 	/**
 	 * Old permalink.
 	 *
 	 * @var string
 	 */
-	protected $_old_link = null;
+	protected $old_link = null;
 
 	/**
 	 * Old categories.
 	 *
 	 * @var array
 	 */
-	protected $_old_cats = null;
+	protected $old_cats = null;
 
 	/**
 	 * Old tags.
 	 *
 	 * @var array
 	 */
-	protected $_old_tags = null;
+	protected $old_tags = null;
 
 	/**
 	 * Old path to file.
 	 *
 	 * @var string
 	 */
-	protected $_old_tmpl = null;
+	protected $old_tmpl = null;
 
 	/**
 	 * Old post is marked as sticky.
 	 *
 	 * @var boolean
 	 */
-	protected $_old_stky = null;
+	protected $old_stky = null;
 
 	/**
 	 * Old Post Status.
@@ -81,9 +83,9 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 	protected $old_meta = null;
 
 	/**
-	 * Listening to events using WP hooks.
+	 * {@inheritDoc}
 	 */
-	public function HookEvents() {
+	public function hook_events() {
 		add_action( 'pre_post_update', array( $this, 'get_before_post_edit_data' ), 10, 2 );
 		add_action( 'save_post', array( $this, 'post_changed' ), 10, 3 );
 		add_action( 'set_object_terms', array( $this, 'post_terms_changed' ), 10, 4 );
@@ -100,10 +102,9 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 		add_action( 'create_post_tag', array( $this, 'event_tag_creation' ), 10, 1 );
 		add_action( 'pre_delete_term', array( $this, 'check_taxonomy_term_deletion' ), 10, 2 );
 		add_filter( 'wp_update_term_data', array( $this, 'event_update_term_data' ), 10, 4 );
-		add_filter( 'add_post_metadata', array( $this, 'check_changed_meta' ), 10, 4 );
-		add_filter( 'updated_post_meta', array( $this, 'check_changed_meta' ), 10, 4 );
+		add_filter( 'add_post_metadata', array( $this, 'check_added_meta' ), 10, 5 );
 		add_filter( 'delete_post_metadata', array( $this, 'check_deleted_meta' ), 10, 5 );
-
+		add_action( 'updated_post_meta', array( $this, 'check_changed_meta' ), 10, 4 );
 
 		// Check if MainWP Child Plugin exists.
 		if ( WpSecurityAuditLog::is_mainwp_active() ) {
@@ -124,14 +125,14 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 
 		// If post exists.
 		if ( ! empty( $post ) && $post instanceof WP_Post ) {
-			$this->_old_post   = $post;
-			$this->_old_link   = get_permalink( $post_id );
-			$this->_old_tmpl   = $this->get_post_template( $this->_old_post );
-			$this->_old_cats   = $this->get_post_categories( $this->_old_post );
-			$this->_old_tags   = $this->get_post_tags( $this->_old_post );
-			$this->_old_stky   = in_array( $post_id, get_option( 'sticky_posts' ), true );
-			$this->old_status  = $post->post_status;
-			$this->old_meta    = get_post_meta( $post_id );
+			$this->old_post   = $post;
+			$this->old_link   = get_permalink( $post_id );
+			$this->old_tmpl   = $this->get_post_template( $this->old_post );
+			$this->old_cats   = $this->get_post_categories( $this->old_post );
+			$this->old_tags   = $this->get_post_tags( $this->old_post );
+			$this->old_stky   = in_array( $post_id, get_option( 'sticky_posts' ), true );
+			$this->old_status = $post->post_status;
+			$this->old_meta   = get_post_meta( $post_id );
 		}
 	}
 
@@ -156,8 +157,8 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 		// Ignorable states.
 		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
 			// Check post creation event.
-			if ( $this->_old_post && 'auto-draft' === $this->_old_post->post_status && 'draft' === $post->post_status ) {
-				$this->check_post_creation( $this->_old_post, $post );
+			if ( $this->old_post && 'auto-draft' === $this->old_post->post_status && 'draft' === $post->post_status ) {
+				$this->check_post_creation( $this->old_post, $post );
 			}
 			return;
 		}
@@ -192,28 +193,28 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 		}
 
 		if ( $update ) {
-			$status_event = $this->check_status_change( $this->_old_post, $post );
+			$status_event = $this->check_status_change( $this->old_post, $post );
 
-			if ( 2001 !== $status_event && 'auto-draft' !== $this->_old_post->post_status ) {
+			if ( 2001 !== $status_event && 'auto-draft' !== $this->old_post->post_status ) {
 				// Handle update post events.
 				$changes = 0;
-				$changes = $this->check_author_change( $this->_old_post, $post )
-				+ $this->check_parent_change( $this->_old_post, $post )
-				+ $this->check_visibility_change( $this->_old_post, $post, $this->old_status, $post->post_status )
-				+ $this->check_date_change( $this->_old_post, $post )
-				+ $this->check_permalink_change( $this->_old_link, get_permalink( $post->ID ), $post )
-				+ $this->check_comments_pings( $this->_old_post, $post );
+				$changes = $this->check_author_change( $this->old_post, $post )
+				+ $this->check_parent_change( $this->old_post, $post )
+				+ $this->check_visibility_change( $this->old_post, $post, $this->old_status, $post->post_status )
+				+ $this->check_date_change( $this->old_post, $post )
+				+ $this->check_permalink_change( $this->old_link, get_permalink( $post->ID ), $post )
+				+ $this->check_comments_pings( $this->old_post, $post );
 
 				// If a status change event has occurred, then don't log event 2002 (post modified).
 				$changes = $status_event ? true : $changes;
 				if ( '1' === $changes ) {
 					remove_action( 'save_post', array( $this, 'post_changed' ), 10, 3 );
 				}
-				$this->check_modification_change( $post->ID, $this->_old_post, $post, $changes );
+				$this->check_modification_change( $post->ID, $this->old_post, $post, $changes );
 			}
 		} else {
 			// If not update then check post creation.
-			$this->check_post_creation( $this->_old_post, $post );
+			$this->check_post_creation( $this->old_post, $post );
 		}
 	}
 
@@ -247,10 +248,10 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 
 		if ( 'post_tag' === $taxonomy ) {
 			// Check tags change event.
-			$this->check_tags_change( $this->_old_tags, $this->get_post_tags( $post ), $post );
+			$this->check_tags_change( $this->old_tags, $this->get_post_tags( $post ), $post );
 		} else {
 			// Check categories change event.
-			$this->check_categories_change( $this->_old_cats, $this->get_post_categories( $post ), $post );
+			$this->check_categories_change( $this->old_cats, $this->get_post_categories( $post ), $post );
 		}
 	}
 
@@ -291,10 +292,10 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 
 			$event_data = $this->get_post_event_data( $post ); // Get event data.
 
-			//  check if this was initiated by a plugin
-			$request_params  = WSAL_Utilities_RequestUtils::get_filtered_request_data();
+			// Check if this was initiated by a plugin.
+			$request_params = WSAL_Utilities_RequestUtils::get_filtered_request_data();
 			if ( empty( $request_params['action'] ) && isset( $request_params['page'] ) ) {
-				$event = 5025;
+				$event      = 5025;
 				$event_data = array(
 					'PostID'     => $post->ID,
 					'PostType'   => $post->post_type,
@@ -304,7 +305,7 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 				);
 			}
 
-			$this->plugin->alerts->Trigger( $event, $event_data ); // Log event.
+			$this->plugin->alerts->trigger_event( $event, $event_data ); // Log event.
 		}
 	}
 
@@ -318,7 +319,7 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 		if ( ! in_array( $post->post_type, $this->plugin->alerts->ignored_cpts, true ) ) {
 			$editor_link = $this->get_editor_link( $post );
 
-			$this->plugin->alerts->Trigger(
+			$this->plugin->alerts->trigger_event(
 				2012,
 				array(
 					'PostID'             => $post->ID,
@@ -343,7 +344,7 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 		if ( ! in_array( $post->post_type, $this->plugin->alerts->ignored_cpts, true ) ) {
 			$editor_link = $this->get_editor_link( $post );
 
-			$this->plugin->alerts->Trigger(
+			$this->plugin->alerts->trigger_event(
 				2014,
 				array(
 					'PostID'             => $post->ID,
@@ -370,7 +371,7 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 		if ( ! in_array( $post->post_type, $this->plugin->alerts->ignored_cpts, true ) ) {
 			$editor_link = $this->get_editor_link( $post );
 
-			$this->plugin->alerts->Trigger(
+			$this->plugin->alerts->trigger_event(
 				2001,
 				array(
 					'PostID'             => $post->ID,
@@ -398,9 +399,7 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 			return;
 		}
 
-		// @codingStandardsIgnoreStart
-		$post_id = isset( $_GET['post'] ) ? (int) sanitize_text_field( wp_unslash( $_GET['post'] ) ) : false;
-		// @codingStandardsIgnoreEnd
+		$post_id = isset( $_GET['post'] ) ? (int) sanitize_text_field( wp_unslash( $_GET['post'] ) ) : false; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
 		// Check post id.
 		if ( empty( $post_id ) ) {
@@ -455,14 +454,14 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 				$post_data = $this->get_post_event_data( $post ); // Get event post data.
 
 				// Update post URL based on current actual path.
-				if ( $this->plugin->IsMultisite() && ! is_subdomain_install() ) {
-					//	for multisite using subfolders, remove the subfolder
-					$subdir_path = parse_url( home_url(), PHP_URL_PATH );
-					$escaped = str_replace( '/', '\/', preg_quote( $subdir_path ) );
+				if ( $this->plugin->is_multisite() && ! is_subdomain_install() ) {
+					// For multisite using subfolders, remove the subfolder.
+					$subdir_path  = parse_url( home_url(), PHP_URL_PATH ); // phpcs:ignore WordPress.WP.AlternativeFunctions.parse_url_parse_url
+					$escaped      = str_replace( '/', '\/', preg_quote( $subdir_path ) ); // phpcs:ignore WordPress.PHP.PregQuoteDelimiter.Missing
 					$current_path = preg_replace( '/' . $escaped . '/', '', $current_path );
 				}
 
-				// Bail if this dont have this, as its probably an archive.
+				// Bail if this don't have this, as it's probably an archive.
 				if ( ! isset( $post_data['PostUrl'] ) ) {
 					return;
 				}
@@ -474,7 +473,7 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 
 				// Set editor link.
 				$post_data[ $edit_link['name'] ] = $edit_link['value'];
-				$this->plugin->alerts->Trigger( 2101, $post_data );
+				$this->plugin->alerts->trigger_event( 2101, $post_data );
 			}
 		}
 	}
@@ -487,7 +486,7 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 	public function event_category_creation( $category_id ) {
 		$category      = get_category( $category_id );
 		$category_link = $this->get_taxonomy_edit_link( $category_id, 'category' );
-		$this->plugin->alerts->Trigger(
+		$this->plugin->alerts->trigger_event(
 			2023,
 			array(
 				'CategoryName' => $category->name,
@@ -505,7 +504,7 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 	public function event_tag_creation( $tag_id ) {
 		$tag      = get_tag( $tag_id );
 		$tag_link = $this->get_taxonomy_edit_link( $tag_id );
-		$this->plugin->alerts->Trigger(
+		$this->plugin->alerts->trigger_event(
 			2121,
 			array(
 				'TagName' => $tag->name,
@@ -524,7 +523,7 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 	public function check_taxonomy_term_deletion( $term_id, $taxonomy ) {
 		if ( 'post_tag' === $taxonomy ) {
 			$tag = get_tag( $term_id );
-			$this->plugin->alerts->Trigger(
+			$this->plugin->alerts->trigger_event(
 				2122,
 				array(
 					'TagID'   => $term_id,
@@ -535,7 +534,7 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 		} elseif ( 'category' === $taxonomy ) {
 			$category      = get_category( $term_id );
 			$category_link = $this->get_taxonomy_edit_link( $term_id, $taxonomy );
-			$this->plugin->alerts->Trigger(
+			$this->plugin->alerts->trigger_event(
 				2024,
 				array(
 					'CategoryID'   => $term_id,
@@ -574,7 +573,7 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 		if ( 'post_tag' === $taxonomy ) {
 			// Update if both names are not same.
 			if ( $old_name !== $new_name ) {
-				$this->plugin->alerts->Trigger(
+				$this->plugin->alerts->trigger_event(
 					2123,
 					array(
 						'old_name' => $old_name,
@@ -587,7 +586,7 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 
 			// Update if both slugs are not same.
 			if ( $old_slug !== $new_slug ) {
-				$this->plugin->alerts->Trigger(
+				$this->plugin->alerts->trigger_event(
 					2124,
 					array(
 						'tag'      => $new_name,
@@ -600,20 +599,20 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 
 			// Update if both descriptions are not same.
 			if ( $old_desc !== $new_desc ) {
-				$this->plugin->alerts->Trigger(
+				$this->plugin->alerts->trigger_event(
 					2125,
 					array(
-						'tag'        => $new_name,
-						'TagLink'    => $term_link,
-						'old_desc'   => $old_desc,
-						'new_desc'   => $new_desc,
+						'tag'      => $new_name,
+						'TagLink'  => $term_link,
+						'old_desc' => $old_desc,
+						'new_desc' => $new_desc,
 					)
 				);
 			}
 		} elseif ( 'category' === $taxonomy ) { // Check if the taxonomy is `category`.
 			// Log event if both names are not same.
 			if ( $old_name !== $new_name ) {
-				$this->plugin->alerts->Trigger(
+				$this->plugin->alerts->trigger_event(
 					2127,
 					array(
 						'old_name' => $old_name,
@@ -626,7 +625,7 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 
 			// Log event if both slugs are not same.
 			if ( $old_slug !== $new_slug ) {
-				$this->plugin->alerts->Trigger(
+				$this->plugin->alerts->trigger_event(
 					2128,
 					array(
 						'CategoryName' => $new_name,
@@ -651,7 +650,7 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 			}
 
 			if ( $old_parent_name !== $new_parent_name ) {
-				$this->plugin->alerts->Trigger(
+				$this->plugin->alerts->trigger_event(
 					2052,
 					array(
 						'CategoryName' => $new_name,
@@ -667,97 +666,117 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 	}
 
 	/**
+	 * Checks if selected metadata items have changed. Function is called from different contexts.
+	 *
+	 * @param int    $post_id        Post ID.
+	 * @param string $meta_key       Meta key.
+	 * @param mixed  $meta_value     Meta value.
+	 * @param mixed  $default_result Default result.
+	 *
+	 * @return mixed
+	 *
+	 * @since 4.4.0
+	 */
+	private function check_selected_meta_change( $post_id, $meta_key, $meta_value, $default_result ) {
+		if ( ! $post_id ) {
+			return $default_result;
+		}
+
+		switch ( $meta_key ) {
+			case '_wp_page_template':
+				$this->check_template_change( $post_id, $meta_value );
+				break;
+			case '_thumbnail_id':
+				$this->check_featured_image_change( $post_id, $meta_value );
+				break;
+			default:
+				return $default_result;
+		}
+
+		return $default_result;
+	}
+
+	/**
 	 * Check Page Template Update.
 	 *
 	 * @param int    $meta_id    ID of updated metadata entry.
 	 * @param int    $post_id    Post ID.
 	 * @param string $meta_key   Meta key.
 	 * @param mixed  $meta_value Meta value.
-	 * 
-	 * @return int $meta_id      ID of updated metadata entry.
+	 *
+	 * @return int ID of updated metadata entry.
 	 */
 	public function check_changed_meta( $meta_id, $post_id, $meta_key, $meta_value ) {
-		if ( ! $post_id ) {
-			return $meta_id;
-		}
-
-		switch ( $meta_key ) {
-			case '_wp_page_template':
-				$this->check_template_change( $post_id, $meta_value );
-				break;
-			case '_thumbnail_id':
-				$this->check_featured_image_change( $post_id, $meta_value );
-				break;
-			default:
-				return $meta_id;
-		}
-
-		return $meta_id;
+		return $this->check_selected_meta_change( $post_id, $meta_key, $meta_value, $meta_id );
 	}
 
 	/**
-	 * Check Page Template Update for delitions.
+	 * Check Page Template Update for deletions.
 	 *
-	 * @param bool|null $delete     Whether to allow metadata deletion of the given type.
-	 * @param int       $meta_id    ID of updated metadata entry.
-	 * @param int       $post_id    Post ID.
-	 * @param string    $meta_key   Meta key.
-	 * @param mixed     $meta_value Meta value.
-	 * 
-	 * @return bool|null $delete    Whether to allow metadata deletion of the given type.
+	 * @param null|bool $delete     Whether to allow metadata deletion of the given type.
+	 * @param int       $object_id  ID of the object metadata is for.
+	 * @param string    $meta_key   Metadata key.
+	 * @param mixed     $meta_value Metadata value. Must be serializable if non-scalar.
+	 * @param bool      $delete_all Whether to delete the matching metadata entries
+	 *                              for all objects, ignoring the specified $object_id.
+	 *                              Default false.
+	 *
+	 * @return bool|null Whether to allow metadata deletion of the given type.
 	 */
-	public function check_deleted_meta( $delete, $meta_id, $post_id, $meta_key, $meta_value ) {
-		if ( ! $post_id ) {
-			return $delete;
-		}
+	public function check_deleted_meta( $delete, $object_id, $meta_key, $meta_value, $delete_all ) {
+		return $this->check_selected_meta_change( $object_id, $meta_key, $meta_value, $delete );
+	}
 
-		switch ( $meta_key ) {
-			case '_wp_page_template':
-				$this->check_template_change( $post_id, $meta_value );
-				break;
-			case '_thumbnail_id':
-				$this->check_featured_image_change( $post_id, $meta_value );
-				break;
-			default:
-			// no other meta keys supported here.
-		} 
-		return $delete; 
+	/**
+	 * Check Page Template Update for additions.
+	 *
+	 * @param null|bool $check      Whether to allow adding metadata for the given type.
+	 * @param int       $object_id  ID of the object metadata is for.
+	 * @param string    $meta_key   Metadata key.
+	 * @param mixed     $meta_value Metadata value. Must be serializable if non-scalar.
+	 * @param bool      $unique     Whether the specified meta key should be unique for the object.
+	 *
+	 * @return bool|null    Whether to allow metadata addition of the given type.
+	 *
+	 * @since 4.4.0
+	 */
+	public function check_added_meta( $check, $object_id, $meta_key, $meta_value, $unique ) {
+		return $this->check_selected_meta_change( $object_id, $meta_key, $meta_value, $check );
 	}
 
 	/**
 	 * Check Page Template Update.
 	 *
-	 * @param int    $post_id    Post ID.
-	 * @param mixed  $meta_value Meta value.
+	 * @param int   $post_id    Post ID.
+	 * @param mixed $meta_value Meta value.
 	 */
-	 public function check_template_change( $post_id, $meta_value ) {
-	 	$post          = get_post( $post_id );
- 		$old_tmpl      = ( $this->_old_tmpl && 'page' !== basename( $this->_old_tmpl, '.php' ) ) ? ucwords( str_replace( array( '-', '_' ), ' ', basename( $this->_old_tmpl, '.php' ) ) ) : __( 'Default template', 'wp-security-audit-log' );
- 		$new_tmpl      = ( $meta_value ) ? ucwords( str_replace( array( '-', '_' ), ' ', basename( $meta_value ) ) ) : __( 'Default', 'wp-security-audit-log' );
-
- 		if ( $old_tmpl !== $new_tmpl ) {
- 			$editor_link = $this->get_editor_link( $post );
- 			$this->plugin->alerts->Trigger(
- 				2048,
- 				array(
- 					'PostID'             => $post->ID,
- 					'PostType'           => $post->post_type,
- 					'PostTitle'          => $post->post_title,
- 					'PostStatus'         => $post->post_status,
- 					'PostDate'           => $post->post_date,
- 					'OldTemplate'        => $old_tmpl,
- 					'NewTemplate'        => $new_tmpl,
- 					$editor_link['name'] => $editor_link['value'],
- 				)
- 			);
- 		}
- 	}
+	public function check_template_change( $post_id, $meta_value ) {
+		$post     = get_post( $post_id );
+		$old_tmpl = ( $this->old_tmpl && 'page' !== basename( $this->old_tmpl, '.php' ) ) ? ucwords( str_replace( array( '-', '_' ), ' ', basename( $this->old_tmpl, '.php' ) ) ) : __( 'Default template', 'wp-security-audit-log' );
+		$new_tmpl = ( $meta_value ) ? ucwords( str_replace( array( '-', '_' ), ' ', basename( $meta_value ) ) ) : __( 'Default', 'wp-security-audit-log' );
+		if ( $old_tmpl !== $new_tmpl ) {
+			$editor_link = $this->get_editor_link( $post );
+			$this->plugin->alerts->trigger_event(
+				2048,
+				array(
+					'PostID'             => $post->ID,
+					'PostType'           => $post->post_type,
+					'PostTitle'          => $post->post_title,
+					'PostStatus'         => $post->post_status,
+					'PostDate'           => $post->post_date,
+					'OldTemplate'        => $old_tmpl,
+					'NewTemplate'        => $new_tmpl,
+					$editor_link['name'] => $editor_link['value'],
+				)
+			);
+		}
+	}
 
 	/**
 	 * Check Post Featured Image Update.
 	 *
-	 * @param int    $post_id    Post ID.
-	 * @param mixed  $meta_value Meta value.
+	 * @param int   $post_id    Post ID.
+	 * @param mixed $meta_value Meta value.
 	 */
 	public function check_featured_image_change( $post_id, $meta_value ) {
 		$previous_featured_image = ( isset( $this->old_meta['_thumbnail_id'][0] ) ) ? wp_get_attachment_metadata( $this->old_meta['_thumbnail_id'][0] ) : false;
@@ -771,16 +790,16 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 
 		if ( empty( $previous_featured_image['file'] ) && ! empty( $new_featured_image['file'] ) ) {
 			$event_type = 'added';
-		} elseif ( ! empty( $previous_featured_image['file'] ) &&  empty( $new_featured_image['file'] ) ) {
+		} elseif ( ! empty( $previous_featured_image['file'] ) && empty( $new_featured_image['file'] ) ) {
 			$event_type = 'removed';
 		}
 
 		$previous_image = is_array( $previous_featured_image ) && array_key_exists( 'file', $previous_featured_image ) ? $previous_featured_image['file'] : __( 'No previous image', 'wp-security-audit-log' );
 		$new_image      = is_array( $new_featured_image ) && array_key_exists( 'file', $new_featured_image ) ? $new_featured_image['file'] : __( 'No image', 'wp-security-audit-log' );
 
-		$post          = get_post( $post_id );
+		$post        = get_post( $post_id );
 		$editor_link = $this->get_editor_link( $post );
-		$this->plugin->alerts->Trigger(
+		$this->plugin->alerts->trigger_event(
 			2130,
 			array(
 				'PostID'             => $post->ID,
@@ -814,12 +833,12 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 
 			// If post exists.
 			if ( ! empty( $post ) ) {
-				$this->_old_post = $post;
-				$this->_old_link = get_permalink( $post_id );
-				$this->_old_tmpl = $this->get_post_template( $this->_old_post );
-				$this->_old_cats = $this->get_post_categories( $this->_old_post );
-				$this->_old_tags = $this->get_post_tags( $this->_old_post );
-				$this->_old_stky = in_array( $post_id, get_option( 'sticky_posts' ), true );
+				$this->old_post = $post;
+				$this->old_link = get_permalink( $post_id );
+				$this->old_tmpl = $this->get_post_template( $this->old_post );
+				$this->old_cats = $this->get_post_categories( $this->old_post );
+				$this->old_tags = $this->get_post_tags( $this->old_post );
+				$this->old_stky = in_array( $post_id, get_option( 'sticky_posts' ), true );
 			}
 		}
 	}
@@ -912,17 +931,17 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 
 				if ( $is_scheduled ) {
 					$event_data['PublishingDate'] = $new_post->post_date;
-					$this->plugin->alerts->Trigger( $event, $event_data );
+					$this->plugin->alerts->trigger_event( $event, $event_data );
 				} else {
 
-					//  so far we assume that the action is initiated by a user, let's check if it was actually initiated
-					//  by a plugin
+					// So far we assume that the action is initiated by a user, let's check if it was actually initiated
+					// by a plugin.
 					$request_params = WSAL_Utilities_RequestUtils::get_filtered_request_data();
-					if ( array_key_exists( 'plugin', $request_params ) && !empty( $request_params['plugin'] ) ) {
-						//  event initiated by a plugin
+					if ( array_key_exists( 'plugin', $request_params ) && ! empty( $request_params['plugin'] ) ) {
+						// Event initiated by a plugin.
 						$plugin_name = $request_params['plugin'];
 						$plugin_data = get_plugin_data( trailingslashit( WP_PLUGIN_DIR ) . $plugin_name );
-						$event_data = array(
+						$event_data  = array(
 							'PluginName'         => ( $plugin_data && isset( $plugin_data['Name'] ) ) ? $plugin_data['Name'] : false,
 							'PostID'             => $new_post->ID,
 							'PostType'           => $new_post->post_type,
@@ -933,7 +952,7 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 						);
 					}
 
-					$this->plugin->alerts->Trigger( $event, $event_data );
+					$this->plugin->alerts->trigger_event( $event, $event_data );
 				}
 			}
 		}
@@ -943,6 +962,7 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 	 * Get editor link.
 	 *
 	 * @param stdClass $post - The post.
+	 *
 	 * @return array $editor_link - Name and value link.
 	 */
 	private function get_editor_link( $post ) {
@@ -989,7 +1009,7 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 			$old_author  = ( is_object( $old_author ) ) ? $old_author->user_login : 'N/A';
 			$new_author  = get_userdata( $newpost->post_author );
 			$new_author  = ( is_object( $new_author ) ) ? $new_author->user_login : 'N/A';
-			$this->plugin->alerts->Trigger(
+			$this->plugin->alerts->trigger_event(
 				2019,
 				array(
 					'PostID'             => $oldpost->ID,
@@ -1041,14 +1061,14 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 
 				if ( $is_scheduled ) {
 					$event_data['PublishingDate'] = $newpost->post_date;
-					$this->plugin->alerts->Trigger( $event, $event_data );
+					$this->plugin->alerts->trigger_event( $event, $event_data );
 				} elseif ( 2021 === $event ) {
 					$event_data['OldStatus'] = $oldpost->post_status;
 					$event_data['NewStatus'] = $newpost->post_status;
-					$this->plugin->alerts->Trigger( $event, $event_data );
+					$this->plugin->alerts->trigger_event( $event, $event_data );
 				} else {
 					// NOTE: this triggers if NOT firing event 5019.
-					$this->plugin->alerts->TriggerIf( $event, $event_data, array( $this, 'plugin_not_created_post' ) );
+					$this->plugin->alerts->trigger_event_if( $event, $event_data, array( $this, 'plugin_not_created_post' ) );
 				}
 			}
 
@@ -1065,7 +1085,7 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 	protected function check_parent_change( $oldpost, $newpost ) {
 		if ( $oldpost->post_parent !== $newpost->post_parent && 'page' === $newpost->post_type ) {
 			$editor_link = $this->get_editor_link( $oldpost );
-			$this->plugin->alerts->Trigger(
+			$this->plugin->alerts->trigger_event(
 				2047,
 				array(
 					'PostID'             => $oldpost->ID,
@@ -1093,13 +1113,13 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 	 */
 	protected function check_permalink_change( $old_link, $new_link, $post ) {
 		if ( in_array( $post->post_status, array( 'draft', 'pending' ), true ) ) {
-			$old_link = $this->_old_post->post_name;
+			$old_link = $this->old_post->post_name;
 			$new_link = $post->post_name;
 		}
 
 		if ( $old_link !== $new_link ) {
 			$editor_link = $this->get_editor_link( $post );
-			$this->plugin->alerts->Trigger(
+			$this->plugin->alerts->trigger_event(
 				2017,
 				array(
 					'PostID'             => $post->ID,
@@ -1130,24 +1150,24 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 		$new_visibility = '';
 
 		if ( $oldpost->post_password ) {
-			$old_visibility = __( 'Password Protected', 'wp-security-audit-log' );
+			$old_visibility = esc_html__( 'Password Protected', 'wp-security-audit-log' );
 		} elseif ( 'private' === $oldpost->post_status ) {
-			$old_visibility = __( 'Private', 'wp-security-audit-log' );
+			$old_visibility = esc_html__( 'Private', 'wp-security-audit-log' );
 		} else {
-			$old_visibility = __( 'Public', 'wp-security-audit-log' );
+			$old_visibility = esc_html__( 'Public', 'wp-security-audit-log' );
 		}
 
 		if ( $newpost->post_password ) {
-			$new_visibility = __( 'Password Protected', 'wp-security-audit-log' );
+			$new_visibility = esc_html__( 'Password Protected', 'wp-security-audit-log' );
 		} elseif ( 'private' === $newpost->post_status ) {
-			$new_visibility = __( 'Private', 'wp-security-audit-log' );
+			$new_visibility = esc_html__( 'Private', 'wp-security-audit-log' );
 		} else {
-			$new_visibility = __( 'Public', 'wp-security-audit-log' );
+			$new_visibility = esc_html__( 'Public', 'wp-security-audit-log' );
 		}
 
 		if ( $old_visibility && $new_visibility && ( $old_visibility !== $new_visibility ) ) {
 			$editor_link = $this->get_editor_link( $oldpost );
-			$this->plugin->alerts->Trigger(
+			$this->plugin->alerts->trigger_event(
 				2025,
 				array(
 					'PostID'             => $oldpost->ID,
@@ -1188,7 +1208,7 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 
 		if ( $from !== $to ) {
 			$editor_link = $this->get_editor_link( $oldpost );
-			$this->plugin->alerts->Trigger(
+			$this->plugin->alerts->trigger_event(
 				2027,
 				array(
 					'PostID'             => $oldpost->ID,
@@ -1219,7 +1239,7 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 
 		// Comments.
 		if ( $oldpost->comment_status !== $newpost->comment_status ) {
-			$this->plugin->alerts->Trigger(
+			$this->plugin->alerts->trigger_event(
 				2111,
 				array(
 					'PostID'             => $newpost->ID,
@@ -1238,7 +1258,7 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 
 		// Trackbacks and Pingbacks.
 		if ( $oldpost->ping_status !== $newpost->ping_status ) {
-			$this->plugin->alerts->Trigger(
+			$this->plugin->alerts->trigger_event(
 				2112,
 				array(
 					'PostID'             => $newpost->ID,
@@ -1259,9 +1279,9 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 	/**
 	 * Categories changed.
 	 *
-	 * @param array $old_cats - Old categories.
-	 * @param array $new_cats - New categories.
-	 * @param WP_Post $post - The post.
+	 * @param array   $old_cats - Old categories.
+	 * @param array   $new_cats - New categories.
+	 * @param WP_Post $post     - The post.
 	 */
 	protected function check_categories_change( $old_cats, $new_cats, $post ) {
 		$old_cats = implode( ', ', (array) $old_cats );
@@ -1280,23 +1300,23 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 				'NewCategories'      => $new_cats ? $new_cats : 'no categories',
 				$editor_link['name'] => $editor_link['value'],
 			);
-			$this->plugin->alerts->Trigger( 2016, $alert_data );
+			$this->plugin->alerts->trigger_event( 2016, $alert_data );
 		}
 	}
 
 	/**
 	 * Reports tags change event. This could be tags addition, removal and possibly other in the future.
 	 *
-	 * @since 4.1.5
+	 * @param int      $event_code   Event code.
+	 * @param WP_Post  $post         WordPress post object.
+	 * @param string[] $tags_changed Changed tags.
 	 *
-	 * @param int $event_code
-	 * @param WP_Post $post
-	 * @param string[] $tags_changed
+	 * @since 4.1.5
 	 */
 	private function report_tags_change_event( $event_code, $post, $tags_changed ) {
 		$editor_link = $this->get_editor_link( $post );
 		$post_status = ( 'publish' === $post->post_status ) ? 'published' : $post->post_status;
-		$this->plugin->alerts->Trigger(
+		$this->plugin->alerts->trigger_event(
 			$event_code,
 			array(
 				'PostID'             => $post->ID,
@@ -1305,7 +1325,7 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 				'PostTitle'          => $post->post_title,
 				'PostDate'           => $post->post_date,
 				'PostUrl'            => get_permalink( $post->ID ),
-				'tag'                => ! empty( $tags_changed ) ? implode( ', ', $tags_changed ) : __('no tags', 'wp-security-audit-log'),
+				'tag'                => ! empty( $tags_changed ) ? implode( ', ', $tags_changed ) : esc_html__( 'no tags', 'wp-security-audit-log' ),
 				$editor_link['name'] => $editor_link['value'],
 			)
 		);
@@ -1321,11 +1341,11 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 	protected function check_tags_change( $old_tags, $new_tags, $post ) {
 		// Ensure old_tags is not null.
 		if ( ! $old_tags ) {
-			$old_tags = [];
+			$old_tags = array();
 		}
 		$intersection = array_intersect( $old_tags, $new_tags );
 		if ( count( $intersection ) === count( $old_tags ) && count( $old_tags ) === count( $new_tags ) ) {
-			//  no change, let's leave
+			// No change, let's leave.
 			return;
 		}
 
@@ -1345,10 +1365,10 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 	/**
 	 * Post modified content.
 	 *
-	 * @param integer $post_id – Post ID.
+	 * @param integer  $post_id – Post ID.
 	 * @param stdClass $oldpost – Old post.
 	 * @param stdClass $newpost – New post.
-	 * @param int $modified – Set to 0 if no changes done to the post.
+	 * @param int      $modified – Set to 0 if no changes done to the post.
 	 *
 	 * @return int|void
 	 */
@@ -1357,7 +1377,7 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 			return;
 		}
 
-		$content_changed = $oldpost->post_content != $newpost->post_content;
+		$content_changed = $oldpost->post_content !== $newpost->post_content;
 
 		/*
 		 * If the content hasn't changed and this looks to be a draft resave
@@ -1384,7 +1404,7 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 					$yoast_alerts         = $yoast_alerts + $yoast_metabox_alerts;
 					// Check all alerts.
 					foreach ( $yoast_alerts as $alert_code => $alert ) {
-						if ( $this->plugin->alerts->WillOrHasTriggered( $alert_code ) ) {
+						if ( $this->plugin->alerts->will_or_has_triggered( $alert_code ) ) {
 							return 0; // Return if any Yoast alert has or will trigger.
 						}
 					}
@@ -1408,18 +1428,19 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 				}
 
 				if ( $old_post_excerpt !== $post_excerpt ) {
-					$event                          = 2129;
-					// We are purposfully showing an empty, not NULL value.
+					$event = 2129;
+					// We are purposefully showing an empty, not NULL value.
 					$event_data['old_post_excerpt'] = ( $old_post_excerpt ) ? $old_post_excerpt : ' ';
 					$event_data['post_excerpt']     = ( $post_excerpt ) ? $post_excerpt : ' ';
 				}
 
 				if ( 2002 === $event ) {
-					// If we reach this point, we no longer need to check if the content has changed as we already have an event to handle it.
-					// So trigger 2002 regardless and "something" has changed in the post, we just dont detect it elsewhere.
-					$this->plugin->alerts->TriggerIf( $event, $event_data, array( $this, 'ignore_other_post_events' ) );
+					// If we reach this point, we no longer need to check if the content has changed as we already have
+					// an event to handle it. So trigger 2002 regardless and "something" has changed in the post, we
+					// just don't detect it elsewhere.
+					$this->plugin->alerts->trigger_event_if( $event, $event_data, array( $this, 'ignore_other_post_events' ) );
 				} else {
-					$this->plugin->alerts->Trigger( $event, $event_data );
+					$this->plugin->alerts->trigger_event( $event, $event_data );
 				}
 			}
 		}
@@ -1436,7 +1457,7 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 		$post_events = array_keys( $this->plugin->alerts->get_alerts_by_sub_category( 'Content' ) );
 
 		foreach ( $post_events as $event ) {
-			if ( $manager->WillOrHasTriggered( $event) || $this->was_triggered_recently( $event ) ) {
+			if ( $manager->will_or_has_triggered( $event ) || $this->was_triggered_recently( $event ) ) {
 				return false;
 			}
 		}
@@ -1453,7 +1474,7 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 	private function check_title_change( $oldpost, $newpost ) {
 		if ( $oldpost->post_title !== $newpost->post_title ) {
 			$editor_link = $this->get_editor_link( $oldpost );
-			$this->plugin->alerts->Trigger(
+			$this->plugin->alerts->trigger_event(
 				2086,
 				array(
 					'PostID'             => $newpost->ID,
@@ -1515,7 +1536,7 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 		$event_data  = $this->get_post_event_data( $post ); // Event data.
 
 		$event_data[ $editor_link['name'] ] = $editor_link['value'];
-		$this->plugin->alerts->Trigger( $event, $event_data );
+		$this->plugin->alerts->trigger_event( $event, $event_data );
 	}
 
 	/**
@@ -1528,24 +1549,9 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 	private function check_auto_draft( $code, $title ) {
 		$ignore = 0;
 		if ( 2008 === $code && ( 'auto-draft' === $title || 'Auto Draft' === $title ) ) {
-			$ignore = ! $this->plugin->settings()->IsWPBackend();
+			$ignore = ! $this->plugin->settings()->is_wp_backend();
 		}
 		return $ignore;
-	}
-
-	/**
-	 * Comments/Trackbacks and Pingbacks event code.
-	 *
-	 * @param stdClass $post - The post.
-	 * @param string   $status - The status.
-	 */
-	private function get_comments_pings_event( $post, $status ) {
-		if ( 'disable' === $status ) {
-			$event = 2111;
-		} else {
-			$event = 2112;
-		}
-		return $event;
 	}
 
 	/**
@@ -1581,7 +1587,7 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 			$event = 2100;
 			if ( ! $this->was_triggered( $event ) ) {
 				$editor_link = $this->get_editor_link( $post );
-				$this->plugin->alerts->Trigger(
+				$this->plugin->alerts->trigger_event(
 					$event,
 					array(
 						'PostID'             => $post->ID,
@@ -1605,14 +1611,14 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 	 */
 	private function was_triggered( $alert_id ) {
 		$query = new WSAL_Models_OccurrenceQuery();
-		$query->addOrderBy( 'created_on', true );
-		$query->setLimit( 1 );
-		$last_occurence = $query->getAdapter()->Execute( $query );
+		$query->add_order_by( 'created_on', true );
+		$query->set_limit( 1 );
+		$last_occurrence = $query->get_adapter()->execute_query( $query );
 
-		if ( ! empty( $last_occurence ) ) {
-			if ( ! is_array( $alert_id ) && $last_occurence[0]->alert_id === $alert_id ) {
+		if ( ! empty( $last_occurrence ) ) {
+			if ( ! is_array( $alert_id ) && $last_occurrence[0]->alert_id === $alert_id ) {
 				return true;
-			} elseif ( is_array( $alert_id ) && in_array( $last_occurence[0]->alert_id, $alert_id, true ) ) {
+			} elseif ( is_array( $alert_id ) && in_array( $last_occurrence[0]->alert_id, $alert_id, true ) ) {
 				return true;
 			}
 		}
@@ -1671,7 +1677,7 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 	 * @return boolean
 	 */
 	public function plugin_not_created_post( $manager ) {
-		$triggered = $manager->WillOrHasTriggered( 5019 );
+		$triggered = $manager->will_or_has_triggered( 5019 );
 		// inverting value here to account for the double NOT in _CommitItem().
 		return ! $triggered;
 	}
@@ -1679,29 +1685,29 @@ class WSAL_Sensors_Content extends WSAL_AbstractSensor {
 	/**
 	 * Check if the alert was triggered recently.
 	 *
-	 * Checks last 5 events if they occured less than 20 seconds ago.
+	 * Checks last 5 events if they occurred less than 20 seconds ago.
 	 *
 	 * @param integer|array $alert_id - Alert code.
 	 * @return boolean
 	 */
 	private function was_triggered_recently( $alert_id ) {
 		// if we have already checked this don't check again.
-		if ( isset( $this->cached_alert_checks ) && array_key_exists( $alert_id, $this->cached_alert_checks ) && $this->cached_alert_checks[$alert_id] ) {
+		if ( isset( $this->cached_alert_checks ) && array_key_exists( $alert_id, $this->cached_alert_checks ) && $this->cached_alert_checks[ $alert_id ] ) {
 			return true;
 		}
 		$query = new WSAL_Models_OccurrenceQuery();
-		$query->addOrderBy( 'created_on', true );
-		$query->setLimit( 5 );
-		$last_occurences  = $query->getAdapter()->Execute( $query );
+		$query->add_order_by( 'created_on', true );
+		$query->set_limit( 5 );
+		$last_occurrences = $query->get_adapter()->execute_query( $query );
 		$known_to_trigger = false;
-		foreach ( $last_occurences as $last_occurence ) {
+		foreach ( $last_occurrences as $last_occurrence ) {
 			if ( $known_to_trigger ) {
 				break;
 			}
-			if ( ! empty( $last_occurence ) && ( $last_occurence->created_on + 5 ) > time() ) {
-				if ( ! is_array( $alert_id ) && $last_occurence->alert_id === $alert_id ) {
+			if ( ! empty( $last_occurrence ) && ( $last_occurrence->created_on + 5 ) > time() ) {
+				if ( ! is_array( $alert_id ) && $last_occurrence->alert_id === $alert_id ) {
 					$known_to_trigger = true;
-				} elseif ( is_array( $alert_id ) && in_array( $last_occurence[0]->alert_id, $alert_id, true ) ) {
+				} elseif ( is_array( $alert_id ) && in_array( $last_occurrence[0]->alert_id, $alert_id, true ) ) {
 					$known_to_trigger = true;
 				}
 			}

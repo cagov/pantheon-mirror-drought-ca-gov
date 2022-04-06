@@ -4,7 +4,7 @@
  *
  * Sensor manager class file.
  *
- * @since 1.0.0
+ * @since   1.0.0
  * @package wsal
  */
 
@@ -30,17 +30,15 @@ final class WSAL_SensorManager extends WSAL_AbstractSensor {
 	protected $sensors = array();
 
 	/**
-	 * Method: Constructor.
-	 *
-	 * @param WpSecurityAuditLog $plugin - Instance of WpSecurityAuditLog.
+	 * {@inheritDoc}
 	 */
 	public function __construct( WpSecurityAuditLog $plugin ) {
 		parent::__construct( $plugin );
 
 		// Check sensors before loading for optimization.
 		add_filter( 'wsal_before_sensor_load', array( $this, 'check_sensor_before_load' ), 10, 2 );
-		foreach ( glob( dirname( __FILE__ ) . '/Sensors/*.php' ) as $file ) {
-			$this->AddFromFile( $file );
+		foreach ( WSAL_Utilities_FileSystemUtils::read_files_in_folder( dirname( __FILE__ ) . '/Sensors', '*.php' ) as $file ) {
+			$this->add_from_file( $file );
 		}
 
 		/*
@@ -55,7 +53,8 @@ final class WSAL_SensorManager extends WSAL_AbstractSensor {
 		foreach ( $paths as $inc_path ) {
 			// Check directory.
 			if ( is_dir( $inc_path ) && is_readable( $inc_path ) ) {
-				foreach ( glob( $inc_path . '*.php' ) as $file ) {
+				$inc_path = trailingslashit( $inc_path );
+				foreach ( WSAL_Utilities_FileSystemUtils::read_files_in_folder( $inc_path, '*.php' ) as $file ) {
 					// Include custom sensor file.
 					require_once $file;
 					$file   = substr( $file, 0, -4 );
@@ -74,25 +73,25 @@ final class WSAL_SensorManager extends WSAL_AbstractSensor {
 					 * is retained for back-compat.
 					 */
 					$class = ( class_exists( $sensor ) ) ? $sensor : 'WSAL_Sensors_' . $sensor;
-					$this->AddFromClass( $class );
+					$this->add_from_class( $class );
 				}
 			}
 		}
 	}
 
 	/**
-	 * Method: Hook events of the sensors.
+	 * {@inheritDoc}
 	 */
-	public function HookEvents() {
+	public function hook_events() {
 		foreach ( $this->sensors as $sensor ) {
-			$sensor->HookEvents();
+			$sensor->hook_events();
 		}
 	}
 
 	/**
 	 * Method: Get the sensors.
 	 */
-	public function GetSensors() {
+	public function get_sensors() {
 		return $this->sensors;
 	}
 
@@ -101,11 +100,11 @@ final class WSAL_SensorManager extends WSAL_AbstractSensor {
 	 *
 	 * @param string $file Path to file.
 	 */
-	public function AddFromFile( $file ) {
+	public function add_from_file( $file ) {
 		/**
 		 * Filter: `wsal_before_sensor_load`
 		 *
-		 * Check to see if sensor is to be initiaited or not.
+		 * Check to see if sensor is to be initiated or not.
 		 *
 		 * @param bool   $load_sensor – Set to true if sensor is to be loaded.
 		 * @param string $file        – File path.
@@ -114,7 +113,7 @@ final class WSAL_SensorManager extends WSAL_AbstractSensor {
 
 		// Initiate the sensor if $load_sensor is true.
 		if ( $load_sensor ) {
-			$this->AddFromClass( $this->plugin->GetClassFileClassName( $file ) );
+			$this->add_from_class( $this->plugin->autoloader->get_class_file_class_name( $file ) );
 		}
 	}
 
@@ -123,8 +122,8 @@ final class WSAL_SensorManager extends WSAL_AbstractSensor {
 	 *
 	 * @param string $class Class name.
 	 */
-	public function AddFromClass( $class ) {
-		$this->AddInstance( new $class( $this->plugin ) );
+	public function add_from_class( $class ) {
+		$this->add_instance( new $class( $this->plugin ) );
 	}
 
 	/**
@@ -132,7 +131,7 @@ final class WSAL_SensorManager extends WSAL_AbstractSensor {
 	 *
 	 * @param WSAL_AbstractSensor $sensor The new sensor.
 	 */
-	public function AddInstance( WSAL_AbstractSensor $sensor ) {
+	public function add_instance( $sensor ) {
 		$this->sensors[] = $sensor;
 	}
 
@@ -145,7 +144,7 @@ final class WSAL_SensorManager extends WSAL_AbstractSensor {
 	 */
 	public function check_sensor_before_load( $load_sensor, $filepath ) {
 		global $pagenow;
-		if ( ! $this->plugin->IsMultisite() ) {
+		if ( ! $this->plugin->is_multisite() ) {
 			$admin_page = $pagenow;
 		} else {
 			/**
@@ -189,13 +188,18 @@ final class WSAL_SensorManager extends WSAL_AbstractSensor {
 
 		$frontend_events = WSAL_Settings::get_frontend_events();
 
-		// Check to see if LogInOut, and FrontendRegister sensors should load on login page.
+		// Only LogInOut and Register sensors should load on login page.
 		if ( WpSecurityAuditLog::is_login_screen() ) {
-			if ( 'FrontendRegister' === $filename && ! empty( $frontend_events['register'] )
-			     || 'LogInOut' === $filename ) {
+			if ( in_array( $filename, array( 'Register', 'LogInOut' ), true ) ) {
 				return true;
 			}
 			return false; // Any other sensor should not load here.
+		}
+
+		$default_public_sensors = array( 'Register', 'LogInOut' );
+		if ( $this->plugin->is_multisite() ) {
+			// Multisite sign-up is happening on front-end.
+			array_push( $default_public_sensors, 'MultisiteSignUp' );
 		}
 
 		/**
@@ -209,7 +213,7 @@ final class WSAL_SensorManager extends WSAL_AbstractSensor {
 		 *
 		 * @param array $public_sensors - List of sensors to be loaded for visitors.
 		 */
-		$public_sensors = apply_filters( 'wsal_load_public_sensors', array( 'FrontendRegister', 'LogInOut' ) );
+		$public_sensors = apply_filters( 'wsal_load_public_sensors', $default_public_sensors );
 		if ( WpSecurityAuditLog::is_frontend() && ! is_user_logged_in() && ! in_array( $filename, $public_sensors, true ) ) {
 			return false;
 		}
@@ -253,7 +257,7 @@ final class WSAL_SensorManager extends WSAL_AbstractSensor {
 
 				case 'Multisite':
 					// If site is not multisite then don't load it.
-					if ( ! $this->plugin->IsMultisite() ) {
+					if ( ! $this->plugin->is_multisite() ) {
 						$load_sensor = false;
 					}
 					break;
@@ -276,7 +280,7 @@ final class WSAL_SensorManager extends WSAL_AbstractSensor {
 					}
 					break;
 
-				case 'FrontendRegister':
+				case 'Register':
 					if ( is_user_logged_in() || empty( $frontend_events['register'] ) ) {
 						$load_sensor = false;
 					}

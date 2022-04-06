@@ -18,8 +18,30 @@ if ( ! defined( 'ABSPATH' ) ) {
  * used for get the alert, set the meta fields, etc.
  *
  * @package wsal
+ *
+ * phpcs:disable PSR2.Classes.PropertyDeclaration.Underscore
  */
 class WSAL_Models_Occurrence extends WSAL_Models_ActiveRecord {
+
+	/**
+	 * List of migrated metadata fields.
+	 *
+	 * @var string[]
+	 */
+	public static $migrated_meta = array(
+		'ClientIP'         => 'client_ip',
+		'Severity'         => 'severity',
+		'Object'           => 'object',
+		'EventType'        => 'event_type',
+		'UserAgent'        => 'user_agent',
+		'CurrentUserRoles' => 'user_roles',
+		'Username'         => 'username',
+		'CurrentUserID'    => 'user_id',
+		'SessionID'        => 'session_id',
+		'PostStatus'       => 'post_status',
+		'PostType'         => 'post_type',
+		'PostID'           => 'post_id',
+	);
 
 	/**
 	 * Occurrence ID.
@@ -50,45 +72,127 @@ class WSAL_Models_Occurrence extends WSAL_Models_ActiveRecord {
 	public $created_on = 0.0;
 
 	/**
-	 * Is read.
+	 * Client IP address.
 	 *
-	 * @var bool
-	 * @deprecated 4.3.2
+	 * @var string
+	 * @since 4.4.0
 	 */
-	public $is_read = false;
+	public $client_ip = '';
 
 	/**
-	 * Is migrated.
+	 * Severity.
 	 *
-	 * @var bool
-	 * @deprecated 4.3.2
+	 * @var int
+	 * @since 4.4.0
 	 */
-	public $is_migrated = false;
+	public $severity = '';
+
+	/**
+	 * Event object.
+	 *
+	 * @var string
+	 * @since 4.4.0
+	 */
+	public $object = '';
+
+	/**
+	 * Event type.
+	 *
+	 * @var string
+	 * @since 4.4.0
+	 */
+	public $event_type = '';
+
+	/**
+	 * User agent string.
+	 *
+	 * @var string
+	 * @since 4.4.0
+	 */
+	public $user_agent = '';
+
+	/**
+	 * Comma separated user roles of the user belonging to the event.
+	 *
+	 * @var string
+	 * @since 4.4.0
+	 */
+	public $user_roles = '';
+
+	/**
+	 * Username of the user belonging to the event.
+	 *
+	 * @var string
+	 * @since 4.4.0
+	 */
+	public $username = null;
+
+	/**
+	 * User ID of the user belonging to the event.
+	 *
+	 * @var int
+	 * @since 4.4.0
+	 */
+	public $user_id = null;
+
+	/**
+	 * Session ID.
+	 *
+	 * @var string
+	 * @since 4.4.0
+	 */
+	public $session_id = '';
+
+	/**
+	 * Post status.
+	 *
+	 * @var string
+	 * @since 4.4.0
+	 */
+	public $post_status = '';
+
+	/**
+	 * Post status.
+	 *
+	 * @var string
+	 * @since 4.4.0
+	 */
+	public $post_type = '';
+
+	/**
+	 * Post ID.
+	 *
+	 * @var int
+	 * @since 4.4.0
+	 */
+	public $post_id = 0;
 
 	/**
 	 * Model Name.
 	 *
 	 * @var string
 	 */
-	protected $adapterName = 'Occurrence';
+	protected $adapter_name = 'Occurrence';
 
 	/**
+	 * Cached message.
+	 *
 	 * @var string
 	 */
-	public $_cachedMessage;
+	public $_cached_message;
 
 	/**
 	 * Returns the alert related to this occurrence.
 	 *
-	 * @see WSAL_AlertManager::GetAlert()
 	 * @return WSAL_Alert
+	 * @see WSAL_AlertManager::get_alert()
 	 */
-	public function GetAlert() {
-		return WpSecurityAuditLog::GetInstance()->alerts->GetAlert(
+	public function get_alert() {
+		return WpSecurityAuditLog::get_instance()->alerts->get_alert(
 			$this->alert_id,
 			(object) array(
-				'mesg' => __( 'Alert message not found.', 'wp-security-audit-log' ),
-				'desc' => __( 'Alert description not found.', 'wp-security-audit-log' ),
+				'mesg' => esc_html__( 'Alert message not found.', 'wp-security-audit-log' ),
+				'desc' => esc_html__( 'Alert description not found.', 'wp-security-audit-log' ),
 			)
 		);
 	}
@@ -96,122 +200,145 @@ class WSAL_Models_Occurrence extends WSAL_Models_ActiveRecord {
 	/**
 	 * Returns the value of a meta item.
 	 *
-	 * @param string $name - Name of meta item.
-	 * @param mixed $default - Default value returned when meta does not exist.
+	 * @param string $name    - Name of meta item.
+	 * @param mixed  $default - Default value returned when meta does not exist.
 	 *
 	 * @return mixed The value, if meta item does not exist $default returned.
-	 * @see WSAL_Adapters_MySQL_Occurrence::GetNamedMeta()
+	 * @see WSAL_Adapters_MySQL_Occurrence::get_named_meta()
 	 */
-	public function GetMetaValue( $name, $default = array() ) {
-		// Get meta adapter.
-		$meta = $this->getAdapter()->GetNamedMeta( $this, $name );
-		if ( is_null( $meta ) || ! array_key_exists( 'value', $meta ) ) {
-			return $default;
+	public function get_meta_value( $name, $default = array() ) {
+		$result = $default;
+
+		// Check if the meta is part of the occurrences table.
+		if ( in_array( $name, array_keys( self::$migrated_meta ), true ) ) {
+			$property_name = self::$migrated_meta[ $name ];
+			if ( property_exists( $this, $property_name ) ) {
+				$result = $this->$property_name;
+			}
+		} else {
+			// Get meta adapter.
+			$meta = $this->get_adapter()->get_named_meta( $this, $name );
+			if ( is_null( $meta ) || ! array_key_exists( 'value', $meta ) ) {
+				return $default;
+			}
+
+			$result = $meta['value'];
 		}
 
-		return maybe_unserialize( $meta['value'] );
+		$result = maybe_unserialize( $result );
+		if ( 'CurrentUserRoles' === $name && is_string( $result ) ) {
+			$result = preg_replace( '/[\[\]"]/', '', $result );
+			$result = explode( ',', $result );
+		}
+
+		return $result;
 	}
 
 	/**
 	 * Sets the value of a meta item (creates or updates meta item).
 	 *
-	 * @param string $name - Meta name.
+	 * @param string $name  - Meta name.
 	 * @param mixed  $value - Meta value.
 	 */
-	public function SetMetaValue( $name, $value ) {
+	public function set_meta_value( $name, $value ) {
 		// check explicitly for `0` string values.
 		if ( '0' === $value || ! empty( $value ) ) {
-			// Get meta adapter.
-			$model                = new WSAL_Models_Meta();
-			$model->occurrence_id = $this->getId();
-			$model->name          = $name;
-			$model->value         = maybe_serialize( $value );
-			$model->SaveMeta();
+			// Check if the meta is part of the occurrences table.
+			if ( in_array( $name, array_keys( self::$migrated_meta ), true ) ) {
+				$property_name = self::$migrated_meta[ $name ];
+				if ( property_exists( $this, $property_name ) ) {
+					if ( 'CurrentUserRoles' === $name ) {
+						$value = maybe_unserialize( $value );
+						if ( is_array( $value ) && ! empty( $value ) ) {
+							$this->$property_name = implode( ',', $value );
+						}
+					} else {
+						$this->$property_name = $value;
+					}
+				}
+			} else {
+				// Get meta adapter.
+				$model                = new WSAL_Models_Meta();
+				$model->occurrence_id = $this->get_id();
+				$model->name          = $name;
+				$model->value         = maybe_serialize( $value );
+				$model->save_meta();
+			}
 		}
 	}
 
 	/**
 	 * Update Metadata of this occurrence by name.
 	 *
-	 * @see WSAL_Models_Meta::UpdateByNameAndOccurenceId()
-	 * @param string $name - Meta name.
+	 * @param string $name  - Meta name.
 	 * @param mixed  $value - Meta value.
+	 *
+	 * @see WSAL_Models_Meta::update_by_name_and_occurrence_id()
 	 */
-	public function UpdateMetaValue( $name, $value ) {
+	public function update_meta_value( $name, $value ) {
 		$model = new WSAL_Models_Meta();
-		$model->UpdateByNameAndOccurenceId( $name, $value, $this->getId() );
+		$model->update_by_name_and_occurrence_id( $name, $value, $this->get_id() );
 	}
 
 	/**
-	 * Returns a key-value pair of meta data.
+	 * Returns a key-value pair of metadata.
 	 *
-	 * @see WSAL_Adapters_MySQL_Occurrence::GetMultiMeta()
 	 * @return array
+	 * @see WSAL_Adapters_MySQL_Occurrence::get_multi_meta()
 	 */
-	public function GetMetaArray() {
+	public function get_meta_array() {
 		$result = array();
-		$metas  = $this->getAdapter()->GetMultiMeta( $this );
+		$metas  = $this->get_adapter()->get_multi_meta( $this );
 		foreach ( $metas as $meta ) {
 			$result[ $meta->name ] = maybe_unserialize( $meta->value );
 		}
+
+		foreach ( self::$migrated_meta as $meta_key => $column_name ) {
+			$result[ $meta_key ] = $this->$column_name;
+		}
+
 		return $result;
 	}
 
 	/**
-	 * Creates or updates all meta data passed as an array of meta-key/meta-value pairs.
+	 * Creates or updates all metadata passed as an array of meta-key/meta-value pairs.
 	 *
 	 * @param array $data - New meta data.
 	 */
 	public function SetMeta( $data ) {
 		foreach ( (array) $data as $key => $val ) {
-			$this->SetMetaValue( $key, $val );
+			$this->set_meta_value( $key, $val );
 		}
+
+		// The occurrence object itself needs to be saved again as some metadata is stored as its properties.
+		$this->save();
 	}
 
 	/**
 	 * Gets alert message.
 	 *
-	 * @param array $meta - Occurrence meta array.
+	 * @param array  $meta    - Occurrence meta array.
 	 * @param string $context Message context.
 	 *
 	 * @return string Full-formatted message.
-	 * @throws Freemius_Exception
-	 * @see WSAL_Alert::GetMessage()
+	 * @see WSAL_Alert::get_message()
 	 */
-	public function GetMessage( $meta = null, $context = false ) {
-		if ( ! isset( $this->_cachedMessage ) ) {
-			// message caching
-			if ( ! $this->_cachedMessage ) {
-				$this->_cachedMessage = $this->GetAlert()->mesg;
+	public function get_message( $meta = null, $context = false ) {
+		if ( ! isset( $this->_cached_message ) ) {
+			// Message caching.
+			if ( ! $this->_cached_message ) {
+				$this->_cached_message = $this->get_alert()->mesg;
 			}
 			// Fill variables in message.
-			$meta_array   = null === $meta ? $this->GetMetaArray() : $meta;
-			$alert_object = $this->GetAlert();
-			if ( null !== $alert_object && method_exists( $alert_object, 'GetMessage' ) ) {
-				$this->_cachedMessage = $alert_object->GetMessage( $meta_array, $this->_cachedMessage, $this->getId(), $context );
+			$meta_array   = null === $meta ? $this->get_meta_array() : $meta;
+			$alert_object = $this->get_alert();
+			if ( null !== $alert_object && method_exists( $alert_object, 'get_message' ) ) {
+				$this->_cached_message = $alert_object->get_message( $meta_array, $this->_cached_message, $this->get_id(), $context );
 			} else {
-				/**
-				 * Reaching this point means we have an event we don't know
-				 * about. It could be a custom event or possibly a removed
-				 * event.
-				 *
-				 * We currently have 2 sets of custom events that we can flag
-				 * specific messages about. WPForms and BBPress. Both are
-				 * available as plugin add-ons.
-				 *
-				 * @since 4.0.2
-				 */
-				$addon_event_codes = array(
-					'wfcm' => array(
-						'name'      => __( 'WFCM', 'wp-security-audit-log' ),
-						'event_ids' => array( 6028, 6029, 6030, 6031, 6032, 6033 ),
-					),
-				);
-
 				// Filter to allow items to be added elsewhere.
 				$addon_event_codes = apply_filters( 'wsal_addon_event_codes', $addon_event_codes );
 
-				$installer_nonce   = wp_create_nonce( 'wsal-install-addon' );
+				$installer_nonce = wp_create_nonce( 'wsal-install-addon' );
 				foreach ( $addon_event_codes as $key => $addon ) {
 					if ( in_array( $this->alert_id, $addon['event_ids'], true ) ) {
 						// check key and update message here.
@@ -226,7 +353,7 @@ class WSAL_Models_Occurrence extends WSAL_Models_ActiveRecord {
 						return $message;
 					}
 				}
-				$this->_cachedMessage = isset( $cached_message ) ? $cached_message : sprintf(
+				$this->_cached_message = isset( $cached_message ) ? $cached_message : sprintf(
 					/* Translators: 1: html that opens a link, 2: html that closes a link. */
 					__( 'This type of activity / change is no longer monitored. You can create your own custom event IDs to keep a log of such change. Read more about custom events %1$shere%2$s.', 'wp-security-audit-log' ),
 					'<a href="https://wpactivitylog.com/support/kb/create-custom-events-wordpress-activity-log/" rel="noopener noreferrer" target="_blank">',
@@ -234,20 +361,24 @@ class WSAL_Models_Occurrence extends WSAL_Models_ActiveRecord {
 				);
 			}
 		}
-		return $this->_cachedMessage;
+		return $this->_cached_message;
 	}
 
 	/**
 	 * Delete occurrence as well as associated meta data.
 	 *
-	 * @see WSAL_Adapters_ActiveRecordInterface::Delete()
+	 * @see WSAL_Adapters_ActiveRecordInterface::delete()
 	 * @return boolean True on success, false on failure.
+	 *
+	 * @phpcs:disable Generic.Commenting.DocComment.MissingShort
 	 */
-	public function Delete() {
-		foreach ( $this->getAdapter()->GetMeta() as $meta ) {
-			$meta->Delete();
+	public function delete() {
+		/** @var WSAL_Adapters_MySQL_Occurrence $adapter */
+		$adapter = $this->get_adapter();
+		foreach ( $adapter->get_multi_meta() as $meta ) {
+			$meta->delete();
 		}
-		return parent::Delete();
+		return parent::delete();
 	}
 
 	/**
@@ -264,14 +395,10 @@ class WSAL_Models_Occurrence extends WSAL_Models_ActiveRecord {
 	/**
 	 * Gets the Client IP.
 	 *
-	 * @param array $meta - Occurrence meta array.
 	 * @return string IP address of request.
 	 */
-	public function GetSourceIP( $meta = null ) {
-		if ( null === $meta ) {
-			return $this->GetMetaValue( 'ClientIP', '' );
-		}
-		return isset( $meta['ClientIP'] ) ? $meta['ClientIP'] : '';
+	public function get_source_ip() {
+		return $this->get_meta_value( 'ClientIP', array() );
 	}
 
 	/**
@@ -279,9 +406,9 @@ class WSAL_Models_Occurrence extends WSAL_Models_ActiveRecord {
 	 *
 	 * @return string IP address of request (from proxies etc).
 	 */
-	public function GetOtherIPs() {
+	public function get_other_ips() {
 		$result = array();
-		$data   = (array) $this->GetMetaValue( 'OtherIPs', array() );
+		$data   = (array) $this->get_meta_value( 'OtherIPs', array() );
 		foreach ( $data as $ips ) {
 			foreach ( $ips as $ip ) {
 				$result[] = $ip;
@@ -293,14 +420,19 @@ class WSAL_Models_Occurrence extends WSAL_Models_ActiveRecord {
 	/**
 	 * Gets user roles.
 	 *
-	 * @param array $meta - Occurrence meta array.
 	 * @return array Array of user roles.
 	 */
-	public function GetUserRoles( $meta = null ) {
-		if ( null === $meta ) {
-			return $this->GetMetaValue( 'CurrentUserRoles', array() );
-		}
-		return isset( $meta['CurrentUserRoles'] ) ? $meta['CurrentUserRoles'] : array();
+	public function get_user_roles() {
+		return $this->get_meta_value( 'CurrentUserRoles', array() );
+	}
+
+	/**
+	 * Sets the user roles.
+	 *
+	 * @param string $roles Array of user roles.
+	 */
+	public function set_user_roles( $roles ) {
+		$this->user_roles = is_array( $roles ) ? implode( ',', $roles ) : $roles;
 	}
 
 	/**
@@ -308,8 +440,8 @@ class WSAL_Models_Occurrence extends WSAL_Models_ActiveRecord {
 	 *
 	 * @return string User's username.
 	 */
-	public function GetUsername() {
-		return WSAL_Utilities_UsersUtils::GetUsername( $this->GetMetaArray() );
+	public function get_username() {
+		return WSAL_Utilities_UsersUtils::get_username( $this->get_meta_array() );
 	}
 
 	/**
@@ -318,8 +450,8 @@ class WSAL_Models_Occurrence extends WSAL_Models_ActiveRecord {
 	 * @return float - Number of seconds (and milliseconds as fraction) since unix Day 0.
 	 * @todo This needs some caching.
 	 */
-	protected function GetMicrotime() {
-		return microtime( true );// + get_option('gmt_offset') * HOUR_IN_SECONDS;
+	protected function get_microtime() {
+		return microtime( true );
 	}
 
 	/**
@@ -328,8 +460,8 @@ class WSAL_Models_Occurrence extends WSAL_Models_ActiveRecord {
 	 * @param array $args - Query args.
 	 * @return WSAL_Models_Occurrence[]
 	 */
-	public function CheckKnownUsers( $args = array() ) {
-		return $this->getAdapter()->CheckKnownUsers( $args );
+	public function check_known_users( $args = array() ) {
+		return $this->get_adapter()->check_known_users( $args );
 	}
 
 	/**
@@ -338,8 +470,8 @@ class WSAL_Models_Occurrence extends WSAL_Models_ActiveRecord {
 	 * @param array $args - Query args.
 	 * @return WSAL_Models_Occurrence[]
 	 */
-	public function CheckUnKnownUsers( $args = array() ) {
-		return $this->getAdapter()->CheckUnKnownUsers( $args );
+	public function check_unknown_users( $args = array() ) {
+		return $this->get_adapter()->check_unknown_users( $args );
 	}
 
 	/**
@@ -349,17 +481,60 @@ class WSAL_Models_Occurrence extends WSAL_Models_ActiveRecord {
 	 * @return WSAL_Models_Occurrence[]
 	 */
 	public function check_alert_1003( $args = array() ) {
-		return $this->getAdapter()->check_alert_1003( $args );
+		return $this->get_adapter()->check_alert_1003( $args );
 	}
 
 	/**
 	 * Gets occurrence by Post_id
 	 *
-	 * @see WSAL_Adapters_MySQL_Occurrence::GetByPostID()
 	 * @param integer $post_id - Post ID.
+	 *
 	 * @return WSAL_Models_Occurrence[]
+	 * @see WSAL_Adapters_MySQL_Occurrence::get_by_post_id()
 	 */
-	public function GetByPostID( $post_id ) {
-		return $this->getAdapter()->GetByPostID( $post_id );
+	public function get_by_post_id( $post_id ) {
+		return $this->get_adapter()->get_by_post_id( $post_id );
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * Extends the default mechanism for loading data to handle the migrated meta fields in version 4.4.0.
+	 *
+	 * @since 4.4.0
+	 */
+	public function load_data( $data ) {
+		$copy = get_class( $this );
+		$copy = new $copy();
+		foreach ( (array) $data as $key => $val ) {
+			if ( ! is_null( $val ) && in_array( $key, array( 'user_id', 'username' ), true ) ) {
+				// Username and user_id cannot have the default value set because some database queries rely on having
+				// null values in the database.
+				if ( 'user_id' === $key ) {
+					$this->user_id = intval( $val );
+				} elseif ( 'username' === $key ) {
+					$this->username = (string) $val;
+				}
+			} elseif ( 'roles' === $key ) {
+				$this->set_user_roles( $val );
+			} elseif ( isset( $copy->$key ) ) {
+				// Default type casting is applied to the rest of the fields.
+				$this->$key = $this->cast_to_correct_type( $copy, $key, $val );
+			}
+		}
+
+		return $this;
+	}
+
+	/**
+	 * Deprecated placeholder function.
+	 *
+	 * @return array
+	 *
+	 * @deprecated 4.4.1 Replaced by function get_meta_array.
+	 * @see        WSAL_Models_Occurrence::get_meta_array()
+	 */
+	public function GetMetaArray() {
+		return $this->get_meta_array();
 	}
 }
