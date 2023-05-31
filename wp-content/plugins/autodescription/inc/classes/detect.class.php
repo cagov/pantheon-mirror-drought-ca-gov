@@ -10,7 +10,7 @@ namespace The_SEO_Framework;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2015 - 2022 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2015 - 2023 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -180,7 +180,7 @@ class Detect extends Render {
 	 * @uses $this->detect_plugin_multi()
 	 *
 	 * @param array[] $plugins   Array of array for globals, constants, classes
-	 *                         and/or functions to check for plugin existence.
+	 *                           and/or functions to check for plugin existence.
 	 * @param bool    $use_cache Bypasses cache if false
 	 */
 	public function can_i_use( $plugins = [], $use_cache = true ) {
@@ -576,6 +576,7 @@ class Detect extends Render {
 	 * @since 4.0.0
 	 * @since 4.0.2 Now tests for an existing post/term ID when on singular/term pages.
 	 * @since 4.0.3 Can now assert empty categories again by checking for taxonomy support.
+	 * @since 4.2.4 Added detection for AJAX, Cron, JSON, and REST queries (they're not supported as SEO-able queries).
 	 *
 	 * @return bool
 	 */
@@ -585,7 +586,11 @@ class Detect extends Render {
 		if ( null !== $memo = memo() ) return $memo;
 
 		switch ( true ) :
-			case $this->is_feed():
+			case \is_feed():
+			case \wp_doing_ajax():
+			case \wp_doing_cron():
+			case \wp_is_json_request():
+			case \defined( 'REST_REQUEST' ) && REST_REQUEST:
 				$supported = false;
 				break;
 
@@ -594,7 +599,7 @@ class Detect extends Render {
 				break;
 
 			case \is_post_type_archive():
-				$supported = $this->is_post_type_supported();
+				$supported = $this->is_post_type_archive_supported();
 				break;
 
 			case $this->is_term_meta_capable():
@@ -604,10 +609,22 @@ class Detect extends Render {
 				$supported = $this->is_taxonomy_supported() && $this->get_the_real_ID();
 				break;
 
-			// Including 404.
+			// This includes 404.
 			default:
 				$supported = true;
 				break;
+
+			// TODO consider this instead of the current default? (it'd make the AJAX through REST test obsolete)
+			// Every recognized query (aside from $this->is_singular()/is_post_type_archive for we already covered those in full)
+			// case \is_404():
+			// case $this->is_search():
+			// case $this->is_real_front_page():
+			// case $this->is_archive():
+			// $supported = true;
+			// break;
+			// default:
+			// $supported = false;
+			// break;
 		endswitch;
 
 		/**
@@ -655,6 +672,9 @@ class Detect extends Render {
 	 * the homepage is not a blog, then this query is malformed. Otherwise, however, it's a good query.
 	 *
 	 * @since 4.0.5
+	 * @since 4.2.7 1. Added detection `not_home_as_page`, specifically for query variable `search`.
+	 *              2. Improved detection for `cat` and `author`, where the value may only be numeric above 0.
+	 * @since 4.2.8 Now blocks any publicly registered variable requested to the home-as-page.
 	 * @global \WP_Query $wp_query
 	 *
 	 * @return bool Whether the query is (accidentally) exploited.
@@ -684,11 +704,12 @@ class Detect extends Render {
 		/**
 		 * @since 4.0.5
 		 * @param array $exploitables The exploitable endpoints by type.
+		 * @since 4.2.7 Added index `not_home_as_page` with value `search`.
 		 */
 		$exploitables = \apply_filters(
 			'the_seo_framework_exploitable_query_endpoints',
 			[
-				'numeric'       => [
+				'numeric'          => [
 					'page_id',
 					'attachment_id',
 					'year',
@@ -703,13 +724,18 @@ class Detect extends Render {
 					'second',
 					'subpost_id',
 				],
-				'numeric_array' => [
+				'numeric_array'    => [
 					'cat',
 					'author',
 				],
-				'requires_s'    => [
+				'requires_s'       => [
 					'sentence',
 				],
+				// When the blog (home) is a page then these requests to any registered query variable will cause issues,
+				// but only when the page ID returns 0. (We already tested for `if ( $this->get_the_real_ID() )` above).
+				// This global's property is only populated with requested parameters that match registered `public_query_vars`.
+				// TODO: We only need one to pass this test. We could use array_key_first()... (PHP7.3+) -> Might be mixed.
+				'not_home_as_page' => array_keys( $GLOBALS['wp']->query_vars ?? [] ),
 			]
 		);
 
@@ -732,12 +758,19 @@ class Detect extends Render {
 
 						// If WordPress didn't canonical_redirect() the user yet, it's exploited.
 						// WordPress mitigates this via a 404 query when a numeric value is found.
-						if ( ! preg_match( '/[0-9]/', $query[ $qv ] ) )
+						if ( ! preg_match( '/^[1-9][0-9]*$/', $query[ $qv ] ) )
 							return memo( true );
 						break;
 
 					case 'requires_s':
 						if ( ! isset( $query['s'] ) )
+							return memo( true );
+						break;
+
+					case 'not_home_as_page':
+						// isset($query[$qv]) is already executed. Just test if homepage ID still works.
+						// !$this->get_the_real_ID() is already executed. Just test if home is a page.
+						if ( $this->is_home_as_page() )
 							return memo( true );
 						break;
 
@@ -755,6 +788,9 @@ class Detect extends Render {
 	 * Memoizes the return value.
 	 *
 	 * @since 4.2.0
+	 * @slow The queried result is not stored in WP Post's cache, which would allow
+	 *       direct access to all values of the post (if requested). This is because
+	 *       we're using `'fields' => 'ids'` instead of `'fields' => 'all'`.
 	 *
 	 * @param string $post_type The post type to test.
 	 * @return bool True if a post is found in the archive, false otherwise.
@@ -805,6 +841,35 @@ class Detect extends Render {
 				$post_type
 					&& ! $this->is_post_type_disabled( $post_type )
 					&& \in_array( $post_type, $this->get_public_post_types(), true ),
+				$post_type,
+			]
+		);
+	}
+
+	/**
+	 * Detects if the current or inputted post type's archive is supported and not disabled.
+	 *
+	 * @since 4.2.8
+	 * @uses `tsf()->is_post_type_supported()`
+	 *
+	 * @param string $post_type Optional. The post type's archive to check.
+	 * @return bool
+	 */
+	public function is_post_type_archive_supported( $post_type = '' ) {
+
+		$post_type = $post_type ?: $this->get_current_post_type();
+
+		/**
+		 * @since 4.2.8
+		 * @param bool   $supported           Whether the post type archive is supported.
+		 * @param string $post_type_evaluated The evaluated post type.
+		 */
+		return (bool) \apply_filters_ref_array(
+			'the_seo_framework_supported_post_type_archive',
+			[
+				$post_type
+					&& $this->is_post_type_supported( $post_type )
+					&& \in_array( $post_type, $this->get_public_post_type_archives(), true ),
 				$post_type,
 			]
 		);
@@ -870,6 +935,7 @@ class Detect extends Render {
 	 * Memoizes the return value.
 	 *
 	 * @since 4.2.0
+	 * @since 4.2.8 Now filters via `tsf()->is_post_type_archive_supported()`.
 	 *
 	 * @return string[] Supported post types with post type archive support.
 	 */
@@ -877,10 +943,8 @@ class Detect extends Render {
 		return memo() ?? memo(
 			array_values(
 				array_filter(
-					$this->get_supported_post_types(),
-					static function( $post_type ) {
-						return \get_post_type_object( $post_type )->has_archive ?? false;
-					}
+					$this->get_public_post_type_archives(),
+					[ $this, 'is_post_type_archive_supported' ]
 				)
 			)
 		);
@@ -891,20 +955,32 @@ class Detect extends Render {
 	 * Memoizes the return value.
 	 *
 	 * @since 4.2.0
+	 * @since 4.2.8 Added filter `the_seo_framework_public_post_type_archives`.
 	 *
 	 * @return string[] Public post types with post type archive support.
 	 */
 	public function get_public_post_type_archives() {
-		return memo() ?? memo(
-			array_values(
-				array_filter(
-					$this->get_public_post_types(),
-					static function( $post_type ) {
-						return \get_post_type_object( $post_type )->has_archive ?? false;
-					}
+		return umemo( __METHOD__ )
+			?? umemo(
+				__METHOD__,
+				/**
+				 * Do not consider using this filter. Properly register your post type, noob.
+				 *
+				 * @since 4.2.8
+				 * @param string[] $post_types The public post types.
+				 */
+				\apply_filters(
+					'the_seo_framework_public_post_type_archives',
+					array_values(
+						array_filter(
+							$this->get_public_post_types(),
+							static function( $post_type ) {
+								return \get_post_type_object( $post_type )->has_archive ?? false;
+							}
+						)
+					)
 				)
-			)
-		);
+			);
 	}
 
 	/**
@@ -917,7 +993,10 @@ class Detect extends Render {
 	public function get_supported_post_types() {
 		return memo() ?? memo(
 			array_values(
-				array_filter( $this->get_public_post_types(), [ $this, 'is_post_type_supported' ] )
+				array_filter(
+					$this->get_public_post_types(),
+					[ $this, 'is_post_type_supported' ]
+				)
 			)
 		);
 	}
@@ -948,7 +1027,7 @@ class Detect extends Render {
 							array_unique(
 								array_merge(
 									$this->get_forced_supported_post_types(),
-									//? array_values() because get_post_types() gives a sequential array.
+									// array_keys() because get_post_types() gives a sequential array.
 									array_keys( (array) \get_post_types( [ 'public' => true ] ) )
 								)
 							),
@@ -1022,7 +1101,7 @@ class Detect extends Render {
 						array_unique(
 							array_merge(
 								$this->get_forced_supported_taxonomies(),
-								//? array_values() because get_taxonomies() gives a sequential array.
+								// array_values() because get_taxonomies() gives a sequential array.
 								array_values( \get_taxonomies( [
 									'public'   => true,
 									'_builtin' => false,
@@ -1226,28 +1305,310 @@ class Detect extends Render {
 	}
 
 	/**
+	 * Determines whether the text has recognizable transformative syntax.
+	 *
+	 * It tests Yoast SEO before Rank Math because that one is more popular, thus more
+	 * likely to yield a result.
+	 *
+	 * @todo test all [ 'extension', 'yoast', 'aioseo', 'rankmath', 'seopress' ]
+	 * @since 4.2.7
+	 * @since 4.2.8 Added SEOPress support.
+	 *
+	 * @param string $text The text to evaluate
+	 * @return bool
+	 */
+	public function has_unprocessed_syntax( $text ) {
+
+		foreach ( [ 'yoast', 'rankmath', 'seopress' ] as $type )
+			if ( $this->{"has_{$type}_syntax"}( $text ) ) return true;
+
+		return false;
+	}
+
+	/**
 	 * Determines if the input text has transformative Yoast SEO syntax.
 	 *
+	 * TODO rename to yoast_seo?
+	 *
 	 * @since 4.0.5
-	 * @link <https://yoast.com/help/list-available-snippet-variables-yoast-seo/>
+	 * @since 4.2.7 1. Added wildcard `ct_`, and `cf_` detection.
+	 *              2. Added detection for various other types
+	 *              2. Removed wildcard `cs_` detection.
+	 * @see $this->has_unprocessed_syntax(), the caller.
+	 * @link <https://yoast.com/help/list-available-snippet-variables-yoast-seo/> (This list containts false information)
+	 * @link <https://theseoframework.com/extensions/transport/#faq/what-data-is-transformed>
 	 *
 	 * @param string $text The text to evaluate.
 	 * @return bool
 	 */
 	public function has_yoast_syntax( $text ) {
 
-		if ( false === strpos( $text, '%%' ) ) return false;
+		// %%id%% is the shortest valid tag... ish. Let's stop at 6.
+		if ( \strlen( $text ) < 6 || false === strpos( $text, '%%' ) )
+			return false;
 
-		$tags_simple = [ 'date', 'title', 'parent_title', 'archive_title', 'sitename', 'sitedesc', 'excerpt', 'excerpt_only', 'tag', 'category', 'primary_category', 'category_description', 'tag_description', 'term_description', 'term_title', 'searchphrase', 'sep', 'pt_single', 'pt_plural', 'modified', 'id', 'name', 'user_description', 'page', 'pagetotal', 'pagenumber', 'caption', 'focuskw', 'term404', 'ct_product_cat', 'ct_product_tag', 'wc_shortdesc', 'wc_sku', 'wc_brand', 'wc_price' ];
-		$_regex      = sprintf( '%%%s%%', implode( '|', $tags_simple ) );
+		$tags = umemo( __METHOD__ . '/tags' );
 
-		if ( preg_match( "/$_regex/i", $text ) ) return true;
+		if ( ! $tags ) {
+			$tags = umemo(
+				__METHOD__ . '/tags',
+				[
+					'simple'       => implode(
+						'|',
+						[
+							// These are Preserved by Transport. Test first, for they are more likely in text.
+							'focuskw',
+							'page',
+							'pagenumber',
+							'pagetotal',
+							'primary_category',
+							'searchphrase',
+							'term404',
+							'wc_brand',
+							'wc_price',
+							'wc_shortdesc',
+							'wc_sku',
 
-		$tags_wildcard_end = [ 'cs_', 'ct_desc_', 'ct_pa_' ];
-		$_regex            = sprintf( '%%(%s)[^\s]*?%%', implode( '|', $tags_wildcard_end ) );
+							// These are transformed by Transport
+							'archive_title',
+							'author_first_name',
+							'author_last_name',
+							'caption',
+							'category',
+							'category_description',
+							'category_title',
+							'currentdate',
+							'currentday',
+							'currentmonth',
+							'currentyear',
+							'date',
+							'excerpt',
+							'excerpt_only',
+							'id',
+							'modified',
+							'name',
+							'parent_title',
+							'permalink',
+							'post_content',
+							'post_year',
+							'post_month',
+							'post_day',
+							'pt_plural',
+							'pt_single',
+							'sep',
+							'sitedesc',
+							'sitename',
+							'tag',
+							'tag_description',
+							'term_description',
+							'term_title',
+							'title',
+							'user_description',
+							'userid',
+						]
+					),
+					'wildcard_end' => implode( '|', [ 'ct_', 'cf_' ] ),
+				]
+			);
+		}
 
-		if ( preg_match( "/$_regex/", $text ) ) return true;
+		return preg_match( "/%%(?:{$tags['simple']})%%/", $text )
+			|| preg_match( "/%%(?:{$tags['wildcard_end']})[^%]+?%%/", $text );
+	}
 
-		return false;
+	/**
+	 * Determines if the input text has transformative Rank Math syntax.
+	 *
+	 * @since 4.2.7
+	 * @since 4.2.8 Actualized the variable list.
+	 * @link <https://theseoframework.com/extensions/transport/#faq/what-data-is-transformed>
+	 *       Rank Math has no documentation on this list, but we sampled their code.
+	 * @see $this->has_unprocessed_syntax(), the caller.
+	 *
+	 * @param string $text The text to evaluate.
+	 * @return bool
+	 */
+	public function has_rankmath_syntax( $text ) {
+
+		// %id% is the shortest valid tag... ish. Let's stop at 4.
+		if ( \strlen( $text ) < 4 || false === strpos( $text, '%' ) )
+			return false;
+
+		$tags = umemo( __METHOD__ . '/tags' );
+
+		if ( ! $tags ) {
+			$tags = umemo(
+				__METHOD__ . '/tags',
+				[
+					'simple'       => implode(
+						'|',
+						[
+							// These are Preserved by Transport. Test first, for they are more likely in text.
+							'currenttime', // Rank Math has two currenttime, this one is simple.
+							'filename',
+							'focuskw',
+							'group_desc',
+							'group_name',
+							'keywords',
+							'org_name',
+							'org_logo',
+							'org_url',
+							'page',
+							'pagenumber',
+							'pagetotal',
+							'post_thumbnail',
+							'primary_category',
+							'primary_taxonomy_terms',
+							'url',
+							'wc_brand',
+							'wc_price',
+							'wc_shortdesc',
+							'wc_sku',
+							'currenttime', // Rank Math has two currenttime, this one is simple.
+
+							// These are transformed by Transport
+							'category',
+							'categories',
+							'currentdate',
+							'currentday',
+							'currentmonth',
+							'currentyear',
+							'date',
+							'excerpt',
+							'excerpt_only',
+							'id',
+							'modified',
+							'name',
+							'parent_title',
+							'post_author',
+							'pt_plural',
+							'pt_single',
+							'seo_title',
+							'seo_description',
+							'sep',
+							'sitedesc',
+							'sitename',
+							'tag',
+							'tags',
+							'term',
+							'term_description',
+							'title',
+							'user_description',
+							'userid',
+						]
+					),
+					// Check out for ref RankMath\Replace_Variables\Replacer::set_up_replacements();
+					'wildcard_end' => implode(
+						'|',
+						[
+							'categories',
+							'count',
+							'currenttime',
+							'customfield',
+							'customterm',
+							'customterm_desc',
+							'date',
+							'modified',
+							'tags',
+						]
+					),
+				]
+			);
+		}
+
+		return preg_match( "/%(?:{$tags['simple']})%/", $text )
+			|| preg_match( "/%(?:{$tags['wildcard_end']})\([^\)]+?\)%/", $text );
+	}
+
+	/**
+	 * Determines if the input text has transformative SEOPress syntax.
+	 *
+	 * @since 4.2.8
+	 * @link <https://theseoframework.com/extensions/transport/#faq/what-data-is-transformed>
+	 *       SEOPress has no documentation on this list, but we sampled their code.
+	 * @see $this->has_unprocessed_syntax(), the caller.
+	 *
+	 * @param string $text The text to evaluate.
+	 * @return bool
+	 */
+	public function has_seopress_syntax( $text ) {
+
+		// %%sep%% is the shortest valid tag... ish. Let's stop at 7.
+		if ( \strlen( $text ) < 7 || false === strpos( $text, '%%' ) )
+			return false;
+
+		$tags = umemo( __METHOD__ . '/tags' );
+
+		if ( ! $tags ) {
+			$tags = umemo(
+				__METHOD__ . '/tags',
+				[
+					'simple'       => implode(
+						'|',
+						[
+							// These are Preserved by Transport. Test first, for they are more likely in text.
+							'author_website',
+							'current_pagination',
+							'currenttime',
+							'post_thumbnail_url',
+							'post_url',
+							'target_keyword',
+							'wc_single_price',
+							'wc_single_price_exc_tax',
+							'wc_sku',
+
+							// These are transformed by Transport
+							'_category_description',
+							'_category_title',
+							'archive_title',
+							'author_bio',
+							'author_first_name',
+							'author_last_name',
+							'author_nickname',
+							'currentday',
+							'currentmonth',
+							'currentmonth_num',
+							'currentmonth_short',
+							'currentyear',
+							'date',
+							'excerpt',
+							'post_author',
+							'post_category',
+							'post_content',
+							'post_date',
+							'post_excerpt',
+							'post_modified_date',
+							'post_tag',
+							'post_title',
+							'sep',
+							'sitedesc',
+							'sitename',
+							'sitetitle',
+							'tag_description',
+							'tag_title',
+							'tagline',
+							'term_description',
+							'term_title',
+							'title',
+							'wc_single_cat',
+							'wc_single_short_desc',
+							'wc_single_tag',
+						]
+					),
+					// Check out for ref somewhere in SEOPress, seopress_get_dyn_variables() is one I guess.
+					'wildcard_end' => implode(
+						'|',
+						[
+							'_cf_',
+							'_ct_',
+							'_ucf_',
+						]
+					),
+				]
+			);
+		}
+
+		return preg_match( "/%%(?:{$tags['simple']})%%/", $text )
+			|| preg_match( "/%%(?:{$tags['wildcard_end']})[^%]+?%%/", $text );
 	}
 }

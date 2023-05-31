@@ -9,6 +9,8 @@
  * @subpackage views
  */
 
+use WSAL\Helpers\WP_Helper;
+
 // Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -107,7 +109,7 @@ class WSAL_Views_Help extends WSAL_AbstractView {
 		$this->wsal_help_tabs = $wsal_help_tabs;
 
 		// Get the current tab.
-		$current_tab       = filter_input( INPUT_GET, 'tab', FILTER_SANITIZE_STRING );
+		$current_tab       = ( isset( $_GET['tab'] ) ) ? \sanitize_text_field( \wp_unslash( $_GET['tab'] ) ) : null;
 		$this->current_tab = empty( $current_tab ) ? 'help' : $current_tab;
 	}
 
@@ -145,9 +147,9 @@ class WSAL_Views_Help extends WSAL_AbstractView {
 	public function header() {
 		wp_enqueue_style(
 			'extensions',
-			$this->plugin->get_base_url() . '/css/extensions.css',
+			WSAL_BASE_URL . '/css/extensions.css',
 			array(),
-			filemtime( $this->plugin->get_base_dir() . '/css/extensions.css' )
+			WSAL_VERSION
 		);
 	}
 
@@ -254,9 +256,19 @@ class WSAL_Views_Help extends WSAL_AbstractView {
 			}
 		</style>
 		<?php
-		$freemius_id = wsal_freemius()->get_id();
-		$vars        = array( 'id' => $freemius_id );
-		echo fs_get_template( 'contact.php', $vars ); // phpcs:ignore
+		if ( $freemius_id = wsal_freemius()->get_id() ) { // phpcs:ignore
+			$vars = array( 'id' => $freemius_id );
+			echo fs_get_template( 'contact.php', $vars ); // phpcs:ignore
+		} else {
+			echo '<p>';
+			printf(
+				/* translators: Link to our contact form */
+				esc_html__( 'Please refer to the Help tab for links and information on how to open a support ticket, or access the database. If you have any other queries, please use our %1$scontact form %2$s', 'wp-security-audit-log' ),
+				'<a style="text-decoration:underline" href="https://www.wpwhitesecurity.com/contact/" target="_blank">',
+				'</a>'
+			);
+			echo '</p>';
+		}
 	}
 
 	/**
@@ -348,7 +360,7 @@ class WSAL_Views_Help extends WSAL_AbstractView {
 		$sysinfo .= '-- Site Info --' . "\n\n";
 		$sysinfo .= 'Site URL (WP Address):    ' . site_url() . "\n";
 		$sysinfo .= 'Home URL (Site Address):  ' . home_url() . "\n";
-		$sysinfo .= 'Multisite:                ' . ( is_multisite() ? 'Yes' : 'No' ) . "\n";
+		$sysinfo .= 'Multisite:                ' . ( WP_Helper::is_multisite() ? 'Yes' : 'No' ) . "\n";
 
 		// Browser information.
 		if ( ! class_exists( 'WSAL_Browser' ) && file_exists( WSAL_BASE_DIR . 'sdk/class-wsal-browser.php' ) ) {
@@ -446,7 +458,7 @@ class WSAL_Views_Help extends WSAL_AbstractView {
 			}
 		}
 
-		if ( is_multisite() ) {
+		if ( WP_Helper::is_multisite() ) {
 			// WordPress Multisite active plugins.
 			$sysinfo .= "\n" . '-- Network Active Plugins --' . "\n\n";
 
@@ -473,7 +485,7 @@ class WSAL_Views_Help extends WSAL_AbstractView {
 		}
 
 		// Server configuration.
-		$server_software = filter_input( INPUT_SERVER, 'SERVER_SOFTWARE', FILTER_SANITIZE_STRING );
+		$server_software = \sanitize_text_field( \wp_unslash( $_SERVER['SERVER_SOFTWARE'] ) );
 		$sysinfo        .= "\n" . '-- Webserver Configuration --' . "\n\n";
 		$sysinfo        .= 'PHP Version:              ' . PHP_VERSION . "\n";
 		$sysinfo        .= 'MySQL Version:            ' . $wpdb->db_version() . "\n";

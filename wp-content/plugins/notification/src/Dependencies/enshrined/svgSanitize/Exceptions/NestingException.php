@@ -1,8 +1,5 @@
 <?php
-
-
 namespace BracketSpace\Notification\Dependencies\enshrined\svgSanitize\Exceptions;
-
 
 use Exception;
 

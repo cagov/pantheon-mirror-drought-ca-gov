@@ -10,7 +10,7 @@ namespace The_SEO_Framework;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2015 - 2022 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2015 - 2023 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -202,7 +202,7 @@ class Post_Data extends Detect {
 	protected function get_unfiltered_post_meta_defaults() {
 		return [
 			'_genesis_title'          => '',
-			'_tsf_title_no_blogname'  => 0, //? The prefix I should've used from the start...
+			'_tsf_title_no_blogname'  => 0, // The prefix I should've used from the start...
 			'_genesis_description'    => '',
 			'_genesis_canonical_uri'  => '',
 			'redirect'                => '', //! Will be displayed in custom fields when set...
@@ -357,16 +357,17 @@ class Post_Data extends Detect {
 		 * @link https://github.com/sybrew/the-seo-framework/issues/48
 		 * @link https://johnblackbourn.com/post-meta-revisions-wordpress
 		 */
-		if ( \wp_is_post_autosave( $post ) ) return;
-		if ( \wp_is_post_revision( $post ) ) return;
+		if ( \wp_is_post_autosave( $post ) || \wp_is_post_revision( $post ) ) return;
 
 		$nonce_name   = $this->inpost_nonce_name;
 		$nonce_action = $this->inpost_nonce_field;
 
 		// Check that the user is allowed to edit the post
-		if ( ! \current_user_can( 'edit_post', $post->ID ) ) return;
-		if ( ! isset( $_POST[ $nonce_name ] ) ) return;
-		if ( ! \wp_verify_nonce( $_POST[ $nonce_name ], $nonce_action ) ) return;
+		if (
+			   ! \current_user_can( 'edit_post', $post->ID )
+			|| ! isset( $_POST[ $nonce_name ] )
+			|| ! \wp_verify_nonce( $_POST[ $nonce_name ], $nonce_action )
+		) return;
 
 		$data = (array) $_POST['autodescription'];
 
@@ -392,8 +393,10 @@ class Post_Data extends Detect {
 
 		// Check again against ambiguous injection...
 		// Note, however: function wp_ajax_inline_save() already performs all these checks for us before firing this callback's action.
-		if ( ! \current_user_can( 'edit_post', $post->ID ) ) return;
-		if ( ! \check_ajax_referer( 'inlineeditnonce', '_inline_edit', false ) ) return;
+		if (
+			   ! \current_user_can( 'edit_post', $post->ID )
+			|| ! \check_ajax_referer( 'inlineeditnonce', '_inline_edit', false )
+		) return;
 
 		$new_data = [];
 
@@ -446,7 +449,7 @@ class Post_Data extends Detect {
 
 		$post = \get_post( $post );
 
-		if ( empty( $post->ID ) ) return;
+		if ( ! $post ) return;
 
 		// Check again against ambiguous injection...
 		// Note, however: function bulk_edit_posts() already performs all these checks for us before firing this callback's action.
@@ -510,7 +513,7 @@ class Post_Data extends Detect {
 
 		$post = \get_post( $post );
 
-		if ( empty( $post->ID ) ) return;
+		if ( ! $post ) return;
 
 		/**
 		 * Don't try to save the data prior autosave, or revision post (is_preview).
@@ -519,8 +522,7 @@ class Post_Data extends Detect {
 		 * @link https://github.com/sybrew/the-seo-framework/issues/48
 		 * @link https://johnblackbourn.com/post-meta-revisions-wordpress
 		 */
-		if ( \wp_is_post_autosave( $post ) ) return;
-		if ( \wp_is_post_revision( $post ) ) return;
+		if ( \wp_is_post_autosave( $post ) || \wp_is_post_revision( $post ) ) return;
 
 		// Check that the user is allowed to edit the post. Nonce checks are done in bulk later.
 		if ( ! \current_user_can( 'edit_post', $post->ID ) ) return;
@@ -534,7 +536,7 @@ class Post_Data extends Detect {
 
 			if ( \wp_verify_nonce(
 				$_POST[ "{$this->inpost_nonce_name}_pt_{$_taxonomy}" ] ?? '', // If empty, wp_verify_nonce will return false.
-				$this->inpost_nonce_field . '_pt'
+				"{$this->inpost_nonce_field}_pt"
 			) ) { // Redundant. Fortified.
 				$this->update_primary_term_id(
 					$post->ID,
@@ -552,6 +554,9 @@ class Post_Data extends Detect {
 	 * @since 2.4.3
 	 * @since 2.9.3 1. Removed object caching.
 	 *              2. It now uses WP_Query, instead of wpdb.
+	 * @slow The queried result is not stored in WP Post's cache, which would allow
+	 *       direct access to all values of the post (if requested). This is because
+	 *       we're using `'fields' => 'ids'` instead of `'fields' => 'all'`.
 	 *
 	 * @return int Latest Post ID.
 	 */
@@ -580,13 +585,19 @@ class Post_Data extends Detect {
 	 *
 	 * @since 2.6.0
 	 * @since 3.1.0 No longer applies WordPress's default filters.
+	 * @since 4.2.8 Now tests for post type support of 'editor' before parsing the content.
 	 *
-	 * @param int $id The post ID.
+	 * @param \WP_Post|int|null $post The Post or Post ID. Leave null to get current post.
 	 * @return string The post content.
 	 */
-	public function get_post_content( $id = 0 ) {
+	public function get_post_content( $post = null ) {
+
+		$post = \get_post( $post ?: $this->get_the_real_ID() );
+
 		// '0' is not deemed content. Return empty string for it's a slippery slope.
-		return ( \get_post( $id ?: $this->get_the_real_ID() )->post_content ?? '' ) ?: '';
+		return ! empty( $post->post_content ) && \post_type_supports( $post->post_type, 'editor' )
+			? $post->post_content
+			: '';
 	}
 
 	/**
@@ -646,7 +657,10 @@ class Post_Data extends Detect {
 	 * @return bool True if protected or private, false otherwise.
 	 */
 	public function is_protected( $post = null ) {
-		$post = \get_post( $post ); // This is here so we don't have to create another instance hereinafter.
+
+		// This is here so we don't have to create another instance hereinafter.
+		$post = \get_post( $post );
+
 		return $this->is_password_protected( $post ) || $this->is_private( $post );
 	}
 
@@ -685,13 +699,22 @@ class Post_Data extends Detect {
 	 * @return bool True if draft, false otherwise.
 	 */
 	public function is_draft( $post = null ) {
-		return \in_array( \get_post( $post )->post_status ?? '', [ 'draft', 'auto-draft', 'pending' ], true );
+
+		switch ( \get_post( $post )->post_status ?? '' ) {
+			case 'draft':
+			case 'auto-draft':
+			case 'pending':
+				return true;
+		}
+
+		return false;
 	}
 
 	/**
 	 * Returns list of post IDs that are excluded from search.
 	 *
 	 * @since 3.0.0
+	 * @TODO deprecate and require procedural API? This is needless function overhead.
 	 *
 	 * @return array The excluded post IDs.
 	 */
@@ -703,6 +726,7 @@ class Post_Data extends Detect {
 	 * Returns list of post IDs that are excluded from archive.
 	 *
 	 * @since 3.0.0
+	 * @TODO deprecate and require procedural API? This is needless function overhead.
 	 *
 	 * @return array The excluded post IDs.
 	 */
@@ -734,14 +758,13 @@ class Post_Data extends Detect {
 	 *                2. The first and second parameters are now required.
 	 * @since 4.1.5.1 1. No longer causes a PHP warning in the unlikely event a post's taxonomy gets deleted.
 	 *                2. This method now converts the post meta to an integer, making the comparison work again.
+	 * @since 4.2.7 Now correctly memoizes when no terms for a post can be found.
 	 *
 	 * @param int    $post_id  The post ID.
 	 * @param string $taxonomy The taxonomy name.
 	 * @return \WP_Term|false The primary term. False if not set.
 	 */
 	public function get_primary_term( $post_id, $taxonomy ) {
-
-		static $primary_terms = [];
 
 		// phpcs:ignore, WordPress.CodeAnalysis.AssignmentInCondition -- I know.
 		if ( null !== $memo = memo( null, $post_id, $taxonomy ) ) return $memo;
@@ -759,7 +782,7 @@ class Post_Data extends Detect {
 		$primary_term = false;
 
 		// Test for otherwise foreach emits a PHP warning in the unlikely event a post's taxonomy is gone.
-		if ( ! \is_array( $terms ) ) return $primary_terms[ $post_id ][ $taxonomy ] = false;
+		if ( ! \is_array( $terms ) ) memo( false, $post_id, $taxonomy );
 
 		foreach ( $terms as $term ) {
 			if ( $primary_id === (int) $term->term_id ) {

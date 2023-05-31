@@ -34,6 +34,8 @@ window.wp = window.wp || {};
 		}
 	});
 
+
+
 	var curAttachmentsBrowser = media.view.AttachmentsBrowser;
 
 	media.view.AttachmentsBrowser = media.view.AttachmentsBrowser.extend({

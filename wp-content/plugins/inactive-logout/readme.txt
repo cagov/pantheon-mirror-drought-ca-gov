@@ -1,11 +1,12 @@
 === Inactive Logout ===
 Contributors: j__3rk
-Tags: logout, inactive user, idle, idle logout, idle user, auto logout, autologout, inactive, inactive, automatic logout, multisite autologout, multisite inactive logout, multisite inactive user, multisite, concurrent logout, multiple sessions, multiple user logout, concurrent login
+Tags: logout, inactive user, idle, idle logout, idle user, auto logout, autologout, inactive, inactive, automatic logout, multisite autologout, redirect logout, redirect, multisite inactive logout, multisite inactive user, multisite, concurrent logout, multiple sessions, multiple user logout, concurrent login
 Donate link: https://www.paypal.com/donate?hosted_button_id=2UCQKR868M9WE
-Requires at least: 4.6.0
-Tested up to: 5.8
-Stable tag: 2.0.2
+Requires at least: 5.8
+Tested up to: 6.2
+Stable tag: 3.1.6
 License: GPLv2 or later
+Requires PHP: 7.1
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
 Logs out users within defined time when inactive. Modify to show only wake up message and not log out as well. Supported for multisites as well.
@@ -18,7 +19,7 @@ Use the Inactive Logout plugin to automatically terminate idle user sessions, th
 
 The plugin is very easy to configure and use. Once you install and activate the plugin simply configure the idle timeout from the plugin settings. So now any unattended idle WordPress user sessions will be terminated automatically. You can also display a custom message to idle user sessions, alerting them that the session is about to end.
 
-**Please check [changelog](https://wordpress.org/plugins/inactive-logout/#developers "Change Log") to see what is added from version 1.3.0**
+**Try it out ==> [Demo](https://tastewp.org/plugins/inactive-logout/ "Demo Link")**
 
 **FEATURES:**.
 
@@ -28,40 +29,29 @@ The plugin is very easy to configure and use. Once you install and activate the 
 * Custom Popup Message.
 * Choose to use concurrent logout functionality derived from [prevent concurrent logins](https://wordpress.org/plugins/prevent-concurrent-logins/ "Prevent Concurrent Logins") by Frankie Jarrett. Thumbs up here too !
 * Redirect to a Different Page instead of Popup box. Create a page such as timeout page and add your content there by creating a blank template or style it as you wish according to your theme.
-* Multiple User Role Configurations for individual timeout and redirects.
+* Works with WooCommerce
+* Multiple User Role Configurations for individual timeout and session logout redirects.
+* Logout to custom page or existing page.
+* WooCommerce Supported.
 * Clean UI
 * Simple to use
-* Multi browser tab support: Means that logout will not happen even if the user has multiple browser tabs opened and is active in certain browser tab.
 * Multisite Support: Override all sites with one setting.
 
 **EXTEND OTHER FEATURES:**
 
-Upgrade to **[Inactive Logout Pro](https://www.codemanas.com/downloads/inactive-logout-pro/ "Inactive Logout Pro")** for:
+Few of the key features to **[Inactive Logout Pro](https://inactive-logout.com/buy/ "Inactive Logout Pro")**:
 
+* Fully functional multi-tab support.
 * Auto browser close logout after 2 minute of active session.
 * Override Multiple Login priority
+* User Lock whenever certain limit login has been reached.
+* Track user login sessions.
+* Logout all Sessions.
+* Logout redirects.
+* Login redirects.
 * Disable inactive logout for specified pages according to your need. Check this **[Documentation](https://gist.github.com/techies23/6d2852eedd6ae56c486056e021e4ee48 "documentation")** for additional post type support.
-* Multi-User configurations ( Coming Soon )
 
-> NOTE: Premium plan users will always be given highest priority over free plan users.
-
-**FILTER HOOKS:**
-
-1. add_filter('ina__redirect_message', 'callback' );
-For changing "You have been logged out because of inactivity. Please wait while we redirect you to a certain page..." this message.
-Reference: [See here](https://gist.github.com/techies23/9046a82671b994c20237a177838b70a2 "See here")
-
-2. add_filter('ina__logout_message', 'callback' );
-For changing "You have been logged out because of inactivity."
-Reference: [See here](https://gist.github.com/techies23/9046a82671b994c20237a177838b70a2 "See here")
-
-3. External Page Redirect For Custom post type pages.
-For allow of support of custom post type in page redirections use.
-Reference: [See here](https://gist.github.com/techies23/91c3144e5273ac00e51df292c4b434ac "See here")
-
-**See the [Inactive Logout](https://deepenbajracharya.com.np/wp-inactive-logout/ "Inactive Logout") homepage for further information. Contact Developer for those who need to write plugins.**
-
-**There's a [GIT repository](https://github.com/techies23/Inactive-Logout.git "Github Inactive Repository") too if you want to contribute a patch. Please check issues. Pull requests are welcomed.**
+**See the [Inactive Logout](https://inactive-logout.com/ "Inactive Logout") homepage for further information.
 
 **Please consider giving a [5 star thumbs up](https://wordpress.org/support/plugin/inactive-logout/reviews/#new-post "5 star thumbs up") if you found this useful.**
 
@@ -103,6 +93,92 @@ Slim Stat Analytics: Users using "Slimstat Analytics" plugin version upto 4.6.2 
 4. Multi User Role Screen
 
 == Changelog ==
+
+= 3.1.6 - May 31st, 2023 =
+* Corrected: Go Pro tab to open in external link.
+
+= 3.1.5 - May 25th, 2023 =
+* Fixed: Concurrent login option was not working.
+
+= 3.1.4 - May 16th, 2023 =
+* Fixed: Role based timeout options not working correctly.
+
+= 3.1.3 - May 16th, 2023 =
+* Downgraded react render method for backwards compatibility.
+
+= 3.1.2 - April 20th, 2023 =
+* Updated: WP Scripts.
+* Added: Trigger for custom events.
+* Fixed: Sometimes save not working in administrator section.
+* Minor changes.
+
+= 3.1.0/3.1.1 - April 5th, 2023 =
+* Fix: Multisite Setting save.
+* Added: Logout redirect to selected page.
+* Backwards compatibility.
+* Bug Fixes.
+
+= 3.0.14 - March 31st, 2023 =
+* Compatibility with WordPress 6.2
+* Idle Timeout limit has been set to 24 hours.
+* Minor changes.
+
+= 3.0.13 - March 2st, 2023 =
+* Fixed: Logout Redirection not working in certain cases.
+
+= 3.0.12 - January 30th, 2023 =
+* Fixed: Deprecated filter for filter_input for PHP version 8 and greater.
+* Added: Session logout message customization.
+
+= 3.0.11 - November 14th, 2022 =
+* Fixed: Save not working for multisite.
+* Added: Minor changes added.
+
+= 3.0.10 - October 31st, 2022 =
+* Added: Hide contine without reload button button.
+
+= 3.0.9 - October 28th, 2022 =
+* Re-Fix: Concurrent login not working for some - Changed the hook to be called in wp_loaded.
+* Updated: Field description texts.
+* Bug Fixes
+
+= 3.0.8 - October 19th, 2022 =
+* Fixed: Concurrent login not working due to callback not being called.
+* Updated translations.
+
+= 3.0.7 - September 20th, 2022 =
+* Minor bug fixes.
+* Updated: Translations.
+
+= 3.0.6 - September 14th, 2022 =
+* Changed: Plugin text for more clear view of the settings.
+* Changed: Plugin dependencies to be loaded on init instead of plugins_loaded hook.
+* Fixed: Previous settings getting overrided when deactivating and activating the plugin.
+* Updated: Translations.
+
+= 3.0.5 =
+* Fixed: Idle message content not being updated due to tinyMCE.
+* Fixed: Reset not working when role based timeout was enabled and "disable inactive logouts" was checked.
+
+= 3.0.3/3.0.4 =
+* Added: Settings page save using ajax.
+* Changed: Languages updated and removed where unnecessary.
+* Fixed: Timeout number showing same regardless of individual roles user setting.
+* Changed: Plugin deactivate now does not remove existing plugin settings.
+* Translations Updated.
+
+= 3.0.2 =
+* Added: Popup modal localization settings on settings page.
+* Changed: Minor text issues.
+
+= 3.0.1 =
+Added: ina_popup_modal_text filter to change the popup modal texts.
+
+= 3.0.0 =
+* Added: React version of inactive logout added for more robust performance.
+* Added: Security Enhancements
+* Fixed: Major bug fixes.
+* Removed: Login popup modal because it was preventing oAuth - also, due to new inactive logout logic. Maybe added later someday.
 
 = 2.0.2 =
 * Bug fixes that relates with "Session Timeout" showing undefined message randomly.
@@ -296,7 +372,7 @@ Slim Stat Analytics: Users using "Slimstat Analytics" plugin version upto 4.6.2 
 = 1.2.1 =
 * Changes: Classes changes in order to avoid any conflict with JS issues.
 * Added: Spanish translation. Thanx to Miguel Arroyo.
-* Updated: Swedish translation. Thanx to Björn Granberg.
+* Updated: Swedish translation. Thanx to BjÃ¶rn Granberg.
 * Minor bug fixes.
 
 = 1.2.0 =

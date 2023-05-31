@@ -57,9 +57,7 @@ switch ( $this->get_view_instance( 'sitemaps', $instance ) ) :
 		break;
 
 	case 'sitemaps_general_tab':
-		$sitemap_url        = The_SEO_Framework\Bridges\Sitemap::get_instance()->get_expected_sitemap_endpoint_url();
 		$has_sitemap_plugin = $this->detect_sitemap_plugin();
-		$use_core_sitemaps  = $this->use_core_sitemaps();
 		$sitemap_detected   = $this->has_sitemap_xml();
 
 		HTML::header_title( __( 'Sitemap Integration Settings', 'autodescription' ) );
@@ -114,7 +112,7 @@ switch ( $this->get_view_instance( 'sitemaps', $instance ) ) :
 				);
 				// TODO In settings generator (TSF 5.0): Overwite this section for Polylang/WPML and output each sitemap language link respectively.
 				// TODO Also add a link telling where why it may not work consistently ('try opening in another browser, incognito, etc.')
-			} elseif ( $use_core_sitemaps ) {
+			} elseif ( $this->use_core_sitemaps() ) {
 				$_index_url = get_sitemap_url( 'index' );
 				if ( $_index_url )
 					HTML::description_noesc(
@@ -158,10 +156,25 @@ switch ( $this->get_view_instance( 'sitemaps', $instance ) ) :
 
 		?>
 		<p>
-			<input type="number" min=1 max=50000 name="<?php Input::field_name( 'sitemap_query_limit' ); ?>" id="<?php Input::field_id( 'sitemap_query_limit' ); ?>" placeholder="<?= absint( $this->get_default_option( 'sitemap_query_limit' ) ) ?>" value="<?= absint( $this->get_option( 'sitemap_query_limit' ) ) ?>" />
+			<input type=number min=1 max=50000 name="<?php Input::field_name( 'sitemap_query_limit' ); ?>" id="<?php Input::field_id( 'sitemap_query_limit' ); ?>" placeholder="<?= absint( $this->get_default_option( 'sitemap_query_limit' ) ) ?>" value="<?= absint( $this->get_option( 'sitemap_query_limit' ) ) ?>" />
 		</p>
 		<?php
 		HTML::description( __( 'Consider lowering this value when the sitemap shows a white screen or notifies you of memory exhaustion.', 'autodescription' ) );
+		?>
+		<hr>
+		<?php
+		HTML::header_title( __( 'Transient Cache Settings', 'autodescription' ) );
+		HTML::description( __( 'To improve performance, generated output can be stored in the database as transient cache.', 'autodescription' ) );
+
+		HTML::wrap_fields(
+			Input::make_checkbox( [
+				'id'     => 'cache_sitemap',
+				'label'  => esc_html__( 'Enable optimized sitemap generation cache?', 'autodescription' )
+					. ' ' . HTML::make_info( __( 'Generating the sitemap can use a lot of server resources.', 'autodescription' ), '', false ),
+				'escape' => false,
+			] ),
+			true
+		);
 		break;
 
 	case 'sitemaps_robots_tab':
@@ -336,7 +349,7 @@ switch ( $this->get_view_instance( 'sitemaps', $instance ) ) :
 			</label>
 		</p>
 		<p>
-			<input type="text" name="<?php Input::field_name( 'sitemap_color_main' ); ?>" class="tsf-color-picker" id="<?php Input::field_id( 'sitemap_color_main' ); ?>" placeholder="<?= esc_attr( $default_colors['main'] ) ?>" value="<?= esc_attr( $current_colors['main'] ) ?>" data-tsf-default-color="<?= esc_attr( $default_colors['main'] ) ?>" />
+			<input type=text name="<?php Input::field_name( 'sitemap_color_main' ); ?>" class=tsf-color-picker id="<?php Input::field_id( 'sitemap_color_main' ); ?>" placeholder="<?= esc_attr( $default_colors['main'] ) ?>" value="<?= esc_attr( $current_colors['main'] ) ?>" data-tsf-default-color="<?= esc_attr( $default_colors['main'] ) ?>" />
 		</p>
 
 		<p>
@@ -345,7 +358,7 @@ switch ( $this->get_view_instance( 'sitemaps', $instance ) ) :
 			</label>
 		</p>
 		<p>
-			<input type="text" name="<?php Input::field_name( 'sitemap_color_accent' ); ?>" class="tsf-color-picker" id="<?php Input::field_id( 'sitemap_color_accent' ); ?>" placeholder="<?= esc_attr( $default_colors['accent'] ) ?>" value="<?= esc_attr( $current_colors['accent'] ) ?>" data-tsf-default-color="<?= esc_attr( $default_colors['accent'] ) ?>" />
+			<input type=text name="<?php Input::field_name( 'sitemap_color_accent' ); ?>" class=tsf-color-picker id="<?php Input::field_id( 'sitemap_color_accent' ); ?>" placeholder="<?= esc_attr( $default_colors['accent'] ) ?>" value="<?= esc_attr( $current_colors['accent'] ) ?>" data-tsf-default-color="<?= esc_attr( $default_colors['accent'] ) ?>" />
 		</p>
 
 		<hr>
@@ -360,33 +373,33 @@ switch ( $this->get_view_instance( 'sitemaps', $instance ) ) :
 			true
 		);
 
-		$ph_id  = get_theme_mod( 'custom_logo' ) ?: 0;
-		$ph_src = $ph_id ? wp_get_attachment_image_src( $ph_id, [ 29, 29 ] ) : [];
+		$ph_id  = get_theme_mod( 'custom_logo' ) ?: get_option( 'site_icon' ) ?: 0;
+		$ph_src = $ph_id ? wp_get_attachment_image_src( $ph_id, [ 29, 29 ] ) : []; // TODO magic number "SITEMAP_LOGO_PX"
 
 		$logo_placeholder = ! empty( $ph_src[0] ) ? $ph_src[0] : '';
 		?>
 
 		<p>
-			<label for="sitemap_logo-url">
+			<label for=sitemap_logo-url>
 				<strong><?php esc_html_e( 'Logo URL', 'autodescription' ); ?></strong>
 			</label>
 		</p>
 		<p class="hide-if-tsf-js attention"><?php esc_html_e( 'Setting a logo requires JavaScript.', 'autodescription' ); ?></p>
 		<p>
-			<input class="large-text" type="url" readonly="readonly" data-readonly="1" name="<?php Input::field_name( 'sitemap_logo_url' ); ?>" id="sitemap_logo-url" placeholder="<?= esc_url( $logo_placeholder ) ?>" value="<?= esc_url( $this->get_option( 'sitemap_logo_url' ) ) ?>" />
-			<input type="hidden" name="<?php Input::field_name( 'sitemap_logo_id' ); ?>" id="sitemap_logo-id" value="<?= absint( $this->get_option( 'sitemap_logo_id' ) ) ?>" />
+			<input class=large-text type=url readonly data-readonly=1 name="<?php Input::field_name( 'sitemap_logo_url' ); ?>" id=sitemap_logo-url placeholder="<?= esc_url( $logo_placeholder ) ?>" value="<?= esc_url( $this->get_option( 'sitemap_logo_url' ) ) ?>" />
+			<input type=hidden name="<?php Input::field_name( 'sitemap_logo_id' ); ?>" id=sitemap_logo-id value="<?= absint( $this->get_option( 'sitemap_logo_id' ) ) ?>" />
 		</p>
-		<p class="hide-if-no-tsf-js">
+		<p class=hide-if-no-tsf-js>
 			<?php
 			// phpcs:ignore, WordPress.Security.EscapeOutput.OutputNotEscaped -- already escaped.
 			echo Form::get_image_uploader_form( [
 				'id'   => 'sitemap_logo',
 				'data' => [
 					'inputType' => 'logo',
-					'width'     => 512,
-					'height'    => 512,
-					'minWidth'  => 64,
-					'minHeight' => 64,
+					'width'     => 512, // Magic number "CUSTOMIZER_LOGO_MAX" (should be defined in WP?)
+					'height'    => 512, // Magic number
+					'minWidth'  => 64, // Magic number "CUSTOMIZER_LOGO_MIN" (should be defined in WP?)
+					'minHeight' => 64, // Magic number
 					'flex'      => true,
 				],
 				'i18n' => [

@@ -8,7 +8,7 @@ namespace The_SEO_Framework\Builders\Robots;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2021 - 2022 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2021 - 2023 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -44,6 +44,8 @@ final class Query extends Factory {
 	 * Yields true when "noindex/noarchive/nofollow", yields false when "index/archive/follow".
 	 *
 	 * @since 4.2.0
+	 * @since 4.2.5 1. Removed needlessly duplicate homepage test.
+	 *              2. Moved archive pagination check to index_protection.
 	 * @generator
 	 *
 	 * @param string $type The robots generator type (noindex, nofollow...).
@@ -55,10 +57,8 @@ final class Query extends Factory {
 
 		$asserting_noindex = 'noindex' === $type;
 
-		meta_settings: {
-			// We assert options here for a jump to meta_settings might be unaware.
-			if ( static::$options & \The_SEO_Framework\ROBOTS_IGNORE_SETTINGS )
-				goto after_meta_settings;
+		// We assert options here for a jump to meta_settings might be unaware.
+		meta_settings: if ( ! ( static::$options & \The_SEO_Framework\ROBOTS_IGNORE_SETTINGS ) ) {
 
 			$qubit = null;
 
@@ -89,27 +89,19 @@ final class Query extends Factory {
 					yield 'meta_qubit_default' => false;
 			endswitch;
 		}
-		after_meta_settings:;
 
-		globals: {
+		globals:
 			yield 'globals_site' => (bool) $tsf->get_option( "site_$type" );
 
 			if ( $tsf->is_real_front_page() ) {
 				yield 'globals_homepage' => (bool) $tsf->get_option( "homepage_$type" );
-
-				if ( ! ( static::$options & \The_SEO_Framework\ROBOTS_IGNORE_PROTECTION ) )
-					$asserting_noindex and yield from static::assert_noindex_query_pass( 'paged_home' );
 			} else {
 				$asserting_noindex and yield from static::assert_noindex_query_pass( '404' );
-
-				if ( ! ( static::$options & \The_SEO_Framework\ROBOTS_IGNORE_PROTECTION ) )
-					if ( $asserting_noindex && ( $tsf->is_archive() || $tsf->is_singular_archive() ) )
-						yield from static::assert_noindex_query_pass( 'paged' );
 
 				if ( $tsf->is_archive() ) {
 					if ( $tsf->is_author() ) {
 						yield 'globals_author' => (bool) $tsf->get_option( "author_$type" );
-					} elseif ( $tsf->is_date() ) {
+					} elseif ( \is_date() ) {
 						yield 'globals_date' => (bool) $tsf->get_option( "date_$type" );
 					}
 				} elseif ( $tsf->is_search() ) {
@@ -134,19 +126,15 @@ final class Query extends Factory {
 			} elseif ( $tsf->is_singular() ) {
 				yield 'globals_post_type' => $tsf->is_post_type_robots_set( $type, $tsf->get_current_post_type() );
 			}
-		}
 
-		index_protection: if ( $asserting_noindex ) {
-			// We assert options here for a jump to index_protection might be unaware.
-			if ( static::$options & \The_SEO_Framework\ROBOTS_IGNORE_PROTECTION )
-				goto after_index_protection;
-
+		// We assert options here for a jump to index_protection might be unaware.
+		index_protection: if ( $asserting_noindex && ! ( static::$options & \The_SEO_Framework\ROBOTS_IGNORE_PROTECTION ) ) {
+			if ( $tsf->is_real_front_page() ) {
+				yield from static::assert_noindex_query_pass( 'paged_home' );
+			} elseif ( $tsf->is_archive() || $tsf->is_singular_archive() ) {
+				yield from static::assert_noindex_query_pass( 'paged' );
+			}
 			if ( $tsf->is_singular() ) {
-				// A reiteration of the very same code as above... but, homepage may not always be singular.
-				// The conditions below MUST overwrite this, too. So, this is the perfect placement.
-				if ( $tsf->is_real_front_page() )
-					yield from static::assert_noindex_query_pass( 'paged_home' );
-
 				yield from static::assert_noindex_query_pass( 'protected' );
 
 				/**
@@ -158,13 +146,11 @@ final class Query extends Factory {
 					yield from static::assert_noindex_query_pass( 'cpage' );
 			}
 		}
-		after_index_protection:;
 
 		exploit_protection: if ( $tsf->is_query_exploited() ) {
 			if ( \in_array( $type, [ 'noindex', 'nofollow' ], true ) )
 				yield 'query_protection' => true;
 		}
-		after_exploit_protection:;
 
 		end:;
 	}
@@ -201,7 +187,7 @@ final class Query extends Factory {
 					 * the first page indexable via user-intent only. Concordingly, too
 					 * because we cannot assert this via the administrative dashboard.
 					 */
-					yield '404' => $tsf->is_404();
+					yield '404' => \is_404();
 				else :
 					/**
 					 * Check for 404, or if archive is empty: set noindex for those.
@@ -210,6 +196,8 @@ final class Query extends Factory {
 					 * because page builders and templates can and will take over.
 					 *
 					 * Don't use empty(), null is regarded as indexable; it's why we coalesce to true whence null.
+					 *
+					 * @FIXME? In admin, this always yields "true" when trying query instead of args; ergo, noindex is set.
 					 *
 					 * post_count can be 0,    which is false -> thus yield true  -> noindex.
 					 * post_count can be null, which is true  -> thus yield false -> index.

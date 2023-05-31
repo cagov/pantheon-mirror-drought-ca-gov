@@ -10,7 +10,7 @@ namespace The_SEO_Framework;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2015 - 2022 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2015 - 2023 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -75,7 +75,7 @@ class Render extends Admin_Init {
 	 * @since 4.0.0 Removed extraneous, unused parameters.
 	 * @see $this->get_title()
 	 *
-	 * @param string $title       The filterable title.
+	 * @param string $title The filterable title.
 	 * @return string $title
 	 */
 	public function get_wp_title( $title = '' ) {
@@ -160,10 +160,16 @@ class Render extends Admin_Init {
 		$attr = '';
 
 		foreach ( $attributes as $_name => $_value ) {
-			if ( \in_array( $_name, [ 'href', 'xlink:href', 'src' ], true ) ) {
-				$_secure_attr_value = \esc_url_raw( $_value );
-			} else {
-				$_secure_attr_value = \esc_attr( $_value );
+
+			switch ( $_name ) {
+				case 'href':
+				case 'xlink:href':
+				case 'src':
+					$_secure_attr_value = \esc_url_raw( $_value );
+					break;
+				default:
+					$_secure_attr_value = \esc_attr( $_value );
+					break;
 			}
 
 			// phpcs:disable -- Security hint for later, left code intact; Redundant, internal... for now.
@@ -202,17 +208,15 @@ class Render extends Admin_Init {
 				]
 			);
 		} else {
-			$el = vsprintf(
+			$el = sprintf(
 				'<%s%s />',
-				[
-					/** @link <https://www.w3.org/TR/2011/WD-html5-20110525/syntax.html#syntax-tag-name> */
-					preg_replace( '/[^0-9a-zA-Z]+/', '', $tag ),
-					$attr,
-				]
+				/** @link <https://www.w3.org/TR/2011/WD-html5-20110525/syntax.html#syntax-tag-name> */
+				preg_replace( '/[^0-9a-zA-Z]+/', '', $tag ),
+				$attr
 			);
 		}
 
-		return $el . ( $new_line ? PHP_EOL : '' );
+		return $el . ( $new_line ? "\n" : '' );
 	}
 
 	/**
@@ -654,6 +658,7 @@ class Render extends Admin_Init {
 	 * @since 4.1.2 Now forwards the `multi_og_image` option to the generator. Although
 	 *              it'll always use just one image, we read this option so we'll only
 	 *              use a single cache instance internally with the generator.
+	 * @since 4.2.8 Removed support for the long deprecated `twitter:image:height` and `twitter:image:width`.
 	 *
 	 * @return string The Twitter Image meta tag.
 	 */
@@ -668,17 +673,6 @@ class Render extends Admin_Init {
 				'name'    => 'twitter:image',
 				'content' => $image['url'],
 			] );
-
-			if ( $image['height'] && $image['width'] ) {
-				$output .= $this->render_element( [
-					'name'    => 'twitter:image:width',
-					'content' => $image['width'],
-				] );
-				$output .= $this->render_element( [
-					'name'    => 'twitter:image:height',
-					'content' => $image['height'],
-				] );
-			}
 
 			if ( $image['alt'] ) {
 				$output .= $this->render_element( [
@@ -824,10 +818,8 @@ class Render extends Admin_Init {
 
 		if ( ! $this->output_published_time() ) return '';
 
-		$id   = $this->get_the_real_ID();
-		$post = \get_post( $id );
-
-		$post_date_gmt = $post->post_date_gmt;
+		$id            = $this->get_the_real_ID();
+		$post_date_gmt = \get_post( $id )->post_date_gmt ?? '0000-00-00 00:00:00';
 
 		if ( '0000-00-00 00:00:00' === $post_date_gmt )
 			return '';
@@ -1251,8 +1243,8 @@ class Render extends Admin_Init {
 	 *
 	 * @param string $where                 Determines the position of the indicator.
 	 *                                      Accepts 'before' for before, anything else for after.
-	 * @param int    $meta_timer            Total meta time.
-	 * @param int    $bootstrap_timer       Total bootstrap time.
+	 * @param float  $meta_timer            Total meta time in seconds.
+	 * @param float  $bootstrap_timer       Total bootstrap time in seconds.
 	 * @return string The SEO Framework's HTML plugin indicator.
 	 */
 	protected function get_plugin_indicator( $where = 'before', $meta_timer = 0, $bootstrap_timer = 0 ) {
@@ -1268,9 +1260,9 @@ class Render extends Admin_Init {
 			 * @param bool $show_timer Whether to show the generation time in the indicator.
 			 */
 			'show_timer' => (bool) \apply_filters( 'the_seo_framework_indicator_timing', true ),
-			'annotation' => trim( vsprintf(
+			'annotation' => \esc_html( trim( vsprintf(
 				/* translators: 1 = The SEO Framework, 2 = 'by Sybre Waaijer */
-				\esc_html__( '%1$s %2$s', 'autodescription' ),
+				\__( '%1$s %2$s', 'autodescription' ),
 				[
 					'The SEO Framework',
 					/**
@@ -1278,10 +1270,10 @@ class Render extends Admin_Init {
 					 * @param bool $sybre Whether to show the author name in the indicator.
 					 */
 					\apply_filters( 'sybre_waaijer_<3', true ) // phpcs:ignore, WordPress.NamingConventions.ValidHookName -- Easter egg.
-						? \esc_html__( 'by Sybre Waaijer', 'autodescription' )
+						? \__( 'by Sybre Waaijer', 'autodescription' )
 						: '',
 				]
-			) ),
+			) ) ),
 		] );
 
 		if ( ! $cache['run'] ) return '';

@@ -10,7 +10,7 @@ namespace The_SEO_Framework;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2015 - 2022 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2015 - 2023 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -62,13 +62,19 @@ class User_Data extends Term_Data {
 	 * Returns the author meta item by key.
 	 *
 	 * @since 4.1.4
+	 * @since 4.2.8 Now returns null when no post author can be established.
 	 *
 	 * @param string $item      The item to get. Required.
 	 * @param bool   $use_cache Whether to use caching.
 	 * @return mixed The author meta item. Null when not found.
 	 */
 	public function get_current_post_author_meta_item( $item, $use_cache = true ) {
-		return $this->get_user_meta_item( $item, $this->get_current_post_author_id(), $use_cache );
+
+		$id = $this->get_current_post_author_id();
+
+		return $id
+			? $this->get_user_meta_item( $item, $id, $use_cache )
+			: null;
 	}
 
 	/**
@@ -76,12 +82,17 @@ class User_Data extends Term_Data {
 	 * Memoizes the return value for the current request.
 	 *
 	 * @since 4.1.4
-	 * @TODO Throw this away? We do not use it... never have.
+	 * @since 4.2.7 Removed redundant memoization.
+	 * @since 4.2.8 Now returns null when no post author can be established.
+	 * @ignore Unused locally. Public API.
 	 *
-	 * @return array The current author meta.
+	 * @return ?array The current author meta, null when no author is set.
 	 */
 	public function get_current_post_author_meta() {
-		return memo() ?? memo( $this->get_user_meta( $this->get_current_post_author_id() ) );
+
+		$id = $this->get_current_post_author_id();
+
+		return $id ? $this->get_user_meta( $id ) : null;
 	}
 
 	/**
@@ -93,7 +104,7 @@ class User_Data extends Term_Data {
 	 * @since 4.1.4 1. Now returns default values when custom values are missing.
 	 *              2. Now listens to headlessness.
 	 *              3. Deprecated the third argument, and moved it to the second.
-	 * @todo Send deprecation warning for 3rd parameter
+	 * @todo deprecate: Send deprecation warning for 3rd parameter -> Does anybody actually use this??
 	 *
 	 * @param int  $user_id   The user ID.
 	 * @param bool $use_cache Whether to store and use options from cache, or bypass it.
@@ -294,11 +305,18 @@ class User_Data extends Term_Data {
 	 * @return int Post author ID on success, 0 on failure.
 	 */
 	public function get_current_post_author_id() {
-		return memo() ?? memo(
-			$this->is_singular()
-				? (int) ( \get_post( $this->get_the_real_ID() )->post_author ?? 0 )
-				: 0
-		);
+
+		// phpcs:ignore, WordPress.CodeAnalysis.AssignmentInCondition -- I know.
+		if ( null !== $memo = memo() ) return $memo;
+
+		if ( $this->is_singular() ) {
+			$post      = \get_post( $this->get_the_real_ID() );
+			$author_id = isset( $post->post_author ) && \post_type_supports( $post->post_type, 'author' )
+				? $post->post_author
+				: 0;
+		}
+
+		return memo( $author_id ?? 0 );
 	}
 
 	/**

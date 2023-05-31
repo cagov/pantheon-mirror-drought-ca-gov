@@ -1,10 +1,11 @@
 <?php
 /**
- * Sensor: MainWP Plugins & Themes
+ * Sensor: MainWP Plugins & Themes.
  *
  * MainWP Plugins & Themes sensor file.
  *
  * @since      4.1.4
+ *
  * @package    wsal
  * @subpackage sensors
  */
@@ -30,8 +31,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @package    wsal
  * @subpackage sensors
  */
-class WSAL_Sensors_MainWP extends WSAL_AbstractSensor {
-
+class WSAL_Sensors_MainWP {//extends WSAL_AbstractSensor {
 	/**
 	 * List of Themes.
 	 *
@@ -43,12 +43,10 @@ class WSAL_Sensors_MainWP extends WSAL_AbstractSensor {
 	 * {@inheritDoc}
 	 */
 	public function hook_events() {
-
 		add_action( 'admin_init', array( $this, 'event_admin_init' ) );
 
 		// Check if MainWP Child Plugin exists.
 		if ( WpSecurityAuditLog::is_mainwp_active() ) {
-
 			$this->mainwp_child_init();
 
 			// Handle plugin/theme installation event via MainWP dashboard.
@@ -81,25 +79,21 @@ class WSAL_Sensors_MainWP extends WSAL_AbstractSensor {
 	 * Method: Check and initialize class members for MainWP.
 	 */
 	public function mainwp_child_init() {
-		// $_POST array arguments.
-		$post_array_args = array(
-			'function'        => FILTER_SANITIZE_STRING,
-			'action'          => FILTER_SANITIZE_STRING,
-			'theme'           => FILTER_SANITIZE_STRING,
-			'mainwpsignature' => FILTER_SANITIZE_STRING,
-		);
+		if ( isset( $_POST['mainwpsignature'] ) ) {
+			$function        = ( isset( $_POST['function'] ) ) ? \sanitize_text_field( \wp_unslash( $_POST['function'] ) ) : null;
+			$action          = ( isset( $_POST['action'] ) ) ? \sanitize_text_field( \wp_unslash( $_POST['action'] ) ) : null;
+			$theme           = ( isset( $_POST['theme'] ) ) ? \sanitize_text_field( \wp_unslash( $_POST['theme'] ) ) : null;
+			$mainwpsignature = ( isset( $_POST['mainwpsignature'] ) ) ? \sanitize_text_field( \wp_unslash( $_POST['mainwpsignature'] ) ) : null;
 
-		// Get $_POST array.
-		$post_array = filter_input_array( INPUT_POST, $post_array_args );
-
-		if (
-			isset( $post_array['function'] ) && 'theme_action' === $post_array['function']
-			&& isset( $post_array['action'] ) && 'delete' === $post_array['action']
-			&& isset( $post_array['theme'] ) && ! empty( $post_array['theme'] )
-			&& isset( $post_array['mainwpsignature'] ) && ! empty( $post_array['mainwpsignature'] )
-		) {
-			if ( empty( $this->old_themes ) ) {
-				$this->old_themes = wp_get_themes();
+			if (
+				isset( $function ) && 'theme_action' === $function
+				&& isset( $action ) && 'delete' === $action
+				&& isset( $theme ) && ! empty( $theme )
+				&& isset( $mainwpsignature ) && ! empty( $mainwpsignature )
+			) {
+				if ( empty( $this->old_themes ) ) {
+					$this->old_themes = wp_get_themes();
+				}
 			}
 		}
 	}
@@ -116,6 +110,7 @@ class WSAL_Sensors_MainWP extends WSAL_AbstractSensor {
 				unset( $result[ $i ] );
 			}
 		}
+
 		return array_values( $result );
 	}
 
@@ -124,6 +119,7 @@ class WSAL_Sensors_MainWP extends WSAL_AbstractSensor {
 	 * from MainWP dashboard on child site.
 	 *
 	 * @param array $args - Array of arguments related to asset installed.
+	 *
 	 * @since 3.2.2
 	 *
 	 * phpcs:disable WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
@@ -189,6 +185,7 @@ class WSAL_Sensors_MainWP extends WSAL_AbstractSensor {
 	 * from MainWP dashboard on child site.
 	 *
 	 * @param array $args - Array of arguments related to asset uninstalled.
+	 *
 	 * @since 3.2.2
 	 */
 	public function mainwp_child_uninstall_plugin( $args ) {
@@ -235,6 +232,7 @@ class WSAL_Sensors_MainWP extends WSAL_AbstractSensor {
 	 * from MainWP dashboard on child site.
 	 *
 	 * @param array $args - Array of arguments related to asset uninstalled.
+	 *
 	 * @since 3.2.2
 	 *
 	 * phpcs:disable WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
@@ -288,6 +286,7 @@ class WSAL_Sensors_MainWP extends WSAL_AbstractSensor {
 	 * from MainWP dashboard on a child site.
 	 *
 	 * @param string $plugin - Plugin slug.
+	 *
 	 * @since 3.2.2
 	 */
 	public function mainwp_child_plugin_events( $plugin ) {

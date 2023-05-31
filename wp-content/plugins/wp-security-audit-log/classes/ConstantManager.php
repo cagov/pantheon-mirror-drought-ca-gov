@@ -64,7 +64,7 @@ class WSAL_ConstantManager {
 		// Check for constant conflict and define new one if required.
 		if ( defined( $name ) && constant( $name ) !== $value ) {
 			throw new Exception( 'Constant already defined with a different value.' );
-		} else {
+		} elseif ( ! defined( $name ) ) {
 			define( $name, $value );
 		}
 		// Add constant to da list.

@@ -11,7 +11,7 @@ namespace The_SEO_Framework;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2015 - 2022 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2015 - 2023 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -61,7 +61,7 @@ final class Load extends Cache {
 	/**
 	 * @since 4.1.4
 	 * @access protected
-	 *         DO NOT OVERWRITE.
+	 *         DO NOT OVERWRITE, it should be 'immutable'. <https://wiki.php.net/rfc/immutability>
 	 *         Feel free to read.
 	 *         Use constant `THE_SEO_FRAMEWORK_HEADLESS` instead.
 	 * @var bool|array $is_headless Whether headless TSF is enabled.

@@ -11,7 +11,7 @@ jQuery( document ).ready( function() {
 		});
 	};
 
-	jQuery( '.js-query-box, #ViewerQueryBox, #EditorQueryBox, #ExRoleQueryBox, #ExUserQueryBox, #CustomQueryBox, #IpAddrQueryBox, #ExCPTsQueryBox, #ExURLsQueryBox' ).keydown( function( event ) {
+	jQuery( '.js-query-box, #ViewerQueryBox, #EditorQueryBox, #ExRoleQueryBox, #ExUserQueryBox, #ExUserSubjectQueryBox, #CustomQueryBox, #IpAddrQueryBox, #IpAddrSubjectQueryBox, #ExCPTsQueryBox, #ExURLsQueryBox' ).keydown( function( event ) {
 		if ( 13 === event.keyCode ) {
 			var type = jQuery( this ).closest( 'fieldset' ).attr( 'data-type' );
 			if (! type ) {
@@ -45,6 +45,7 @@ jQuery( document ).ready( function() {
 			{
 				action: 'AjaxCheckSecurityToken',
 				token: value,
+				type: type,
 				nonce: wsal_data.wp_nonce
 			},
 			function( data ) {
@@ -98,6 +99,11 @@ jQuery( document ).ready( function() {
 	    minLength: 1
 	});
 
+    jQuery( '#ExUserSubjectQueryBox' ).autocomplete({
+	    source: usersUrl,
+	    minLength: 1
+	});
+
 	var rolesUrl = ajaxurl + '?action=AjaxGetAllRoles&wsal_nonce=' + wsal_data.wp_nonce;
 	jQuery( '#ExRoleQueryBox' ).autocomplete({
 	    source: rolesUrl,
@@ -127,7 +133,7 @@ jQuery( document ).ready( function() {
 
 	// Purge activity handler.
 	jQuery( '[data-remodal-id=wsal_purge_activity] button[data-remodal-action=confirm]' ).click( function() {
-		resetWSAL( 'wsal_purge_activity', jQuery( '#wsal-purge-activity-nonce' ).val() );
+		resetWSAL( 'wsal_purge_activity', jQuery( '#wsal-purge-activity-nonce' ).val(), '.js-purge-reset' );
 	});
 
 	/**

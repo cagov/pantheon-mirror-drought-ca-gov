@@ -32,17 +32,18 @@ class Loader {
 	 */
 	public function __construct() {
 
-		$core_class_names = array(
+		$core_class_names = [
 			'Connect',
 			'DashboardWidget',
 			'FlyoutMenu',
 			'Builder\LicenseAlert',
+			'Builder\Builder',
 			'Pages\Community',
 			'Pages\SMTP',
 			'Pages\Analytics',
 			'Entries\PrintPreview',
 			'Entries\DefaultScreen',
-		);
+		];
 
 		$class_names = \apply_filters( 'wpforms_admin_classes_available', $core_class_names );
 

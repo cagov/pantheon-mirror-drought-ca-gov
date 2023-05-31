@@ -7,7 +7,7 @@ namespace The_SEO_Framework\Bridges;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2021 - 2022 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2021 - 2023 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -59,12 +59,12 @@ final class PluginTable {
 		}
 
 		$tsf_links['tsfem']   = sprintf(
-			'<a href="%s" rel="noreferrer noopener" target="_blank">%s</a>',
+			'<a href="%s" rel="noreferrer noopener" target=_blank>%s</a>',
 			'https://theseoframework.com/extensions/',
 			\esc_html_x( 'Extensions', 'Plugin extensions', 'autodescription' )
 		);
 		$tsf_links['pricing'] = sprintf(
-			'<a href="%s" rel="noreferrer noopener" target="_blank">%s</a>',
+			'<a href="%s" rel="noreferrer noopener" target=_blank>%s</a>',
 			'https://theseoframework.com/pricing/',
 			\esc_html_x( 'Pricing', 'Plugin pricing', 'autodescription' )
 		);
@@ -97,28 +97,28 @@ final class PluginTable {
 			$plugin_meta,
 			[
 				'support' => vsprintf(
-					'<a href="%s" rel="noreferrer noopener nofollow" target="_blank">%s</a>',
+					'<a href="%s" rel="noreferrer noopener nofollow" target=_blank>%s</a>',
 					[
 						'https://tsf.fyi/support',
 						\esc_html__( 'Get support', 'autodescription' ),
 					]
 				),
 				'docs'    => vsprintf(
-					'<a href="%s" rel="noreferrer noopener nofollow" target="_blank">%s</a>',
+					'<a href="%s" rel="noreferrer noopener nofollow" target=_blank>%s</a>',
 					[
 						'https://tsf.fyi/docs',
 						\esc_html__( 'View documentation', 'autodescription' ),
 					]
 				),
 				'API'     => vsprintf(
-					'<a href="%s" rel="noreferrer noopener nofollow" target="_blank">%s</a>',
+					'<a href="%s" rel="noreferrer noopener nofollow" target=_blank>%s</a>',
 					[
 						'https://tsf.fyi/docs/api',
 						\esc_html__( 'View API docs', 'autodescription' ),
 					]
 				),
 				'EM'      => vsprintf(
-					'<a href="%s" rel="noreferrer noopener nofollow" target="_blank">%s</a>',
+					'<a href="%s" rel="noreferrer noopener nofollow" target=_blank>%s</a>',
 					[
 						'https://tsf.fyi/extension-manager',
 						$_get_em

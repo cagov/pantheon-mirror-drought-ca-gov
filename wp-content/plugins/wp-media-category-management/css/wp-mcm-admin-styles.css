@@ -1,0 +1,379 @@
+/**
+ ** file: wp-mcm-admin-styles.css
+ ** label: WP-MCM
+ ** description: This stylesheet is used to style the admin option form of the plugin.
+ **
+ **/
+
+/* WP_MediaCategoryManagement Custom */
+ div .icon32.icon-post,#icon-wp-mcm
+ {
+    background: url("../assets/icon-wp-mcm.png") no-repeat scroll transparent;
+}
+
+@font-face {
+  font-family: 'fontello';
+  src: url('../font/fontello.eot?54620740');
+  src: url('../font/fontello.eot?54620740#iefix') format('embedded-opentype'),
+       url('../font/fontello.woff?54620740') format('woff'),
+       url('../font/fontello.ttf?54620740') format('truetype'),
+       url('../font/fontello.svg?54620740#fontello') format('svg');
+  font-weight: normal;
+  font-style: normal;
+}
+
+/*---------------------
+ * Input
+ *---------------------*/
+#wp-mcm-settings-form input[type="text"],
+#wp-mcm-settings-form input[type="file"],
+#wp-mcm-settings-form input[type="password"],
+#wp-mcm-settings-form input[type="date"],
+#wp-mcm-settings-form input[type="datetime"],
+#wp-mcm-settings-form input[type="datetime-local"],
+#wp-mcm-settings-form input[type="email"],
+#wp-mcm-settings-form input[type="month"],
+#wp-mcm-settings-form input[type="number"],
+#wp-mcm-settings-form input[type="search"],
+#wp-mcm-settings-form input[type="tel"],
+#wp-mcm-settings-form input[type="time"],
+#wp-mcm-settings-form input[type="url"],
+#wp-mcm-settings-form input[type="week"],
+#wp-mcm-settings-form select,
+textarea {
+	min-width: 267px;
+    width: 45%;
+}
+
+
+/* Settings page */
+#wp-mcm-wrap.wp-mcm-settings h2 {
+    margin-bottom: 15px;
+}
+#wp-mcm-wrap.wp-mcm-settings .wp-mcm-error {
+    border: 1px solid #c01313;
+}
+#wp-mcm-wrap.wp-mcm-settings input[type=text].textinput {
+    width: 255px;
+}
+
+#wp-mcm-wrap.wp-mcm-settings .metabox-holder {
+    width: 100%;
+}
+
+#wp-mcm-wrap.wp-mcm-settings .metabox-holder h3:hover {
+    cursor: auto;
+}
+
+#wp-mcm-settings-form .postbox-container {
+    min-width: 550px;
+    width: 50%;
+    clear: both;
+}
+
+.wp-mcm-icon-form .postbox-container {
+    width: 100%!important;
+}
+
+#fs-notice label {
+    width: 200px!important;
+    margin-top: 0px!important;
+}
+
+.wp-mcm-datetime-format, .wp-mcm-date-format, .wp-mcm-time-format {
+    display: none;
+}
+
+#wp-mcm-settings-form label {
+    position: relative;
+    display: inline-block;
+    font-weight: normal;
+    margin: 0 10px 0 0;
+    width: 45%;
+}
+
+#wp-mcm-settings-form .wp-mcm-radioboxes label {
+    float: none;
+    margin-right: 10px;
+    width: auto;
+}
+#wp-mcm-settings-form em,
+.wp-mcm-store-meta em {
+    display: block;
+}
+
+#wp-mcm-settings-form .wp-mcm-info em {
+    display: inline;
+}
+
+#wp-mcm-settings-form #wp-mcm-store-hours {
+    width: 100%;
+}
+
+#wp-mcm-settings-form #wp-mcm-store-hours th {
+    text-align: left;
+}
+
+#wp-mcm-settings-form #wp-mcm-store-hours .wp-mcm-opening-day {
+    width: 150px;
+}
+
+#wp-mcm-settings-form #wp-mcm-store-hours td p  {
+    padding: 10px 0 0 0;
+    margin: 0;
+    text-align: left;
+}
+
+/* Tooltip */
+.wp-mcm-info {
+    position: relative;
+    margin-left: 3px;
+}
+
+.wp-mcm-hide {
+    display:none;
+}
+
+.wp-mcm-info:before { 
+    content: '\e802'; 
+    font-size: 14px;
+    font-family: "fontello";
+    font-style: normal;
+    font-weight: normal;
+    speak: none;
+    display: inline-block;
+    text-decoration: inherit;
+    width: 1em;
+    margin-right: .2em;
+    text-align: center;
+    font-variant: normal;
+    text-transform: none;
+    line-height: 1em;
+    margin-left: .2em;
+}
+
+.wp-mcm-info:hover {
+    cursor: pointer;
+}
+
+.wp-mcm-warning,
+.wp-mcm-info.wp-mcm-required-setting:before {
+    color: #b91111;
+}
+
+.wp-mcm-info-text {
+    position: absolute;
+    padding: 10px;
+    left: -29px;
+    bottom: 28px;
+    color: #eee;
+    width: 400px;
+    min-width: 200px;
+    background: #222;
+    border-radius: 3px;
+    line-height: 1.4em;
+}
+
+#wp-mcm-map-preview .wp-mcm-info-text {
+    width: 175px;
+    min-width: 0;
+    left: -88px;
+}
+
+#wp-mcm-map-preview .wp-mcm-info-text::after {
+    left: auto;
+    right: 87px;
+}
+
+#wp-mcm-map-preview .wp-mcm-info {
+    position: absolute;
+    margin-left: 5px;
+    top: 5px;
+}
+
+.wp-mcm-submit-wrap {
+    position: relative;
+    clear: both;
+}
+
+.wp-mcm-info-text:after {
+    position: absolute;
+    border-left: 11px solid transparent;
+    border-right: 11px solid transparent;
+    border-top: 11px solid #222;	
+    content: "";	
+    left: 27px;
+    bottom: -10px;
+}
+
+.wp-mcm-info-text a {
+    color: #fff;
+}
+	
+#wp-mcm-save-settings {
+    float: left; 
+    clear: both;
+}	
+
+#wp-mcm-faq dt {
+    margin-bottom: 4px;
+    font-weight: bold;
+    font-size: 110%;
+}
+
+#wp-mcm-faq dd {
+    margin-left: 0;	
+}
+
+#wp-mcm-faq dl {
+    margin-bottom: 25px;	
+}
+
+/* Fontello fonts */
+[class^="wp-mcm-icon-"]:before, [class*=" wp-mcm-icon-"]:before {
+    font-family: "fontello";
+    font-style: normal;
+    font-weight: normal;
+    speak: none;
+    display: inline-block;
+    text-decoration: inherit;
+    width: 1em;
+    margin-right: .2em;
+    text-align: center;
+    font-variant: normal;
+    text-transform: none;
+    line-height: 1em;
+    margin-left: .2em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+[class^="wp-mcm-icon-"]:hover, [class*=" wp-mcm-icon-"]:hover {
+    cursor: pointer;
+}
+
+.wp-mcm-icon-location:before { 
+    content: '\e801'; 
+}
+
+.wp-mcm-icon-attention-circled:before { 
+    content: '\e802'; 
+}
+
+.wp-mcm-icon-cancel-circled:before { 
+    content: '\e803'; 
+}
+
+.wp-mcm-icon-plus-circled:before {
+    content: '\e805'; 
+}
+
+
+/***************************
+ * Shortcodes
+ */
+th.wp_mcm_shortcodes_cell {
+	padding: 8px 15px;
+}
+td.wp_mcm_shortcodes_cell {
+    display: table-cell;
+    word-wrap: break-word;
+    word-break: keep-all;
+	padding: 8px 15px;
+}
+.wp_mcm_shortcodes_cell ul {
+    list-style: disc outside none;
+	margin: 0;
+}
+tr.wp_mcm_shortcodes_row.even {
+    background-color: #FFFFFF;
+}
+tr.wp_mcm_shortcodes_row.even:hover {
+    background-color: #FFFFCC;
+}
+tr.wp_mcm_shortcodes_row.odd {
+    background-color: #DDDDDD;
+}
+tr.wp_mcm_shortcodes_row.odd:hover {
+    background-color: #FFFF99;
+}
+tr.wp_mcm_shortcodes_row.invalid {
+    background-color: #FFCCCC;
+}
+tr.wp_mcm_shortcodes_row.invalid:hover {
+    background-color: #FFDDDD;
+}
+#wp_mcm_shortcodes_table {
+   margin: 0px;
+   padding: 0px;
+}
+#wp_mcm_shortcodes_table th {
+    vertical-align: top;
+    background: #404040; /* for non-css3 browsers */
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#808080', endColorstr=' #404040'); /* for IE */
+    background: -webkit-gradient(linear, left top, left bottom, from(#808080), to( #404040)); /* for webkit browsers */
+    background: -moz-linear-gradient(top,  #808080,   #404040); /* for firefox 3.6+ */
+    background-image: -moz-linear-gradient(center top , #808080, #404040);
+    text-decoration: none;
+	font-size: 14px;
+    color: #00FF00;
+    text-shadow: none;
+    font-weight: 500;
+    font-family: "Trebuchet MS", Helvetica, sans-serif; 
+}
+#wp_mcm_shortcodes_table th.thnowrap {
+    white-space: nowrap;
+}
+div#wp_mcm_table_wrapper {
+	border: 1px solid #CCCCCC;
+	margin: -1px 0 0;
+	padding: 0px;
+}
+
+/* Media Modal page */
+.compat-item .field input[type="checkbox"] {
+	width: auto;
+}
+
+.term-list {
+	background-color: #fff;
+	border: 1px solid #dfdfdf;
+	border-radius: 3px;
+	padding: 10px 10px 5px;
+	margin: 0 0 10px;
+}
+.term-list li {
+	line-height: 22px;
+}
+.term-list li input[type="checkbox"] {
+	margin: -4px 4px 0 0 !important;
+}
+.term-list .children {
+	margin: 5px 0 0 20px;
+}
+/* Fix display attachment-filters */
+.media-frame select.attachment-filters {
+    /* max-width: calc(48% - 12px) !important; */
+}
+.attachments-browser .media-toolbar-secondary {
+    width: 100%;
+}
+
+.media-toolbar-secondary {
+	display: flex
+}
+
+body.block-editor-page.wp-media-category .media-frame select.attachment-filters {
+    width: auto;
+    max-width: 100%;
+}
+body.block-editor-page.wp-media-category .attachments-browser .media-toolbar {
+    margin-bottom: 15px;
+    height: auto;
+}
+body.block-editor-page.wp-media-category .attachments-browser .media-toolbar-secondary {
+    width: 100%;
+}
+body.block-editor-page.wp-media-category .media-toolbar .spinner {
+    display: inline-block;
+}

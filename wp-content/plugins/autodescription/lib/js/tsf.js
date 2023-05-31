@@ -8,7 +8,7 @@
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2015 - 2022 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2015 - 2023 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -72,38 +72,24 @@ window.tsf = function( $ ) {
 	 */
 	const stripTags = str => str.length && str.replace( /(<([^>]+)?>?)/ig, '' ) || '';
 
-	let _canUseDOMParserTest = void 0;
-	/**
-	 * Tests if DOMParser is supported.
-	 *
-	 * @since 4.0.0
-	 *
-	 * @return {Boolean}
-	 */
-	const _canUseDOMParser = () => {
-		if ( void 0 === _canUseDOMParserTest ) {
-			try {
-				// text/html parsing is natively supported when true.
-				_canUseDOMParserTest = !! ( new DOMParser() ).parseFromString( '', 'text/html' );
-			} catch ( e ) { }
-
-			_canUseDOMParserTest = !! _canUseDOMParserTest;
-		}
-
-		return _canUseDOMParserTest;
-	}
-
-	let _decodeEntitiesDOMParser = void 0;
+	let _decodeEntitiesDOMParser = void 0,
+		_decodeEntitiesMap       = {
+			'<':  '&#x3C;',
+			'>':  '&#x3E;',
+			"\\": '&#x5C;',
+		};
 	/**
 	 * Decodes string entities securely.
 	 *
 	 * Uses a fallback when the browser doesn't support DOMParser.
 	 * This fallback sends out exactly the same output.
 	 *
-	 * The output of this function is considered secure against XSS attacks.
+	 * The rendering of this function is considered secure against XSS attacks.
+	 * However, you must consider the output as insecure HTML, and may only append via innerText.
 	 *
 	 * @since 4.0.0
 	 * @access public
+	 * @see tsf.escapeString;
 	 *
 	 * @credit <https://stackoverflow.com/questions/1912501/unescape-html-entities-in-javascript/34064434#34064434>
 	 * Modified to allow <, >, and \ entities, and cached the parser.
@@ -115,24 +101,13 @@ window.tsf = function( $ ) {
 
 		if ( ! str?.length ) return '';
 
-		let map = {
-			'<':  '&#x3C;',
-			'>':  '&#x3E;',
-			"\\": '&#x5C;',
-		};
-		// Prevent "tags" from being stripped.
-		str = str.replace( /[<>\\]/g, m => map[ m ] );
+		_decodeEntitiesDOMParser ||= new DOMParser();
 
-		if ( _canUseDOMParser() ) {
-			_decodeEntitiesDOMParser = _decodeEntitiesDOMParser || new DOMParser();
-			str = _decodeEntitiesDOMParser.parseFromString( str, 'text/html' ).documentElement.textContent;
-		} else {
-			_decodeEntitiesDOMParser = _decodeEntitiesDOMParser || document.createElement( 'span' );
-			_decodeEntitiesDOMParser.innerHTML = str;
-			str = ampHTMLtoText( _decodeEntitiesDOMParser.textContent );
-		}
-
-		return str;
+		return _decodeEntitiesDOMParser.parseFromString(
+			// Prevent "tags" from being stripped. When not string, return ''.
+			str.replace?.( /[<>\\]/g, m => _decodeEntitiesMap[ m ] ) || '',
+			'text/html'
+		).documentElement.textContent;
 	}
 
 	/**
@@ -152,7 +127,7 @@ window.tsf = function( $ ) {
 	 */
 	const escapeString = str => {
 
-		if ( ! str.length ) return '';
+		if ( ! str?.length ) return '';
 
 		let map = {
 			'&':  '&#x26;',
@@ -164,7 +139,8 @@ window.tsf = function( $ ) {
 			"/":  '&#x2F;',
 		};
 
-		return str.replace( /[&<>"'\\\/]/g, m => map[ m ] );
+		// When not string, return ''
+		return str.replace?.( /[&<>"'\\\/]/g, m => map[ m ] ) || '';
 	}
 
 	/**
@@ -172,7 +148,8 @@ window.tsf = function( $ ) {
 	 *
 	 * @since 4.0.0
 	 * @access public
-
+	 * @todo deprecate, unused internally. Should've also been named ampEntitytoHTML.
+	 *
 	 * @function
 	 * @param {string} str
 	 * @return {string}
@@ -338,8 +315,8 @@ window.tsf = function( $ ) {
 	 */
 	const unsetAjaxLoader = ( target, success ) => {
 
-		let newclass = 'tsf-success',
-			fadeTime = 2500;
+		const newclass = 'tsf-success',
+			  fadeTime = 2500;
 
 		if ( ! success ) {
 			newclass = 'tsf-error';
@@ -463,9 +440,9 @@ window.tsf = function( $ ) {
 		 */
 		const dismissNotice = event => {
 
-			let $notice = $( event.target ).parents( '.tsf-notice' ).first(),
-				key     = event.target.dataset && event.target.dataset.key || void 0,
-				nonce   = event.target.dataset && event.target.dataset.nonce || void 0;
+			const $notice = $( event.target ).closest( '.tsf-notice' ).first(),
+				  key     = event.target.dataset && event.target.dataset.key || void 0,
+				  nonce   = event.target.dataset && event.target.dataset.nonce || void 0;
 
 			$notice.fadeTo( 100, 0, () => {
 				$notice.slideUp( 100, () => {
@@ -489,7 +466,11 @@ window.tsf = function( $ ) {
 
 		const reset = () => {
 			// Enable dismissal of PHP-inserted notices.
-			document.querySelectorAll( '.tsf-dismiss' ).forEach( el => el.addEventListener( 'click', dismissNotice ) );
+			document.querySelectorAll( '.tsf-dismiss' ).forEach(
+				el => {
+					el.addEventListener( 'click', dismissNotice )
+				}
+			);
 		}
 		/**
 		 * @access private Use triggerNoticeReset() instead.
@@ -554,7 +535,7 @@ window.tsf = function( $ ) {
 	let _debounceResize,
 		_debounceResizeTrigger,
 	    _throttleResize = false;
-	const _throttleResizeDebounceDelay = 100;
+	const _throttleResizeDebounceDelay = 50;
 	/**
 	 * Dispatches tsf-resize event on window.
 	 *

@@ -92,12 +92,14 @@ class Core {
 		$strings['close']              = esc_html__( 'Close', 'wpforms-lite' );
 		$strings['ajax_url']           = admin_url( 'admin-ajax.php' );
 		$strings['nonce']              = wp_create_nonce( 'wpforms-education' );
-		$strings['activate_prompt']    = '<p>' . esc_html__( 'The %name% is installed but not activated. Would you like to activate it?', 'wpforms-lite' ) . '</p>';
+		/* translators: %s - addon name. */
+		$strings['activate_prompt']    = '<p>' . esc_html( sprintf( __( 'The %s is installed but not activated. Would you like to activate it?', 'wpforms-lite' ), '%name%' ) ) . '</p>';
 		$strings['activate_confirm']   = esc_html__( 'Yes, activate', 'wpforms-lite' );
 		$strings['addon_activated']    = esc_html__( 'Addon activated', 'wpforms-lite' );
 		$strings['plugin_activated']   = esc_html__( 'Plugin activated', 'wpforms-lite' );
 		$strings['activating']         = esc_html__( 'Activating', 'wpforms-lite' );
-		$strings['install_prompt']     = '<p>' . esc_html__( 'The %name% is not installed. Would you like to install and activate it?', 'wpforms-lite' ) . '</p>';
+		/* translators: %s - addon name. */
+		$strings['install_prompt']     = '<p>' . esc_html( sprintf( __( 'The %s is not installed. Would you like to install and activate it?', 'wpforms-lite' ), '%name%' ) ) . '</p>';
 		$strings['install_confirm']    = esc_html__( 'Yes, install and activate', 'wpforms-lite' );
 		$strings['installing']         = esc_html__( 'Installing', 'wpforms-lite' );
 		$strings['can_install_addons'] = wpforms_can_install( 'addon' );
@@ -106,26 +108,39 @@ class Core {
 		$strings['saving']             = esc_html__( 'Saving ...', 'wpforms-lite' );
 
 		if ( ! $strings['can_install_addons'] ) {
-			$strings['install_prompt'] = '<p>' . esc_html__( 'The %name% is not installed. Please install and activate it to use this feature.', 'wpforms-lite' ) . '</p>';
+			/* translators: %s - addon name. */
+			$strings['install_prompt'] = '<p>' . esc_html( sprintf( __( 'The %s is not installed. Please install and activate it to use this feature.', 'wpforms-lite' ), '%name%' ) ) . '</p>';
 		}
+
+		$upgrade_utm_medium = wpforms_is_admin_page() ? 'Settings - Integration' : 'Builder - Settings';
 
 		$strings['upgrade'] = [
 			'pro'   => [
 				'title'        => esc_html__( 'is a PRO Feature', 'wpforms-lite' ),
-				'message'      => '<p>' . esc_html__( 'We\'re sorry, the %name% is not available on your plan. Please upgrade to the PRO plan to unlock all these awesome features.', 'wpforms-lite' ) . '</p>',
-				'doc'          => '<a href="https://wpforms.com/docs/upgrade-wpforms-lite-paid-license/?utm_source=WordPress&amp;utm_medium=link&amp;utm_campaign=liteplugin&amp;utm_content=upgrade-pro#installing-wpforms" target="_blank" rel="noopener noreferrer" class="already-purchased">' . esc_html__( 'Already purchased?', 'wpforms-lite' ) . '</a>',
+				/* translators: %s - addon name. */
+				'message'      => '<p>' . esc_html( sprintf( __( 'We\'re sorry, the %s is not available on your plan. Please upgrade to the PRO plan to unlock all these awesome features.', 'wpforms-lite' ), '%name%' ) ) . '</p>',
+				'doc'          => sprintf(
+					'<a href="%1$s" target="_blank" rel="noopener noreferrer" class="already-purchased">%2$s</a>',
+					esc_url( wpforms_utm_link( 'https://wpforms.com/docs/upgrade-wpforms-lite-paid-license/#installing-wpforms', $upgrade_utm_medium, 'AP - %name%' ) ),
+					esc_html__( 'Already purchased?', 'wpforms-lite' )
+				),
 				'button'       => esc_html__( 'Upgrade to PRO', 'wpforms-lite' ),
-				'url'          => wpforms_admin_upgrade_link( 'builder-modal' ),
-				'url_template' => wpforms_admin_upgrade_link( 'builder-modal-template' ),
+				'url'          => wpforms_admin_upgrade_link( $upgrade_utm_medium ),
+				'url_template' => wpforms_is_admin_page( 'templates' ) ? wpforms_admin_upgrade_link( 'Form Templates Subpage' ) : wpforms_admin_upgrade_link( 'builder-modal-template' ),
 				'modal'        => wpforms_get_upgrade_modal_text( 'pro' ),
 			],
 			'elite' => [
 				'title'        => esc_html__( 'is an Elite Feature', 'wpforms-lite' ),
-				'message'      => '<p>' . esc_html__( 'We\'re sorry, the %name% is not available on your plan. Please upgrade to the Elite plan to unlock all these awesome features.', 'wpforms-lite' ) . '</p>',
-				'doc'          => '<a href="https://wpforms.com/docs/upgrade-wpforms-lite-paid-license/?utm_source=WordPress&amp;utm_medium=link&amp;utm_campaign=liteplugin&amp;utm_content=upgrade-elite#installing-wpforms" target="_blank" rel="noopener noreferrer" class="already-purchased">' . esc_html__( 'Already purchased?', 'wpforms-lite' ) . '</a>',
+				/* translators: %s - addon name. */
+				'message'      => '<p>' . esc_html( sprintf( __( 'We\'re sorry, the %s is not available on your plan. Please upgrade to the Elite plan to unlock all these awesome features.', 'wpforms-lite' ), '%name%' ) ) . '</p>',
+				'doc'          => sprintf(
+					'<a href="%1$s" target="_blank" rel="noopener noreferrer" class="already-purchased">%2$s</a>',
+					esc_url( wpforms_utm_link( 'https://wpforms.com/docs/upgrade-wpforms-lite-paid-license/#installing-wpforms', $upgrade_utm_medium, 'AP - %name%' ) ),
+					esc_html__( 'Already purchased?', 'wpforms-lite' )
+				),
 				'button'       => esc_html__( 'Upgrade to Elite', 'wpforms-lite' ),
-				'url'          => wpforms_admin_upgrade_link( 'builder-modal' ),
-				'url_template' => wpforms_admin_upgrade_link( 'builder-modal-template' ),
+				'url'          => wpforms_admin_upgrade_link( $upgrade_utm_medium ),
+				'url_template' => wpforms_is_admin_page( 'templates' ) ? wpforms_admin_upgrade_link( 'Form Templates Subpage' ) : wpforms_admin_upgrade_link( 'builder-modal-template' ),
 				'modal'        => wpforms_get_upgrade_modal_text( 'elite' ),
 			],
 		];
@@ -140,6 +155,8 @@ class Core {
 			)
 		);
 
+		$strings['thanks_for_interest'] = esc_html__( 'Thanks for your interest in WPForms Pro!', 'wpforms-lite' );
+
 		return $strings;
 	}
 
@@ -153,22 +170,9 @@ class Core {
 		// Run a security check.
 		check_ajax_referer( 'wpforms-education', 'nonce' );
 
-		// Check for permissions.
-		if ( ! wpforms_current_user_can() ) {
-			wp_send_json_error(
-				[ 'error' => esc_html__( 'You do not have permission to perform this action.', 'wpforms-lite' ) ]
-			);
-		}
-
-		$dismissed = get_user_meta( get_current_user_id(), 'wpforms_dismissed', true );
-
-		if ( empty( $dismissed ) ) {
-			$dismissed = [];
-		}
-
 		// Section is the identifier of the education feature.
 		// For example: in Builder/DidYouKnow feature used 'builder-did-you-know-notifications' and 'builder-did-you-know-confirmations'.
-		$section = ! empty( $_POST['section'] ) ? sanitize_key( wp_unslash( $_POST['section'] ) ) : '';
+		$section = ! empty( $_POST['section'] ) ? sanitize_key( $_POST['section'] ) : '';
 
 		if ( empty( $section ) ) {
 			wp_send_json_error(
@@ -176,9 +180,45 @@ class Core {
 			);
 		}
 
+		// Check for permissions.
+		if ( ! $this->current_user_can() ) {
+			wp_send_json_error(
+				[ 'error' => esc_html__( 'You do not have permission to perform this action.', 'wpforms-lite' ) ]
+			);
+		}
+
+		$user_id   = get_current_user_id();
+		$dismissed = get_user_meta( $user_id, 'wpforms_dismissed', true );
+
+		if ( empty( $dismissed ) ) {
+			$dismissed = [];
+		}
+
 		$dismissed[ 'edu-' . $section ] = time();
 
-		update_user_meta( get_current_user_id(), 'wpforms_dismissed', $dismissed );
+		update_user_meta( $user_id, 'wpforms_dismissed', $dismissed );
 		wp_send_json_success();
+	}
+
+	/**
+	 * Whether the current user can perform an action.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @return bool
+	 */
+	private function current_user_can() {
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$page = ! empty( $_POST['page'] ) ? sanitize_key( $_POST['page'] ) : '';
+
+		// key is the same as $current_screen->id and the JS global 'pagenow', value - capability name(s).
+		$caps = [
+			'toplevel_page_wpforms-overview' => [ 'view_forms' ],
+			'wpforms_page_wpforms-builder'   => [ 'edit_forms' ],
+			'wpforms_page_wpforms-entries'   => [ 'view_entries' ],
+		];
+
+		return isset( $caps[ $page ] ) ? wpforms_current_user_can( $caps[ $page ] ) : wpforms_current_user_can();
 	}
 }

@@ -33,6 +33,8 @@ class Loader {
 	public function __construct() {
 
 		$core_class_names = [
+			'SMTP\Notifications',
+			'LiteConnect\LiteConnect',
 			'Divi\Divi',
 			'Elementor\Elementor',
 			'Gutenberg\FormSelector',
@@ -43,6 +45,7 @@ class Loader {
 			'DefaultThemes\DefaultThemes',
 			'TranslationsPress\Translations',
 			'DefaultContent\DefaultContent',
+			'PopupMaker\PopupMaker',
 		];
 
 		$class_names = (array) apply_filters( 'wpforms_integrations_available', $core_class_names );

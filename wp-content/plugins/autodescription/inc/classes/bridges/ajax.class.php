@@ -8,7 +8,7 @@ namespace The_SEO_Framework\Bridges;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2021 - 2022 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2021 - 2023 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -137,7 +137,9 @@ final class AJAX {
 	 * @since 3.1.0 Introduced in 2.9.0, but the name changed.
 	 * @since 4.1.4 Moved to \The_SEO_Framework\Bridges\AJAX and made static.
 	 * @since 4.2.0 Now cleans response header.
-	 * @securitycheck 3.0.0 OK.
+	 * @since 4.2.5 1. Backported cropping support for WebP (WP 5.9).
+	 *              2. Backported title, description, alt tag, and excerpt preservation (WP 6.0).
+	 * @securitycheck 4.2.5 OK.
 	 * @access private
 	 */
 	public static function _wp_ajax_crop_image() {
@@ -152,6 +154,9 @@ final class AJAX {
 			\wp_send_json_error();
 
 		$attachment_id = \absint( $_POST['id'] );
+
+		if ( ! $attachment_id || 'attachment' !== \get_post_type( $attachment_id ) || ! \wp_attachment_is_image( $attachment_id ) )
+			\wp_send_json_error( [ 'message' => \esc_js( \__( 'Image could not be processed.', 'default' ) ) ] );
 
 		$context = str_replace( '_', '-', \sanitize_key( $_POST['context'] ) );
 		$data    = array_map( 'absint', $_POST['cropDetails'] );
@@ -175,43 +180,63 @@ final class AJAX {
 				 */
 				\do_action( 'wp_ajax_crop_image_pre_save', $context, $attachment_id, $cropped );
 
-				/** This filter is documented in wp-admin/custom-header.php */
+				/** This filter is documented in wp-admin/includes/class-custom-image-header.php */
 				$cropped = \apply_filters( 'wp_create_file_in_uploads', $cropped, $attachment_id ); // For replication.
 
-				$parent_url = \wp_get_attachment_url( $attachment_id );
-				$url        = str_replace( basename( $parent_url ), basename( $cropped ), $parent_url );
+				$parent_url       = \wp_get_attachment_url( $attachment_id );
+				$parent_basename  = \wp_basename( $parent_url );
+				$cropped_basename = \wp_basename( $cropped );
+				$url              = str_replace( $parent_basename, $cropped_basename, $parent_url );
 
-				// phpcs:ignore, WordPress.PHP.NoSilencedErrors -- Feature may be disabled; should not cause fatal errors.
-				$size       = @getimagesize( $cropped );
-				$image_type = ( $size ) ? $size['mime'] : 'image/jpeg';
+				// phpcs:ignore, WordPress.PHP.NoSilencedErrors -- See https://core.trac.wordpress.org/ticket/42480
+				$size       = \function_exists( '\\wp_getimagesize' ) ? \wp_getimagesize( $cropped ) : @getimagesize( $cropped );
+				$image_type = $size ? $size['mime'] : 'image/jpeg';
 
-				$object = [
-					'post_title'     => basename( $cropped ),
-					'post_content'   => $url,
+				// Get the original image's post to pre-populate the cropped image.
+				$original_attachment  = \get_post( $attachment_id );
+				$sanitized_post_title = \sanitize_file_name( $original_attachment->post_title );
+				$use_original_title   = (
+					\strlen( trim( $original_attachment->post_title ) ) &&
+					/**
+					 * Check if the original image has a title other than the "filename" default,
+					 * meaning the image had a title when originally uploaded or its title was edited.
+					 */
+					( $parent_basename !== $sanitized_post_title ) &&
+					( pathinfo( $parent_basename, PATHINFO_FILENAME ) !== $sanitized_post_title )
+				);
+				$use_original_description = \strlen( trim( $original_attachment->post_content ) );
+
+				$attachment = [
+					'post_title'     => $use_original_title ? $original_attachment->post_title : $cropped_basename,
+					'post_content'   => $use_original_description ? $original_attachment->post_content : $url,
 					'post_mime_type' => $image_type,
 					'guid'           => $url,
 					'context'        => $context,
 				];
 
-				$attachment_id = \wp_insert_attachment( $object, $cropped );
+				// Copy the image caption attribute (post_excerpt field) from the original image.
+				if ( \strlen( trim( $original_attachment->post_excerpt ) ) )
+					$attachment['post_excerpt'] = $original_attachment->post_excerpt;
+
+				// Copy the image alt text attribute from the original image.
+				if ( \strlen( trim( $original_attachment->_wp_attachment_image_alt ) ) )
+					$attachment['meta_input'] = [
+						'_wp_attachment_image_alt' => \wp_slash( $original_attachment->_wp_attachment_image_alt ),
+					];
+
+				$attachment_id = \wp_insert_attachment( $attachment, $cropped );
 				$metadata      = \wp_generate_attachment_metadata( $attachment_id, $cropped );
 
 				/**
-				 * Filters the cropped image attachment metadata.
-				 *
 				 * @since 4.3.0 WordPress Core
 				 * @see wp_generate_attachment_metadata()
-				 *
 				 * @param array $metadata Attachment metadata.
 				 */
 				$metadata = \apply_filters( 'wp_ajax_cropped_attachment_metadata', $metadata );
 				\wp_update_attachment_metadata( $attachment_id, $metadata );
 
 				/**
-				 * Filters the attachment ID for a cropped image.
-				 *
 				 * @since 4.3.0 WordPress Core
-				 *
 				 * @param int    $attachment_id The attachment ID of the cropped image.
 				 * @param string $context       The Customizer control requesting the cropped image.
 				 */
@@ -274,57 +299,55 @@ final class AJAX {
 
 		$data = [];
 
-		foreach ( $get as $g ) :
-			switch ( $g ) {
-				case 'seobar':
-					$data[ $g ] = $tsf->get_generated_seo_bar( $_generator_args );
-					break;
+		foreach ( $get as $g ) switch ( $g ) {
+			case 'seobar':
+				$data[ $g ] = $tsf->get_generated_seo_bar( $_generator_args );
+				break;
 
-				case 'metadescription':
-				case 'ogdescription':
-				case 'twdescription':
-					switch ( $g ) {
-						case 'metadescription':
-							if ( $tsf->is_static_frontpage( $post_id ) ) {
-								$data[ $g ] = $tsf->get_option( 'homepage_description' )
-										   ?: $tsf->get_generated_description( $_generator_args, false );
-							} else {
-								$data[ $g ] = $tsf->get_generated_description( $_generator_args, false );
-							}
-							break;
-						case 'ogdescription':
-							if ( $tsf->is_static_frontpage( $post_id ) ) {
-								$data[ $g ] = $tsf->get_option( 'homepage_description' )
-										   ?: $tsf->get_generated_open_graph_description( $_generator_args, false );
-							} else {
-								$data[ $g ] = $tsf->get_generated_open_graph_description( $_generator_args, false );
-							}
-							break;
-						case 'twdescription':
-							if ( $tsf->is_static_frontpage( $post_id ) ) {
-								$data[ $g ] = $tsf->get_option( 'homepage_description' )
-										   ?: $tsf->get_generated_twitter_description( $_generator_args, false );
-							} else {
-								$data[ $g ] = $tsf->get_generated_twitter_description( $_generator_args, false );
-							}
-							break;
-					}
+			case 'metadescription':
+			case 'ogdescription':
+			case 'twdescription':
+				switch ( $g ) {
+					case 'metadescription':
+						if ( $tsf->is_static_frontpage( $post_id ) ) {
+							$data[ $g ] = $tsf->get_option( 'homepage_description' )
+										?: $tsf->get_generated_description( $_generator_args, false );
+						} else {
+							$data[ $g ] = $tsf->get_generated_description( $_generator_args, false );
+						}
+						break;
+					case 'ogdescription':
+						if ( $tsf->is_static_frontpage( $post_id ) ) {
+							$data[ $g ] = $tsf->get_option( 'homepage_description' )
+										?: $tsf->get_generated_open_graph_description( $_generator_args, false );
+						} else {
+							$data[ $g ] = $tsf->get_generated_open_graph_description( $_generator_args, false );
+						}
+						break;
+					case 'twdescription':
+						if ( $tsf->is_static_frontpage( $post_id ) ) {
+							$data[ $g ] = $tsf->get_option( 'homepage_description' )
+										?: $tsf->get_generated_twitter_description( $_generator_args, false );
+						} else {
+							$data[ $g ] = $tsf->get_generated_twitter_description( $_generator_args, false );
+						}
+						break;
+				}
 
-					$data[ $g ] = $tsf->s_description( $data[ $g ] );
-					break;
+				$data[ $g ] = $tsf->s_description( $data[ $g ] );
+				break;
 
-				case 'imageurl':
-					if ( $tsf->is_static_frontpage( $post_id ) && $tsf->get_option( 'homepage_social_image_url' ) ) {
-						$data[ $g ] = current( $tsf->get_image_details( $_generator_args, true, 'social', true ) )['url'] ?? '';
-					} else {
-						$data[ $g ] = current( $tsf->get_generated_image_details( $_generator_args, true, 'social', true ) )['url'] ?? '';
-					}
-					break;
+			case 'imageurl':
+				if ( $tsf->is_static_frontpage( $post_id ) && $tsf->get_option( 'homepage_social_image_url' ) ) {
+					$data[ $g ] = current( $tsf->get_image_details( $_generator_args, true, 'social', true ) )['url'] ?? '';
+				} else {
+					$data[ $g ] = current( $tsf->get_generated_image_details( $_generator_args, true, 'social', true ) )['url'] ?? '';
+				}
+				break;
 
-				default:
-					break;
-			}
-		endforeach;
+			default:
+				break;
+		}
 
 		\wp_send_json_success( [
 			'data'      => $data,

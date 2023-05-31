@@ -3,7 +3,7 @@
  * Plugin Name: Media Library Categories
  * Plugin URI: https://wordpress.org/plugins/wp-media-library-categories/
  * Description: Adds the ability to use categories in the media library.
- * Version: 1.9.9
+ * Version: 2.0.0
  * Author: Jeffrey-WP
  * Text Domain: wp-media-library-categories
  * Domain Path: /languages
@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class wpMediaLibraryCategories {
 
-    public $plugin_version = '1.9.9';
+    public $plugin_version = '2.0.0';
 
     /**
      * Initialize the hooks and filters
@@ -866,7 +866,7 @@ class wpMediaLibraryCategories {
         // Get taxonomy slug
         $taxonomy = $this->get_wpmlc_taxonomy();
 
-        echo '<input type="text" name="wpmlc_settings[wpmediacategory_taxonomy]" value="' . ( ( $taxonomy === 'category' ) ? '' : $taxonomy ) . '" placeholder="category">';
+        echo '<input type="text" name="wpmlc_settings[wpmediacategory_taxonomy]" value="' . ( ( $taxonomy === 'category' ) ? '' : esc_attr( $taxonomy ) ) . '" placeholder="category">';
 
     }
 

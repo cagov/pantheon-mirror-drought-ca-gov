@@ -10,7 +10,7 @@ namespace The_SEO_Framework;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2015 - 2022 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2015 - 2023 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -188,7 +188,7 @@ class Core {
 	 */
 	public function get_view( $view, $__args = [], $instance = 'main' ) {
 
-		//? A faster extract().
+		// A faster extract().
 		foreach ( $__args as $__k => $__v ) $$__k = $__v;
 		unset( $__k, $__v, $__args );
 
@@ -201,9 +201,11 @@ class Core {
 	/**
 	 * Stores and returns view secret.
 	 *
-	 * This is not cryptographically secure, but it's enough to fend others off including our files where they shouldn't.
-	 * Our view-files have a certain expectation of inputs to meet. If they don't meet that, we could expose our users to security issues.
-	 * We could not measure any meaningful performance impact by using this (0.02% of 54x get_view() runtime).
+	 * This is not cryptographically secure, but it's enough to fend others off
+	 * including our files where they shouldn't. Our view-files have a certain
+	 * expectation of inputs to meet. When they don't meet that, we could expose
+	 * our users to security issues. We could not measure any meaningful
+	 * performance impact by using this (0.02% of 54x get_view() runtime).
 	 *
 	 * @since 4.1.1
 	 *
@@ -239,7 +241,7 @@ class Core {
 	 * @return string The view location.
 	 */
 	public function get_view_location( $file ) {
-		return THE_SEO_FRAMEWORK_DIR_PATH_VIEWS . $file . '.php';
+		return THE_SEO_FRAMEWORK_DIR_PATH_VIEWS . "$file.php";
 	}
 
 	/**
@@ -415,7 +417,7 @@ class Core {
 	 * @return string The converted time. Empty string if no $time is given.
 	 */
 	public function gmt2date( $format = 'Y-m-d', $time = '' ) {
-		return $time ? gmdate( $format, strtotime( $time . ' GMT' ) ) : '';
+		return $time ? gmdate( $format, strtotime( "$time GMT" ) ) : '';
 	}
 
 	/**
@@ -454,29 +456,68 @@ class Core {
 	}
 
 	/**
+	 * Flattens multidimensional lists into a single dimensional list.
+	 * Deeply nested lists are merged as well. Won't dig associative arrays.
+	 *
+	 * E.g., this [ [ 'one' => 1 ], [ [ 'two' => 2 ], [ 'three' => [ 3, 4 ] ] ] ]
+	 * becomes    [ [ 'one' => 1 ], [ 'two', => 2 ], [ 'three' => [ 3, 4 ] ] ];
+	 *
+	 * @link <https://3v4l.org/XBSFa>, test it here.
+	 *
+	 * @since 4.2.7
+	 * @access private
+	 * @ignore This will move to new "helper" classes in a future update, becoming public then.
+	 *
+	 * @param array $array The array to flatten. If input is not an array, it'll be casted.
+	 * @return array The flattened array.
+	 */
+	public function array_flatten_list( $array ) {
+
+		// We can later use `!array_is_list()`.
+		// This is 350x faster than a polyfill for `!array_is_list()`.
+		if ( [] === $array || array_values( $array ) !== $array ) return $array;
+
+		$ret = [];
+
+		foreach ( $array as $value ) {
+			// We can later use `array_is_list()`.
+			if ( \is_array( $value ) && [] !== $value && array_values( $value ) === $value ) {
+				$ret = array_merge( $ret, $this->array_flatten_list( $value ) );
+			} else {
+				array_push( $ret, $value );
+			}
+		}
+
+		return $ret;
+	}
+
+	/**
 	 * Merges arrays distinctly, much like `array_merge()`, but then for multidimensionals.
 	 * Unlike PHP's `array_merge_recursive()`, this method doesn't convert non-unique keys as sequential.
 	 *
-	 * A do-while is faster than while. Sorry for the legibility.
-	 * TODO instead of calling thyself, would a goto not be better?
+	 * @link <https://3v4l.org/9pnW1#v8.1.8> Test it here.
 	 *
 	 * @since 4.1.4
+	 * @since 4.2.7 1. Now supports a single array entry without causing issues.
+	 *              2. Reduced number of opcodes by roughly 27% by reworking it.
+	 *              3. Now no longer throws warnings with qubed+ arrays.
+	 *              4. Now no longer prevents scalar values overwriting arrays.
 	 *
 	 * @param array ...$arrays The arrays to merge. The rightmost array's values are dominant.
 	 * @return array The merged arrays.
 	 */
-	public function array_merge_recursive_distinct( array ...$arrays ) {
+	public function array_merge_recursive_distinct( ...$arrays ) {
 
 		$i = \count( $arrays );
 
-		if ( 2 === $i ) foreach ( $arrays[1] as $key => $value ) {
-			$arrays[0][ $key ] = \is_array( $arrays[0][ $key ] ?? null )
-				? $this->array_merge_recursive_distinct( $arrays[0][ $key ], $value )
-				: $value;
-		} else do {
-			// phpcs:ignore -- Imagine assigning from right to left, but also left to right. Yes:
-			$arrays[ --$i - 1 ] = $this->array_merge_recursive_distinct( $arrays[ $i - 1 ], $arrays[ $i ] );
-		} while ( $i > 1 );
+		while ( --$i ) {
+			$p = $i - 1;
+
+			foreach ( $arrays[ $i ] as $key => $value )
+				$arrays[ $p ][ $key ] = isset( $arrays[ $p ][ $key ] ) && \is_array( $value )
+					? $this->array_merge_recursive_distinct( $arrays[ $p ][ $key ], $value )
+					: $value;
+		}
 
 		return $arrays[0];
 	}
@@ -533,6 +574,7 @@ class Core {
 
 		if ( ! $string ) return [];
 
+		// Not if-function-exists; we're going for speed over accuracy. Hosts must do their job correctly.
 		$use_mb = memo( null, 'use_mb' ) ?? memo( \extension_loaded( 'mbstring' ), 'use_mb' );
 
 		$word_list = preg_split(
@@ -579,7 +621,7 @@ class Core {
 	}
 
 	/**
-	 * Calculates the relative font color according to the background.
+	 * Calculates the relative font color according to the background, grayscale.
 	 *
 	 * @since 2.8.0
 	 * @since 2.9.0 Now adds a little more relative softness based on rel_lum.
@@ -590,26 +632,28 @@ class Core {
 	 * @link https://www.w3.org/TR/2008/REC-WCAG20-20081211/#visual-audio-contrast-contrast
 	 * @link https://www.w3.org/WAI/GL/wiki/Relative_luminance
 	 *
-	 * @param string $hex The 3 to 6 character RGB hex. The '#' prefix may be added.
-	 *                    RRGGBBAA is supported, but the Alpha channels won't be returned.
+	 * @param string $hex The 3 to 6+ character RGB hex. The '#' prefix may be added.
+	 *                    RGBA/RRGGBBAA is supported, but the Alpha channels won't be returned.
 	 * @return string The hexadecimal RGB relative font color, without '#' prefix.
 	 */
 	public function get_relative_fontcolor( $hex = '' ) {
 
+		// TODO: To support RGBA, we must fill to 4 or 8 via sprintf `%0{1,2}x`
+		// But doing this will add processing requirements for something we do not need... yet.
 		$hex = ltrim( $hex, '#' );
 
 		// Convert hex to usable numerics.
 		[ $r, $g, $b ] = array_map(
 			'hexdec',
 			str_split(
-				// rgb == rrggbb.
+				// rgb[..] == rrggbb[..].
 				\strlen( $hex ) >= 6 ? $hex : "$hex[0]$hex[0]$hex[1]$hex[1]$hex[2]$hex[2]",
 				2
 			)
 		);
 
 		$get_relative_luminance = static function( $v ) {
-			// Convert to 0~1 value.
+			// Convert hex to 0~1 float.
 			$v /= 0xFF;
 
 			if ( $v > .03928 ) {
@@ -620,19 +664,20 @@ class Core {
 			return $lum;
 		};
 
-		// Create Relative Luminance via sRGB.
-		$rl = ( 0.2126 * $get_relative_luminance( $r ) )
-			+ ( 0.7152 * $get_relative_luminance( $g ) )
-			+ ( 0.0722 * $get_relative_luminance( $b ) );
+		// Calc relative Luminance using sRGB.
+		$rl = .2126 * $get_relative_luminance( $r )
+			+ .7152 * $get_relative_luminance( $g )
+			+ .0722 * $get_relative_luminance( $b );
 
-		// Build light greyscale. Rounding is required for bitwise operation (PHP8.1+).
-		$gr = round( ( $r * 0.2989 / 8 ) * $rl );
-		$gg = round( ( $g * 0.5870 / 8 ) * $rl );
-		$gb = round( ( $b * 0.1140 / 8 ) * $rl );
+		// Build light greyscale using relative constrast.
+		// Rounding is required for bitwise operation (PHP8.1+).
+		// printf will round anyway when floats are detected. Diff in #opcodes should be minimal.
+		$gr = round( $r * .2989 / 8 * $rl );
+		$gg = round( $g * .5870 / 8 * $rl );
+		$gb = round( $b * .1140 / 8 * $rl );
 
-		// Invert colors if they hit this luminance boundary.
-		if ( $rl < 0.5 ) {
-			// Build dark greyscale. bitwise operators...
+		// Invert grayscela if they pass the relative luminance midpoint.
+		if ( $rl < .5 ) {
 			$gr ^= 0xFF;
 			$gg ^= 0xFF;
 			$gb ^= 0xFF;
@@ -695,5 +740,17 @@ class Core {
 	 */
 	public function convert_markdown( $text, $convert = [], $args = [] ) {
 		return Interpreters\Markdown::convert( $text, $convert, $args );
+	}
+
+	/**
+	 * Whether to display Extension Manager suggestions to the user based on several conditions.
+	 *
+	 * @since 4.2.4
+	 * @uses TSF_DISABLE_SUGGESTIONS Set that to true if you don't like us.
+	 *
+	 * @return bool
+	 */
+	public function _display_extension_suggestions() {
+		return \current_user_can( 'install_plugins' ) && ! ( \defined( 'TSF_DISABLE_SUGGESTIONS' ) && TSF_DISABLE_SUGGESTIONS );
 	}
 }

@@ -37,6 +37,15 @@ abstract class WSAL_Connector_ConnectorFactory {
 	private static $connectors = array();
 
 	/**
+	 * Holds the configuration of the connection (if there is one)
+	 *
+	 * @var boolean
+	 *
+	 * @since 4.4.2.1
+	 */
+	private static $connection = false;
+
+	/**
 	 * Occurrence is installed.
 	 *
 	 * @since 3.4.1
@@ -76,8 +85,7 @@ abstract class WSAL_Connector_ConnectorFactory {
 		if ( is_null( $config ) || empty( $config ) ) {
 			if ( self::$archive_mode ) {
 				// Force archive database if no config provided and archive mode is enabled.
-				$plugin            = WpSecurityAuditLog::get_instance();
-				$connection_name   = $plugin->get_global_setting( 'archive-connection' );
+				$connection_name   = WSAL\Helpers\Settings_Helper::get_option_value( 'archive-connection' );
 				$connection_config = self::load_connection_config( $connection_name );
 			} else {
 				// Default config - local or external, depending on plugin settings and licensing.
@@ -125,31 +133,45 @@ abstract class WSAL_Connector_ConnectorFactory {
 	 * @throws Freemius_Exception
 	 */
 	public static function get_config() {
-		$plugin          = WpSecurityAuditLog::get_instance();
-		$connection_name = $plugin->get_global_setting( 'adapter-connection' );
+		if ( false === self::$connection ) {
+			$connection_name = WSAL\Helpers\Settings_Helper::get_option_value( 'adapter-connection' );
 
-		if ( function_exists( 'wsal_freemius' ) && ! apply_filters( 'wsal_disable_freemius_sdk', false ) ) {
-			$is_not_paying = wsal_freemius()->is_not_paying();
-		} else {
-			$is_not_paying = ! WpSecurityAuditLog::is_premium_freemius();
-		}
-
-		if ( $connection_name && $is_not_paying ) {
-			$connector = new WSAL_Connector_MySQLDB();
-
-			if ( ! self::$is_installed ) {
-				self::$is_installed = $connector->is_installed();
-				$connector->install_all();
+			if ( empty( $connection_name ) ) {
+				self::$connection = null;
 			}
 
-			$connection_name = null;
-		}
+			/** 
+			 * this code is commented out because it is producing errors when license expires. Please do not remove it for now as it is may become part of separate method.
+			 */
+			// if ( function_exists( 'wsal_freemius' ) && ! apply_filters( 'wsal_disable_freemius_sdk', false ) ) {
+			// 	$is_not_paying = wsal_freemius()->is_not_paying();
+			// } else {
+			// 	$is_not_paying = ! WpSecurityAuditLog::is_premium_freemius();
+			// }
 
-		if ( empty( $connection_name ) ) {
-			return null;
-		}
+			// if ( $connection_name && $is_not_paying ) {
+			// 	$connector = new WSAL_Connector_MySQLDB();
 
-		return self::load_connection_config( $connection_name );
+			// 	if ( ! self::$is_installed ) {
+			// 		self::$is_installed = $connector->is_installed();
+			// 		$connector->install_all();
+			// 	}
+			// }
+
+			self::$connection = self::load_connection_config( $connection_name );
+		}
+		return self::$connection;
+	}
+
+	/**
+	 * As this is static class, we need to destroy the connection sometimes.
+	 *
+	 * @return void
+	 *
+	 * @since 4.4.2.1
+	 */
+	public static function destroy_connection() {
+		self::$connection = false;
 	}
 
 	/**
@@ -160,14 +182,13 @@ abstract class WSAL_Connector_ConnectorFactory {
 	 * @return array|null
 	 * @since 4.4.0
 	 */
-	private static function load_connection_config( $connection_name ) {
+	public static function load_connection_config( $connection_name ) {
 		/*
 		 * Reused code from the external DB module.
 		 *
 		 * @see WSAL_Ext_Common::get_connection()
 		 */
-		$plugin         = WpSecurityAuditLog::get_instance();
-		$connection_raw = maybe_unserialize( $plugin->get_global_setting( 'connection-' . $connection_name ) );
+		$connection_raw = maybe_unserialize( WSAL\Helpers\Settings_Helper::get_option_value( 'connection-' . $connection_name ) );
 		$connection     = ( $connection_raw instanceof stdClass ) ? json_decode( json_encode( $connection_raw ), true ) : $connection_raw; // phpcs:ignore
 		if ( ! is_array( $connection ) || empty( $connection ) ) {
 			return null;

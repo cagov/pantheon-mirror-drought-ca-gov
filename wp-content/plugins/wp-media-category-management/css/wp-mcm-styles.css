@@ -1,0 +1,62 @@
+/**
+ ** file: wp-mcm-styles.css
+ ** label: WP-MCM-STYLES
+ ** description: Some styles for WP-MCM front-end.
+ **
+ **/
+
+/**
+ * DashIcons
+ */
+.dashicons.wp-mcm-no-box-shadow {
+	box-shadow: none;
+}
+
+/* Settings for icons */
+img.wp-mcm-icon {
+	max-width: 32px;
+	padding: 2px;
+	line-height:0.3em;
+}
+.wp-mcm-icon {
+	max-width: 50px;
+	line-height:0.4em;
+}
+
+#wp-mcm-legend {
+  border: 3px double #444444;
+  padding: 12px;
+  margin: 20px 0px 10px 0px;
+}
+
+#wp-mcm-legend .legend-text, #wp-mcm-icon .legend-text {
+}
+/**
+ */
+.legend-text {
+  display: inline-block;
+  margin-left: 3px;
+  margin-right: 3px;
+  vertical-align: middle;
+  word-wrap: anywhere;
+  font-size: 50%
+}
+
+#wp-mcm-list {
+  margin: -20px 0px 0px 0px;
+}
+
+#wp-mcm-legend .legend-header {
+  display: inline-block;
+  margin: -60px 0px 0px 0px;
+  padding: 0px 10px 0px 10px;
+  background-color: #EEEEEE;
+  font-style: italic;
+  vertical-align: middle;
+}
+
+#wp-mcm-legend .tagalong-legend-icon {
+  display: inline-block;
+  margin-bottom: 12px;
+  min-width: 190px;
+}

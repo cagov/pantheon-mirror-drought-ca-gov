@@ -8,6 +8,8 @@
  * @package wsal
  */
 
+use WSAL\Helpers\WP_Helper;
+
 // Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -82,7 +84,7 @@ class WSAL_WidgetManager {
 					<?php
 					$url = 'admin.php?page=' . $this->plugin->views->views[0]->get_safe_view_name();
 					foreach ( $results as $entry ) :
-						$event_meta = $entry->get_meta_array();
+						$event_meta = $entry['meta_values'];
 						$username   = WSAL_Utilities_UsersUtils::get_username( $event_meta );
 						?>
 						<tr>
@@ -90,8 +92,8 @@ class WSAL_WidgetManager {
 							<td><?php echo ( $event_meta['Object'] ) ? esc_html( $event_meta['Object'] ) : '<i>unknown</i>'; ?></td>
 							<td><?php echo ( $event_meta['EventType'] ) ? esc_html( $event_meta['EventType'] ) : '<i>unknown</i>'; ?></td>
 							<td>
-								<a href="<?php echo esc_url( $url ) . '#Event' . esc_attr( $entry->get_id() ); ?>">
-									<?php echo wp_kses( $entry->get_message( $event_meta, 'dashboard-widget' ), $this->plugin->allowed_html_tags ); ?>
+								<a href="<?php echo esc_url( $url ) . '#Event' . esc_attr( $entry['id'] ); ?>">
+									<?php echo wp_kses( WSAL_Models_Occurrence::get_alert_message( $entry, 'dashboard-widget' ), $this->plugin->allowed_html_tags ); ?>
 								</a>
 							</td>
 						</tr>
@@ -113,7 +115,7 @@ class WSAL_WidgetManager {
 	public function get_dashboard_widget_query() {
 		$query = new WSAL_Models_OccurrenceQuery();
 		// get the site we are on (of multisite).
-		$bid = (int) $this->get_view_site_id();
+		$bid = (int) WP_Helper::get_view_site_id();
 		if ( $bid ) {
 			$query->add_condition( 'site_id = %s ', $bid );
 		}
@@ -122,16 +124,5 @@ class WSAL_WidgetManager {
 		// set the limit based on the limit option for dashboard alerts.
 		$query->set_limit( $this->plugin->settings()->get_dashboard_widget_max_alerts() );
 		return $query;
-	}
-
-	/**
-	 * Method: Get view site id.
-	 */
-	protected function get_view_site_id() {
-		if ( is_super_admin() ) {
-			return 0;
-		} else {
-			return get_current_blog_id();
-		}
 	}
 }

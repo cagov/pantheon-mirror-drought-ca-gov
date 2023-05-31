@@ -25,12 +25,12 @@ window.wp = window.wp || {};
 			filters['all']['props'][wpmcm_admin_js.mcm_taxonomy] = '';
 
 			// Add the option to select No category
-			filters.none = {
+			filters.no_category = {
 				text: wpmcm_admin_js.mcm_label_none,
 				priority: 10
 			};
-			filters['none']['props'] = {};
-			filters['none']['props'][wpmcm_admin_js.mcm_taxonomy] = 'no_category';
+			filters['no_category']['props'] = {};
+			filters['no_category']['props'][wpmcm_admin_js.mcm_taxonomy] = 'no_category';
 
 			this.filters = filters;
 		}

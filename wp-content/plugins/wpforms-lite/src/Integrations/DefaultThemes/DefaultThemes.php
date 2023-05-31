@@ -105,6 +105,10 @@ class DefaultThemes implements IntegrationInterface {
 	 */
 	private function tt1_hooks() { // phpcs:disable WPForms.PHP.HooksMethod.InvalidPlaceForAddingHooks
 
+		if ( wpforms_get_render_engine() === 'modern' ) {
+			return;
+		}
+
 		$form_styling = wpforms_setting( 'disable-css', '1' );
 
 		if ( $form_styling === '1' ) {
@@ -158,6 +162,7 @@ class DefaultThemes implements IntegrationInterface {
 				background-image: url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'10\' height=\'10\' fill=\'%2328303d\'><polygon points=\'0,0 10,0 5,5\'/></svg>");
 				background-repeat: no-repeat;
 				background-position: right var(--form--spacing-unit) top 60%;
+				padding-right: calc(var(--form--spacing-unit) * 2.5);
 			}'
 		);
 	}
@@ -200,7 +205,7 @@ class DefaultThemes implements IntegrationInterface {
 					return;
 				}
 
-				jQuery( document ).on( "wpformsPageChange wpformsShowConditionalsField", function() { 
+				jQuery( document ).on( "wpformsPageChange wpformsShowConditionalsField", function() {
 
 					if ( typeof twentytwenty === "undefined" || typeof twentytwenty.intrinsicRatioVideos === "undefined" || typeof twentytwenty.intrinsicRatioVideos.makeFit === "undefined" ) {
 						return;
@@ -209,7 +214,7 @@ class DefaultThemes implements IntegrationInterface {
 					twentytwenty.intrinsicRatioVideos.makeFit();
 				} );
 
-				jQuery( document ).on( "wpformsRichTextEditorInit", function( e, editor ) { 
+				jQuery( document ).on( "wpformsRichTextEditorInit", function( e, editor ) {
 
 					jQuery( editor.container ).find( "iframe" ).addClass( "intrinsic-ignore" );
 				} );

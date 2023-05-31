@@ -8,7 +8,7 @@
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2019 - 2022 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2019 - 2023 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -40,9 +40,9 @@ window.tsfSocial = function() {
 	 * @since 4.2.0
 	 * @access private
 	 * @type {(Map<string,{
-	 * 	 group:  string,
-	 * 	 inputs: {ogTitle:Element,twTitle:Element,ogDesc:Element,twDesc:Element}
-	 * 	 refs:   {titleInput:Element,descInput:Element,title:Element,titleNa:Element,desc:Element}
+	 *   group:  string,
+	 *   inputs: {ogTitle:Element,twTitle:Element,ogDesc:Element,twDesc:Element}
+	 *   refs:   {titleInput:Element,descInput:Element,title:Element,titleNa:Element,desc:Element}
 	 * }>)} The input element instances.
 	 */
 	const inputInstances = new Map();

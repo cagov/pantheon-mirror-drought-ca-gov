@@ -10,7 +10,7 @@ namespace The_SEO_Framework;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2015 - 2022 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2015 - 2023 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -61,9 +61,10 @@ class Sanitize extends Admin_Pages {
 		 *
 		 * @since 2.2.9
 		 */
-		if ( empty( $_POST[ THE_SEO_FRAMEWORK_SITE_OPTIONS ] )
-		|| ! \is_array( $_POST[ THE_SEO_FRAMEWORK_SITE_OPTIONS ] ) )
-			return memo( false );
+		if (
+			   empty( $_POST[ THE_SEO_FRAMEWORK_SITE_OPTIONS ] )
+			|| ! \is_array( $_POST[ THE_SEO_FRAMEWORK_SITE_OPTIONS ] )
+		) return memo( false );
 
 		// This is also handled in /wp-admin/options.php. Nevertheless, one might register outside of scope.
 		if ( ! \current_user_can( $this->get_settings_capability() ) )
@@ -99,7 +100,7 @@ class Sanitize extends Admin_Pages {
 		$this->delete_main_cache();
 
 		// Set backward compatibility. This runs after the sanitization.
-		\add_filter( 'pre_update_option_' . THE_SEO_FRAMEWORK_SITE_OPTIONS, [ $this, '_set_backward_compatibility' ], 10 );
+		// \add_filter( 'pre_update_option_' . THE_SEO_FRAMEWORK_SITE_OPTIONS, [ $this, '_set_backward_compatibility' ], 10 );
 
 		// Sets that the options are unchanged, preemptively.
 		$this->update_static_cache( 'settings_notice', 'unchanged' );
@@ -141,29 +142,15 @@ class Sanitize extends Admin_Pages {
 	 * @since 4.0.0 Emptied and is no longer enqueued.
 	 * @since 4.1.0 1. Added taxonomical robots options backward compat.
 	 *              2. Added the first two parameters.
+	 * @since 4.2.5 Emptied and is no longer enqueued.
 	 * @access private
 	 *
 	 * @param mixed $new_value The new, unserialized, and filtered option value.
 	 * @return mixed $new_value The updated option.
 	 */
 	public function _set_backward_compatibility( $new_value ) {
-
-		db_4103:
-		// Category and Tag robots backward compat.
-		foreach ( [ 'noindex', 'nofollow', 'noarchive' ] as $r ) :
-			$robots_option_id   = $this->get_robots_taxonomy_option_id( $r );
-			$new_robots_options = $new_value[ $robots_option_id ] ?? [];
-
-			$new_category_option = $new_robots_options['category'] ?? 0;
-			$new_tag_option      = $new_robots_options['post_tag'] ?? 0;
-
-			// Don't compare to old option--it's never reliably set; it might skip otherwise, although it's always correct.
-			// Do not resanitize. Others might've overwritten that, let's keep their value.
-			$new_value[ "category_$r" ] = $new_category_option;
-			$new_value[ "tag_$r" ]      = $new_tag_option;
-		endforeach;
-
-		end:;
+		// db_4103:
+		// end:;
 		return $new_value;
 	}
 
@@ -239,6 +226,14 @@ class Sanitize extends Admin_Pages {
 			[
 				'alter_archive_query_type',
 				'alter_search_query_type',
+			]
+		);
+
+		$this->add_option_filter(
+			's_description_html_method',
+			THE_SEO_FRAMEWORK_SITE_OPTIONS,
+			[
+				'auto_descripton_html_method',
 			]
 		);
 
@@ -401,9 +396,8 @@ class Sanitize extends Admin_Pages {
 			]
 		);
 
-		/**
-		 * @todo create content="code" stripper in PHP (redundant from JS's)
-		 */
+		// TODO create content="code" -> "code" stripper in PHP (redundant from JS's)
+		// We should add new method 's_verification_id' for that.
 		$this->add_option_filter(
 			's_no_html_space',
 			THE_SEO_FRAMEWORK_SITE_OPTIONS,
@@ -692,6 +686,7 @@ class Sanitize extends Admin_Pages {
 				's_title_raw'                  => [ $this, 's_title_raw' ],
 				's_knowledge_type'             => [ $this, 's_knowledge_type' ],
 				's_alter_query_type'           => [ $this, 's_alter_query_type' ],
+				's_description_html_method'    => [ $this, 's_description_html_method' ],
 				's_one_zero'                   => [ $this, 's_one_zero' ],
 				's_disabled_post_types'        => [ $this, 's_disabled_post_types' ],
 				's_disabled_taxonomies'        => [ $this, 's_disabled_taxonomies' ],
@@ -733,7 +728,7 @@ class Sanitize extends Admin_Pages {
 
 		// Do NOT test for post type's existence -- it might be registered incorrectly.
 		// If the metadata yields empty -- do not unset key! It'll override "defaults" that way.
-		foreach ( $data as $_post_type => &$meta )
+		foreach ( $data as &$meta )
 			$meta = $this->s_post_type_archive_meta( $meta );
 
 		return $data;
@@ -978,14 +973,15 @@ class Sanitize extends Admin_Pages {
 	 *
 	 * @since 2.8.2
 	 * @since 4.0.5 Now normalized `-` entities.
+	 * @since 4.2.7 Now converts nbsp before singleline, because singleline must also trim old nbsp.
 	 *
 	 * @param string $new_value The Description.
 	 * @return string One line sanitized description.
 	 */
 	public function s_description_raw( $new_value ) {
 
-		$new_value = $this->s_singleline( $new_value );
 		$new_value = $this->s_nbsp( $new_value );
+		$new_value = $this->s_singleline( $new_value );
 		$new_value = $this->s_tabs( $new_value );
 		$new_value = $this->s_hyphen( $new_value );
 		$new_value = $this->s_bsol( $new_value );
@@ -1026,6 +1022,7 @@ class Sanitize extends Admin_Pages {
 	 * @return string The input string without duplicated spaces.
 	 */
 	public function s_dupe_space( $new_value ) {
+		// TODO consider returning the original unicode space? Test if necessary.
 		return preg_replace( '/\p{Zs}{2,}/u', ' ', $new_value );
 	}
 
@@ -1053,6 +1050,12 @@ class Sanitize extends Admin_Pages {
 	 *              2. Added $escape parameter.
 	 * @since 3.2.4 Now selectively clears tags.
 	 * @since 4.1.0 Moved `figcaption`, `figure`, `footer`, and `tfoot`, from `space` to `clear`.
+	 * @since 4.2.7 1. No longer clears `figcaption`, `hr`, `link`, `meta`, `option`, or `tfoot`.
+	 *              2. Now clears `area`, `audio`, `datalist`, `del`, `dialog`, `dl`, `hgroup`, `menu`, `meter`, `ol`,
+	 *                 `object`, `output`, `progress`, `s`, `template`, and `ul`.
+	 *              3. Now adds spaces around `blockquote`, `details`, and `hr`.
+	 *              4. Now ignores `dd`, `dl`, `dt`, `li`, `main`, for they are inherently excluded or ignored anyway.
+	 *              5. Now processed the `auto_descripton_html_method` option for stripping tags.
 	 * @see `$this->strip_tags_cs()`
 	 *
 	 * @param string $excerpt          The excerpt.
@@ -1062,14 +1065,30 @@ class Sanitize extends Admin_Pages {
 	 */
 	public function s_excerpt( $excerpt = '', $allow_shortcodes = true, $escape = true ) {
 
-		// No need to parse an empty excerpt.
+		// No need to parse an empty excerpt. TODO consider not parsing '0' as well?
 		if ( '' === $excerpt ) return '';
 
+		// Oh, how I'd like PHP 8's match()...
+		switch ( $this->get_option( 'auto_descripton_html_method' ) ) {
+			case 'thorough':
+				$passes = 12;
+				break;
+			case 'accurate':
+				$passes = 6;
+				break;
+			default:
+			case 'fast':
+				$passes = 2;
+				break;
+		}
+
+		// Missing 'dd', 'dt', and 'li' -- these are obligatory subelements of what's already cleared.
 		$strip_args = [
-			'space' =>
-				[ 'article', 'aside', 'blockquote', 'br', 'dd', 'div', 'dl', 'dt', 'li', 'main', 'ol', 'p', 'section', 'ul' ],
-			'clear' =>
-				[ 'address', 'bdo', 'button', 'canvas', 'code', 'fieldset', 'figcaption', 'figure', 'footer', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'header', 'hr', 'iframe', 'input', 'label', 'link', 'meta', 'nav', 'noscript', 'option', 'pre', 'samp', 'script', 'select', 'style', 'svg', 'table', 'textarea', 'tfoot', 'var', 'video' ],
+			'space'  =>
+				[ 'article', 'br', 'blockquote', 'details', 'div', 'hr', 'p', 'section' ],
+			'clear'  =>
+				[ 'address', 'area', 'aside', 'audio', 'blockquote', 'button', 'canvas', 'code', 'datalist', 'del', 'dialog', 'dl', 'fieldset', 'figure', 'footer', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'header', 'hgroup', 'iframe', 'input', 'label', 'map', 'menu', 'meter', 'nav', 'noscript', 'ol', 'object', 'output', 'pre', 'progress', 's', 'script', 'select', 'style', 'svg', 'table', 'template', 'textarea', 'ul', 'video' ],
+			'passes' => $passes,
 		];
 
 		/**
@@ -1146,14 +1165,15 @@ class Sanitize extends Admin_Pages {
 	 * @since 2.8.2
 	 * @since 4.0.0 Now normalizes `&` entities.
 	 * @since 4.0.5 Now normalized `-` entities.
+	 * @since 4.2.7 Now converts nbsp before singleline, because singleline must also trim old nbsp.
 	 *
 	 * @param string $new_value The input Title.
 	 * @return string Sanitized, beautified and trimmed title.
 	 */
 	public function s_title_raw( $new_value ) {
 
-		$new_value = $this->s_singleline( $new_value );
 		$new_value = $this->s_nbsp( $new_value );
+		$new_value = $this->s_singleline( $new_value );
 		$new_value = $this->s_tabs( $new_value );
 		$new_value = $this->s_hyphen( $new_value );
 		$new_value = $this->s_bsol( $new_value );
@@ -1174,8 +1194,11 @@ class Sanitize extends Admin_Pages {
 	 */
 	public function s_knowledge_type( $new_value ) {
 
-		if ( \in_array( $new_value, [ 'person', 'organization' ], true ) )
-			return $new_value;
+		switch ( $new_value ) {
+			case 'person':
+			case 'organization':
+				return $new_value;
+		}
 
 		return 'organization';
 	}
@@ -1193,16 +1216,16 @@ class Sanitize extends Admin_Pages {
 	 */
 	public function s_left_right( $new_value ) {
 
-		if ( \in_array( $new_value, [ 'left', 'right' ], true ) )
-			return $new_value;
+		switch ( $new_value ) {
+			case 'left':
+			case 'right':
+				return $new_value;
+		}
 
-		$previous = $this->get_option( 'title_location' );
-
-		// Fallback if previous is also empty.
-		if ( ! $previous )
-			$previous = $this->get_default_option( 'title_location' );
-
-		return (string) $previous;
+		return (string) (
+			   $this->get_option( 'title_location' )
+			?: $this->get_default_option( 'title_location' )
+		);
 	}
 
 	/**
@@ -1218,16 +1241,16 @@ class Sanitize extends Admin_Pages {
 	 */
 	public function s_left_right_home( $new_value ) {
 
-		if ( \in_array( $new_value, [ 'left', 'right' ], true ) )
-			return $new_value;
+		switch ( $new_value ) {
+			case 'left':
+			case 'right':
+				return $new_value;
+		}
 
-		$previous = $this->get_option( 'home_title_location' );
-
-		// Fallback if previous is also empty.
-		if ( ! $previous )
-			$previous = $this->get_default_option( 'home_title_location' );
-
-		return (string) $previous;
+		return (string) (
+			   $this->get_option( 'home_title_location' )
+			?: $this->get_default_option( 'home_title_location' )
+		);
 	}
 
 	/**
@@ -1240,10 +1263,33 @@ class Sanitize extends Admin_Pages {
 	 */
 	public function s_alter_query_type( $new_value ) {
 
-		if ( \in_array( $new_value, [ 'in_query', 'post_query' ], true ) )
-			return $new_value;
+		switch ( $new_value ) {
+			case 'in_query':
+			case 'post_query':
+				return $new_value;
+		}
 
 		return 'in_query';
+	}
+
+	/**
+	 * Sanitizes the html method value.
+	 *
+	 * @since 4.2.7
+	 *
+	 * @param mixed $new_value Should ideally be a string 'fast', 'accurate', or 'thorough' passed in.
+	 * @return string 'fast', 'accurate', or 'thorough'.
+	 */
+	public function s_description_html_method( $new_value ) {
+
+		switch ( $new_value ) {
+			case 'fast':
+			case 'accurate':
+			case 'thorough':
+				return $new_value;
+		}
+
+		return 'fast';
 	}
 
 	/**
@@ -1316,7 +1362,7 @@ class Sanitize extends Admin_Pages {
 
 		if ( ! \is_array( $new_values ) ) return [];
 
-		foreach ( $new_values as $index => &$value )
+		foreach ( $new_values as &$value )
 			$value = $this->s_one_zero( $value );
 
 		return $new_values;
@@ -1640,7 +1686,7 @@ class Sanitize extends Admin_Pages {
 	 * @since 4.0.0 1. Removed rudimentary relative URL testing.
 	 *              2. Removed input transformation filters, and with that, removed redundant multisite spam protection.
 	 *              3. Now allows all protocols. Enjoy!
-	 *              4. Now no longer lets through double-absolute URLs (e.g. `https://google.com/https://google.com/path/to/file/`)
+	 *              4. Now no longer lets through double-absolute URLs (e.g. `https://example.com/https://example.com/path/to/file/`)
 	 *                 when filter `the_seo_framework_allow_external_redirect` is set to false.
 	 *
 	 * @param string $new_value String with potentially unwanted redirect URL.
@@ -1811,10 +1857,9 @@ class Sanitize extends Admin_Pages {
 		if ( ! $new_value ) {
 			// We assume something's wrong. Return default value.
 			$new_value = $this->get_default_option( 'sitemap_query_limit' );
-		} elseif ( $new_value < 1 ) {
-			$new_value = 1;
-		} elseif ( $new_value > 50000 ) {
-			$new_value = 50000;
+		} else {
+			// At least 1, at most 50000.
+			$new_value = max( 1, min( 50000, $new_value ) );
 		}
 
 		return $new_value;
@@ -1830,10 +1875,14 @@ class Sanitize extends Admin_Pages {
 	 */
 	public function s_image_preview( $new_value ) {
 
-		if ( ! \in_array( $new_value, [ 'none', 'standard', 'large' ], true ) )
-			$new_value = 'standard';
+		switch ( $new_value ) {
+			case 'none':
+			case 'standard':
+			case 'large':
+				return $new_value;
+		}
 
-		return $new_value;
+		return 'standard';
 	}
 
 	/**
@@ -1845,16 +1894,8 @@ class Sanitize extends Admin_Pages {
 	 * @return int The robots video and snippet preview directive value.
 	 */
 	public function s_snippet_length( $new_value ) {
-
-		$new_value = (int) $new_value;
-
-		if ( $new_value < 0 ) {
-			$new_value = -1;
-		} elseif ( $new_value > 600 ) {
-			$new_value = 600;
-		}
-
-		return $new_value;
+		// At least -1, at most 600.
+		return max( -1, min( 600, (int) $new_value ) );
 	}
 
 	/**
@@ -1900,6 +1941,7 @@ class Sanitize extends Admin_Pages {
 	 * @return string $content Without the paragraphs containing simple URLs.
 	 */
 	public function strip_paragraph_urls( $content ) {
+		// TODO maybe later, this would be faster: '/<p\b[^>]*>\s*https?:\/\/[^\s<>"]+\s*<\/p>/i'
 		return preg_replace( '/(<p(?: [^>]*)?>\s*)(https?:\/\/[^\s<>"]+)(\s*<\/p>)/i', '', $content );
 	}
 
@@ -1909,7 +1951,7 @@ class Sanitize extends Admin_Pages {
 	 * It essentially strips all tags, and replaces block-type tags' endings with spaces.
 	 * When done, it performs a sanity-cleanup via `strip_tags()`.
 	 *
-	 * Tip: You might want to use method `s_dupe_space()` to clear up the duplicated spaces afterward.
+	 * Tip: You might want to use method `s_dupe_space()` to clear up the duplicated/repeated spaces afterward.
 	 *
 	 * @since 3.2.4
 	 * @since 4.0.0 Now allows emptying the indexes `space` and `clear`.
@@ -1919,71 +1961,175 @@ class Sanitize extends Admin_Pages {
 	 *              4. Now performs a separate query for void elements; to prevent regex recursion.
 	 * @since 4.1.0 Now detects nested elements and preserves that content correctly--as if we'd pass through scrupulously beyond infinity.
 	 * @since 4.1.1 Can now replace void elements with spaces when so inclined via the arguments (space vs clear).
-	 * @link https://www.w3schools.com/html/html_blocks.asp
+	 * @since 4.2.7 1. Revamped the HTML lookup: it now (more) accurately processes HTML, and is less likely to be fooled by HTML tags
+	 *                 in attributes.
+	 *              2. The 'space' index no longer has default `fieldset`, `figcaption`, `form`, `main`, `nav`, `pre`, `table`, and `tfoot`.
+	 *              3. The space index now has added to default `details`, `hgroup`, and `hr`.
+	 *              4. The 'clear' index no longer has default `bdo`, `hr`, `link`, `meta`, `option`, `samp`, `style`, and `var`.
+	 *              5. The 'clear' index now has added to default `area`, `audio`, `datalist`, `del`, `dialog`, `fieldset`, `form`, `map`,
+	 *                 `menu`, `meter`, `nav`, `object`, `output`, `pre`, `progress`, `s`, `table`, and `template`.
+	 *              6. Added the 'passes' index to `$args`. This tells the maximum passes 'space' may process.
+	 *                 Read TSF option `auto_descripton_html_method` to use the user-defined method.
+	 *              7. Now replaces all elements passed with spaces. For void elements, or phrasing elements, you'd want to omit
+	 *                 those from '$args' so it falls through to `strip_tags()`.
+	 *              8. Added preparation memoization using cache delimiters `$args['space']` and `$args['clear']`.
+	 * @since 4.2.8 Elements with that start with exactly the same text as others won't be preemptively closed.
+	 *
+	 * @link https://developer.mozilla.org/en-US/docs/Web/Guide/HTML/Content_categories
 	 * @link https://html.spec.whatwg.org/multipage/syntax.html#void-elements
 	 *
 	 * @param string $input The input text that needs its tags stripped.
-	 * @param array  $args  The input arguments: {
-	 *                         'space'   : @param array|null HTML elements that should have a space added around it.
-	 *                                                       If not set or null, skip check.
-	 *                                                       If empty array, skips stripping; otherwise, use input.
-	 *                         'clear'   : @param array|null HTML elements that should be emptied and replaced with a space.
-	 *                                                       If not set or null, skip check.
-	 *                                                       If empty array, skips stripping; otherwise, use input.
-	 *                         'strip'   : @param bool       If set, strip_tags() is performed before returning the output.
-	 *                                                       Recommended always true, since Regex doesn't understand XML.
+	 * @param array  $args  The input arguments. Tags not included are ignored. {
+	 *                         'space'   : @param ?string[] HTML elements that should be processed for spacing. If the space
+	 *                                                      element is of void element type, it'll be treated as 'clear'.
+	 *                                                      If not set or null, skip check.
+	 *                                                      If empty array, skips stripping; otherwise, use input.
+	 *                         'clear'   : @param ?string[] HTML elements that should be emptied and replaced with a space.
+	 *                                                      If not set or null, skip check.
+	 *                                                      If empty array, skips stripping; otherwise, use input.
+	 *                         'strip'   : @param bool      If set, strip_tags() is performed before returning the output.
+	 *                                                      Recommended always true, since Regex doesn't understand XML.
+	 *                         'passes'  : @param int       The maximum number of passes 'space' may conduct. More is slower,
+	 *                                                      but more accurate.
 	 *                      }
 	 *                      NOTE: WARNING The array values are forwarded to a regex without sanitization/quoting.
 	 *                      NOTE: Unlisted, script, and style tags will be stripped via PHP's `strip_tags()`. (togglable via `$args['strip']`)
 	 *                            Also note that their contents are maintained as-is, without added spaces.
-	 *                            It is why you should always list `style` and `script` in the `clear` array.
-	 * @return string The output string without tags.
+	 *                            It is why you should always list `style` and `script` in the `clear` array, never in 'space'.
+	 * @return string The output string without tags. May have many stray and repeated spaces.
+	 *                Not secure for display! Don't trust this method. Always use esc_* functionality.
 	 */
 	public function strip_tags_cs( $input, $args = [] ) {
 
-		$default_args = [
-			'space' =>
-				[ 'address', 'article', 'aside', 'blockquote', 'br', 'dd', 'div', 'dl', 'dt', 'fieldset', 'figcaption', 'figure', 'footer', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'header', 'li', 'main', 'nav', 'ol', 'p', 'pre', 'section', 'table', 'tfoot', 'ul' ],
-			'clear' =>
-				[ 'bdo', 'button', 'canvas', 'code', 'hr', 'iframe', 'input', 'label', 'link', 'noscript', 'meta', 'option', 'samp', 'script', 'select', 'style', 'svg', 'textarea', 'var', 'video' ],
-			'strip' => true,
-		];
+		if ( false === strpos( $input, '<' ) ) return $input;
 
-		$void = [ 'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr' ];
+		/**
+		 * Find the optimized version in `s_excerpt()`. The defaults here treats HTML for a18y reading, not description generation.
+		 *
+		 * Contains HTML5 supported flow content elements only, even though browsers might behave differently.
+		 * https://developer.mozilla.org/en-US/docs/Web/Guide/HTML/Content_categories#flow_content
+		 *
+		 * Missing phrasing elements: 'a', 'abbr', 'b', 'bdo', 'bdi', 'cite', 'data', 'dfn', 'em', 'embed', 'i', 'img', 'ins', 'kbd',
+		 * 'mark', 'math', 'picture', 'q', 'ruby', 'samp', 'small', 'span', 'strong', 'sub', 'sup', 'time', 'u', 'var', and 'wbr'.
+		 * There's no need to add these, for they're cleared plainly by `strip_tags()`.
+		 *
+		 * Missing flow elements: 'link', 'meta'
+		 * There's no need to add these, for they are void content.
+		 *
+		 * Contains all form elements. Those must be stripped in almost any context.
+		 */
+		$default_args = [
+			'space'  =>
+				[ 'address', 'article', 'aside', 'br', 'blockquote', 'details', 'dd', 'div', 'dl', 'dt', 'figure', 'footer', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'header', 'hgroup', 'hr', 'li', 'ol', 'p', 'section', 'ul' ],
+			'clear'  =>
+				[ 'area', 'audio', 'button', 'canvas', 'code', 'datalist', 'del', 'dialog', 'fieldset', 'form', 'iframe', 'input', 'label', 'map', 'menu', 'meter', 'nav', 'noscript', 'object', 'output', 'pre', 'progress', 's', 'script', 'select', 'style', 'svg', 'table', 'template', 'textarea', 'video' ],
+			'strip'  => true,
+			'passes' => 1,
+		];
 
 		if ( ! $args ) {
 			$args = $default_args;
 		} else {
-			foreach ( [ 'space', 'clear' ] as $type ) {
-				if ( isset( $args[ $type ] ) )
-					$args[ $type ] = $args[ $type ] ? (array) $args[ $type ] : [];
-			}
-			$args['strip'] = $args['strip'] ?? $default_args['strip'];
+			// We don't use array_merge() here because we want to default these to [] when $args is given.
+			foreach ( [ 'clear', 'space' ] as $type )
+				$args[ $type ] = (array) ( $args[ $type ] ?? [] );
+
+			$args['strip']  = $args['strip'] ?? $default_args['strip'];
+			$args['passes'] = $args['passes'] ?? $default_args['passes'];
 		}
 
-		// Clear first, so there's less to process; then add spaces.
-		foreach ( [ 'clear', 'space' ] as $type ) {
-			if ( empty( $args[ $type ] ) ) continue;
+		$parse = umemo( __METHOD__ . '/parse', null, $args['space'], $args['clear'] );
+		// phpcs:ignore, WordPress.CodeAnalysis.AssignmentInCondition -- I know.
+		if ( ! $parse ) {
+			// Void elements never have content. 'param', 'source', 'track',
+			$void = [ 'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'wbr' ];
+			// Phrase elements should be replaced without spacing. There are more phrasing (54) than block elements (39)...
+			// Blocks: address, area, article, aside, audio, blockquote, br, button, canvas, dd, details, dialog, div, dl, dt, fieldset, figure, footer, form, h1, h2, h3, h4, h5, h6, header, hgroup, hr, li, ol, pre, table, td, template, textarea, th, tr, ul, video
+			// 'br' is a phrase element, but also a struct whitespace -- let's omit it so we can substitute it with a space as block.
+			$phrase = [ 'a', 'area', 'abbr', 'audio', 'b', 'bdo', 'bdi', 'button', 'canvas', 'cite', 'code', 'data', 'datalist', 'del', 'dfn', 'em', 'embed', 'i', 'iframe', 'img', 'input', 'ins', 'link', 'kbd', 'label', 'map', 'mark', 'meta', 'math', 'meter', 'noscript', 'object', 'output', 'picture', 'progress', 'q', 'ruby', 's', 'samp', 'script', 'select', 'small', 'span', 'strong', 'sub', 'sup', 'svg', 'textarea', 'time', 'u', 'var', 'video', 'wbr' ];
 
-			// void = element without content.
-			$void_query = array_intersect( $args[ $type ], $void );
-			// fill = <normal | template | raw text | escapable text | foreign> element.
-			$fill_query = array_diff( $args[ $type ], $void );
+			$marked_for_parsing = array_merge( $args['space'], $args['clear'] );
 
-			if ( $void_query ) {
-				$_regex   = sprintf( '<(%s)\b[^>]*?>', implode( '|', $void_query ) );
-				$_replace = 'space' === $type ? ' ' : '';
-				$input    = preg_replace( "/$_regex/si", $_replace, $input );
-			}
-			if ( $fill_query ) {
-				$_regex   = sprintf( '<(%s)\b[^>]*>([^<]*)(<\/\1>)?|(<\/?(?1)>)', implode( '|', $fill_query ) );
-				$_replace = 'space' === $type ? ' $2 ' : ' ';
-				$input    = preg_replace( "/$_regex/si", $_replace, $input );
+			$void_elements = array_intersect( $marked_for_parsing, $void );
+			$flow_elements = array_diff( $marked_for_parsing, $void );
+
+			$clear_elements = array_intersect( $flow_elements, $args['clear'] );
+
+			$parse = umemo(
+				__METHOD__ . '/parse',
+				[
+					// void = element without content.
+					'void_query'  => [
+						'phrase' => array_intersect( $void_elements, $phrase ),
+						'block'  => array_diff( $void_elements, $phrase ),
+					],
+					// fill = <normal | template | raw text | escapable text | foreign> element.
+					'clear_query' => [
+						'phrase' => array_intersect( $clear_elements, $phrase ),
+						'block'  => array_diff( $clear_elements, $phrase ),
+					],
+					'space_query' => [
+						'phrase' => array_intersect( $flow_elements, $args['space'] ),
+					],
+				],
+				$args['space'],
+				$args['clear']
+			);
+		}
+
+		foreach ( $parse as $query_type => $handles ) {
+			foreach ( $handles as $flow_type => $elements ) {
+				if ( false === strpos( $input, '<' ) || ! $elements ) break 2;
+
+				switch ( $query_type ) {
+					case 'void_query':
+						$input = preg_replace(
+							/**
+							 * This one grabs opening tags only, and no content.
+							 * Basically, the content and closing tag reader is split from clear_query/flow_query's regex.
+							 */
+							sprintf(
+								'/<(?:%s)\b(?:[^=>\/]+|(?>[^=>\/]*(?:=([\'"])[^\'"]+\g{-1})|[^>]+?)+)*?\/?>/i',
+								implode( '|', $elements )
+							),
+							'phrase' === $flow_type ? '' : ' ', // Add space if block, otherwise clear.
+							$input
+						) ?? '';
+						break;
+
+					case 'space_query':
+						$passes      = $args['passes'];
+						$replacement = ' $3 ';
+						// Fall through;
+					case 'clear_query':
+						$passes      = $passes ?? 1;
+						$replacement = $replacement ?? ( 'phrase' === $flow_type ? '' : ' ' );
+
+						$i = 0;
+						// To be most accurate, we should parse 'space' $type at least twice, up to 6 times. This is a performance hog.
+						// This is because we process the tags from the outer layer to the most inner. Each pass goes deeper.
+						while ( $i++ < $passes ) {
+							$pre_pass_input = $input;
+							// Akin to https://regex101.com/r/mOWqoL/1. (This might be outdated, copy work!)
+							$input = preg_replace(
+								sprintf(
+									'/<(%s)\b(?:[^=>\/]+|(?>[^=>\/]*(?:=([\'"])[^\'"]+\g{-1})|[^>]+?)+)*?(?:\/>(*ACCEPT))?>((?:[^<]*+(?:<(?!\/?\1\b)[^<]+)*|(?R)|$(*ACCEPT))+?)<\/\1\b[^>]*>/i',
+									implode( '|', $elements )
+								),
+								$replacement,
+								$input
+							) ?? '';
+							// If nothing changed, or no more HTML is present, we're done.
+							if ( $pre_pass_input === $input || false === strpos( $input, '<' ) ) break;
+						}
+						unset( $passes, $replacement );
+						break;
+				}
 			}
 		}
 
 		// phpcs:ignore, WordPress.WP.AlternativeFunctions.strip_tags_strip_tags -- $args defines stripping of 'script' and 'style'.
-		return $args['strip'] ? strip_tags( $input ) : $input;
+		return $args['strip'] ? \strip_tags( $input ) : $input;
 	}
 
 	/**
@@ -1994,31 +2140,35 @@ class Sanitize extends Admin_Pages {
 	 * @since 4.0.5 Now faults images with filename extensions APNG, BMP, ICO, TIFF, or SVG.
 	 * @since 4.1.4 Fixed theoretical issue where a different image could be set when width
 	 *              and height are supplied and either over 4K, but no ID is given.
+	 * @since 4.2.4 Now accepts, processes, and returns filesizes under index `filesize`.
 	 * @NOTE If the input details are in an associative array, they'll be converted to sequential.
 	 *
 	 * @param array $details The image details, either associative (see $defaults) or sequential.
 	 * @return array The image details array, sequential: int => {
-	 *    string url:    The image URL,
-	 *    int    id:     The image ID,
-	 *    int    width:  The image width in pixels,
-	 *    int    height: The image height in pixels,
-	 *    string alt:    The image alt tag,
+	 *    string url:      The image URL,
+	 *    int    id:       The image ID,
+	 *    int    width:    The image width in pixels,
+	 *    int    height:   The image height in pixels,
+	 *    string alt:      The image alt tag,
+	 *    int    filesize: The image filesize in bytes,
 	 * }
 	 */
 	public function s_image_details( $details ) {
 
+		// This is 350x faster than a polyfill for `array_is_list()`.
 		if ( array_values( $details ) === $details )
 			return $this->s_image_details_deep( $details );
 
 		$defaults = [
-			'url'    => '',
-			'id'     => 0,
-			'width'  => 0,
-			'height' => 0,
-			'alt'    => '',
+			'url'      => '',
+			'id'       => 0,
+			'width'    => 0,
+			'height'   => 0,
+			'alt'      => '',
+			'filesize' => 0,
 		];
 
-		[ $url, $id, $width, $height, $alt ] = array_values( array_merge( $defaults, $details ) );
+		[ $url, $id, $width, $height, $alt, $filesize ] = array_values( array_merge( $defaults, $details ) );
 
 		if ( ! $url ) return $defaults;
 
@@ -2036,7 +2186,7 @@ class Sanitize extends Admin_Pages {
 		 *
 		 * Tested with Facebook; they ignore them too. There's no documentation available.
 		 * TODO Should we even test for this here, or at the image generators' type?
-		 * It seems, however, that all services we want to communicate with ignore these types, anyway.
+		 * It seems, however, that _all_ services we want to communicate with ignore these types, anyway.
 		 */
 		if ( \in_array(
 			strtolower( strtok( pathinfo( $url, PATHINFO_EXTENSION ), '?' ) ),
@@ -2050,8 +2200,9 @@ class Sanitize extends Admin_Pages {
 		if ( ! $width || ! $height )
 			$width = $height = 0;
 
-		if ( $id && ( $width > 4096 || $height > 4096 ) ) {
-			$new_image = $this->get_largest_acceptable_image_src( $id, 4096 );
+		// TODO add filter for 5 * MB_IN_BYTES; Facebook allows 8MB; Twitter 5MB (Q4 2022).
+		if ( $id && ( $width > 4096 || $height > 4096 || $filesize > 5 * MB_IN_BYTES ) ) {
+			$new_image = $this->get_largest_acceptable_image_src( $id, 4096, 5 * MB_IN_BYTES );
 			$url       = $new_image ? $this->s_url_relative_to_current_scheme( $new_image[0] ) : '';
 
 			if ( ! $url ) return $defaults;
@@ -2068,21 +2219,23 @@ class Sanitize extends Admin_Pages {
 			$alt = \strlen( $alt ) > 420 ? $this->trim_excerpt( $alt, 0, 420 ) : $alt;
 		}
 
-		return compact( 'url', 'id', 'width', 'height', 'alt' );
+		return compact( 'url', 'id', 'width', 'height', 'alt', 'filesize' );
 	}
 
 	/**
 	 * Iterates over and cleans known parameters from image details. Also strips out duplicates.
 	 *
 	 * @since 4.0.0
+	 * @since 4.2.4 Now accepts, processes, and returns filesizes under index `filesize`.
 	 *
 	 * @param array $details_array The image details, preferably sequential.
 	 * @return array The image details array, sequential: int => {
-	 *    string url:    The image URL,
-	 *    int    id:     The image ID,
-	 *    int    width:  The image width in pixels,
-	 *    int    height: The image height in pixels,
-	 *    string alt:    The image alt tag,
+	 *    string url:      The image URL,
+	 *    int    id:       The image ID,
+	 *    int    width:    The image width in pixels,
+	 *    int    height:   The image height in pixels,
+	 *    string alt:      The image alt tag,
+	 *    int    filesize: The image filesize in bytes,
 	 * }
 	 */
 	public function s_image_details_deep( $details_array ) {

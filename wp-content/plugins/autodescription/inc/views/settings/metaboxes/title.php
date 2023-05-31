@@ -24,9 +24,11 @@ switch ( $this->get_view_instance( 'title', $instance ) ) :
 		$latest_post_id = $this->get_latest_post_id();
 		$latest_cat_id  = $this->get_latest_category_id();
 
-		// phpcs:ignore, WordPress.WP.AlternativeFunctions.strip_tags_strip_tags -- We don't expect users to set scripts in titles.
-		$post_name  = strip_tags( get_the_title( $latest_post_id ) ) ?: __( 'Example Post', 'autodescription' );
-		$post_title = $this->s_title( $this->hellip_if_over( $post_name, 60 ) );
+		$post_title = $this->s_title( $this->hellip_if_over(
+			// phpcs:ignore, WordPress.WP.AlternativeFunctions.strip_tags_strip_tags -- We don't expect users to set scripts in titles.
+			esc_html( strip_tags( get_the_title( $latest_post_id ) ) ?: __( 'Example Post', 'autodescription' ) ),
+			60
+		) );
 
 		$cat_prefix = $this->s_title( _x( 'Category:', 'category archive title prefix', 'default' ) );
 		$cat_title  = $this->s_title( $this->hellip_if_over(
@@ -36,19 +38,18 @@ switch ( $this->get_view_instance( 'title', $instance ) ) :
 		) );
 		$cat_title_full = sprintf(
 			/* translators: 1: Title prefix. 2: Title. */
-			_x( '%1$s %2$s', 'archive title', 'default' ),
+			esc_html_x( '%1$s %2$s', 'archive title', 'default' ),
 			$cat_prefix,
 			$cat_title
 		);
 
-		$example_post_left      = "<em>{$additions_left}{$post_name}</em>";
-		$example_post_right     = "<em>{$post_name}{$additions_right}</em>";
+		$example_post_left      = "<em>{$additions_left}{$post_title}</em>";
+		$example_post_right     = "<em>{$post_title}{$additions_right}</em>";
 		$example_tax_left_full  = "<em>{$additions_left}{$cat_title_full}</em>";
 		$example_tax_right_full = "<em>{$cat_title_full}{$additions_right}</em>";
 		$example_tax_left       = "<em>{$additions_left}{$cat_title}</em>";
 		$example_tax_right      = "<em>{$cat_title}{$additions_right}</em>";
 
-		HTML::header_title( __( 'Automated Title Settings', 'autodescription' ) );
 		HTML::description( __( 'The page title is prominently shown within the browser tab as well as within the search engine results pages.', 'autodescription' ) );
 
 		// Yes, this is a mess. But, we cannot circumvent this because we do not control the translations.
@@ -104,10 +105,9 @@ switch ( $this->get_view_instance( 'title', $instance ) ) :
 		<hr>
 		<?php
 		if (
-			! ( defined( 'TSF_DISABLE_SUGGESTIONS' ) && TSF_DISABLE_SUGGESTIONS )
+			   $this->_display_extension_suggestions()
 			&& ! current_theme_supports( 'title-tag' )
 			&& ! defined( 'TSFEM_E_TITLE_FIX' )
-			&& current_user_can( 'install_plugins' )
 		) {
 			?>
 			<h4>
@@ -181,7 +181,7 @@ switch ( $this->get_view_instance( 'title', $instance ) ) :
 			<?php
 			HTML::description( __( 'If the title consists of multiple parts, then the separator will go in-between them.', 'autodescription' ) );
 			?>
-			<p id="tsf-title-separator" class="tsf-fields">
+			<p id=tsf-title-separator class=tsf-fields>
 			<?php
 			foreach ( $title_separator as $name => $html ) {
 				vprintf(
@@ -231,12 +231,12 @@ switch ( $this->get_view_instance( 'title', $instance ) ) :
 	case 'title_additions_tab':
 		?>
 		<p>
-			<label for="<?php Input::field_id( 'site_title' ); ?>" class="tsf-toblock">
+			<label for="<?php Input::field_id( 'site_title' ); ?>" class=tsf-toblock>
 				<strong><?php esc_html_e( 'Site Title', 'autodescription' ); ?></strong>
 			</label>
 		</p>
 		<p class=tsf-title-wrap>
-			<input type="text" name="<?php Input::field_name( 'site_title' ); ?>" class="large-text" id="<?php Input::field_id( 'site_title' ); ?>" placeholder="<?= esc_attr( $this->s_title_raw( $this->get_filtered_raw_blogname() ) ) ?>" value="<?= $this->esc_attr_preserve_amp( $this->get_option( 'site_title' ) ) ?>" autocomplete=off />
+			<input type=text name="<?php Input::field_name( 'site_title' ); ?>" class=large-text id="<?php Input::field_id( 'site_title' ); ?>" placeholder="<?= esc_attr( $this->s_title_raw( $this->get_filtered_raw_blogname() ) ) ?>" value="<?= $this->esc_attr_preserve_amp( $this->get_option( 'site_title' ) ) ?>" autocomplete=off />
 		</p>
 		<?php
 		HTML::description( __( 'This option does not affect titles displayed directly on your website.', 'autodescription' ) );
@@ -251,9 +251,9 @@ switch ( $this->get_view_instance( 'title', $instance ) ) :
 		?>
 		<fieldset>
 			<legend><?php HTML::header_title( __( 'Site Title Location', 'autodescription' ) ); ?></legend>
-			<p id="tsf-title-location" class="tsf-fields">
-				<span class="tsf-toblock">
-					<input type="radio" name="<?php Input::field_name( 'title_location' ); ?>" id="<?php Input::field_id( 'title_location_left' ); ?>" value="left" <?php checked( $this->get_option( 'title_location' ), 'left' ); ?> />
+			<p id=tsf-title-location class=tsf-fields>
+				<span class=tsf-toblock>
+					<input type=radio name="<?php Input::field_name( 'title_location' ); ?>" id="<?php Input::field_id( 'title_location_left' ); ?>" value=left <?php checked( $this->get_option( 'title_location' ), 'left' ); ?> />
 					<label for="<?php Input::field_id( 'title_location_left' ); ?>">
 						<span><?php esc_html_e( 'Left:', 'autodescription' ); ?></span>
 						<?php
@@ -262,8 +262,8 @@ switch ( $this->get_view_instance( 'title', $instance ) ) :
 						?>
 					</label>
 				</span>
-				<span class="tsf-toblock">
-					<input type="radio" name="<?php Input::field_name( 'title_location' ); ?>" id="<?php Input::field_id( 'title_location_right' ); ?>" value="right" <?php checked( $this->get_option( 'title_location' ), 'right' ); ?> />
+				<span class=tsf-toblock>
+					<input type=radio name="<?php Input::field_name( 'title_location' ); ?>" id="<?php Input::field_id( 'title_location_right' ); ?>" value=right <?php checked( $this->get_option( 'title_location' ), 'right' ); ?> />
 					<label for="<?php Input::field_id( 'title_location_right' ); ?>">
 						<span><?php esc_html_e( 'Right:', 'autodescription' ); ?></span>
 						<?php
@@ -279,11 +279,11 @@ switch ( $this->get_view_instance( 'title', $instance ) ) :
 		<hr>
 
 		<?php HTML::header_title( __( 'Site Title Removal', 'autodescription' ) ); ?>
-		<div id="tsf-title-additions-toggle">
+		<div id=tsf-title-additions-toggle>
 			<?php
 			$info = HTML::make_info(
 				__( 'Always brand your titles. Search engines may ignore your titles with this feature enabled.', 'autodescription' ),
-				'https://developers.google.com/search/docs/advanced/appearance/good-titles-snippets#page-titles',
+				'https://developers.google.com/search/docs/advanced/appearance/title-link',
 				false
 			);
 
@@ -311,7 +311,7 @@ switch ( $this->get_view_instance( 'title', $instance ) ) :
 		<hr>
 
 		<?php HTML::header_title( __( 'Archive Title Prefixes', 'autodescription' ) ); ?>
-		<div id="tsf-title-prefixes-toggle">
+		<div id=tsf-title-prefixes-toggle>
 			<?php
 			$info = HTML::make_info(
 				__( "The prefix helps visitors and search engines determine what kind of page they're visiting.", 'autodescription' ),

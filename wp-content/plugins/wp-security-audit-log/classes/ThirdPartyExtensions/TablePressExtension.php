@@ -42,7 +42,7 @@ if ( ! class_exists( 'WSAL_TablePressExtension' ) ) {
 		 */
 		public function add_event_codes( $addon_event_codes ) {
 			$new_event_codes = array(
-				'yoast' => array(
+				'tablepress' => array(
 					'name'      => $this->get_plugin_name(),
 					'event_ids' => array( 8900, 8901, 8902, 8903, 8904, 8905, 8906, 8907, 8908 ),
 				),

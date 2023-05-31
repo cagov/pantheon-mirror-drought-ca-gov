@@ -45,21 +45,27 @@ class InfoBlocks {
 	 */
 	public function fetch_all() {
 
-		$info = array();
+		$info = [];
 
-		$res = \wp_remote_get( self::SOURCE_URL );
+		$res = wp_remote_get(
+			self::SOURCE_URL,
+			[
+				'timeout'    => 10,
+				'user-agent' => wpforms_get_default_user_agent(),
+			]
+		);
 
-		if ( \is_wp_error( $res ) ) {
+		if ( is_wp_error( $res ) ) {
 			return $info;
 		}
 
-		$body = \wp_remote_retrieve_body( $res );
+		$body = wp_remote_retrieve_body( $res );
 
 		if ( empty( $body ) ) {
 			return $info;
 		}
 
-		$body = \json_decode( $body, true );
+		$body = json_decode( $body, true );
 
 		return $this->verify_fetched( $body );
 	}
@@ -75,7 +81,7 @@ class InfoBlocks {
 	 */
 	protected function verify_fetched( $fetched ) {
 
-		$info = array();
+		$info = [];
 
 		if ( ! \is_array( $fetched ) ) {
 			return $info;
@@ -109,7 +115,7 @@ class InfoBlocks {
 	protected function get_by_license() {
 
 		$data     = $this->get_all();
-		$filtered = array();
+		$filtered = [];
 
 		if ( empty( $data ) || ! \is_array( $data ) ) {
 			return $filtered;
@@ -146,7 +152,7 @@ class InfoBlocks {
 	protected function get_first_with_id( $data ) {
 
 		if ( empty( $data ) || ! \is_array( $data ) ) {
-			return array();
+			return [];
 		}
 
 		foreach ( $data as $item ) {
@@ -156,7 +162,7 @@ class InfoBlocks {
 			}
 		}
 
-		return array();
+		return [];
 	}
 
 	/**
@@ -169,7 +175,7 @@ class InfoBlocks {
 	public function get_next() {
 
 		$data  = $this->get_by_license();
-		$block = array();
+		$block = [];
 
 		if ( empty( $data ) || ! \is_array( $data ) ) {
 			return $block;
@@ -198,27 +204,28 @@ class InfoBlocks {
 	 */
 	public function register_sent( $info_block ) {
 
-		$block_id = isset( $info_block['id'] ) ? \absint( $info_block['id'] ) : false;
+		$block_id = isset( $info_block['id'] ) ? absint( $info_block['id'] ) : false;
 
 		if ( empty( $block_id ) ) {
 			return;
 		}
 
 		$option_name = 'wpforms_email_summaries_info_blocks_sent';
-		$blocks      = \get_option( $option_name );
+		$blocks      = get_option( $option_name );
 
-		if ( empty( $blocks ) || ! \is_array( $blocks ) ) {
-			\update_option( $option_name, array( $block_id ) );
+		if ( empty( $blocks ) || ! is_array( $blocks ) ) {
+			update_option( $option_name, [ $block_id ] );
+
 			return;
 		}
 
-		if ( \in_array( $block_id, $blocks, true ) ) {
+		if ( in_array( $block_id, $blocks, true ) ) {
 			return;
 		}
 
 		$blocks[] = $block_id;
 
-		\update_option( $option_name, $blocks );
+		update_option( $option_name, $blocks );
 	}
 
 	/**

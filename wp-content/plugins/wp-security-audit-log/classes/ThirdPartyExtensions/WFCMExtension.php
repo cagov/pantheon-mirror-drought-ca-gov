@@ -92,11 +92,11 @@ if ( ! class_exists( 'WSAL_WFCMExtension' ) ) {
 
 			if ( ! empty( $events ) ) {
 				foreach ( $events as $event ) {
-					if ( 6028 === $event->alert_id ) {
+					if ( 6028 === $event['alert_id'] ) {
 						$files_modified[] = $event;
-					} elseif ( 6029 === $event->alert_id ) {
+					} elseif ( 6029 === $event['alert_id'] ) {
 						$files_added[] = $event;
-					} elseif ( 6030 === $event->alert_id ) {
+					} elseif ( 6030 === $event['alert_id'] ) {
 						$files_deleted[] = $event;
 					}
 				}

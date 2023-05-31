@@ -2,8 +2,8 @@
 Contributors: notification, bracketspace, Kubitomakita, tomaszadamowicz, insejn, mateuszgbiorczyk
 Tags: notification, notify, alert, email, mail, webhook, API, developer, framework
 Requires at least: 4.9
-Tested up to: 5.8
-Stable tag: 8.0.10
+Tested up to: 6.2
+Stable tag: 8.0.15
 Requires PHP: 7.0
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
@@ -301,6 +301,40 @@ Yes! We're offering a [custom plugin development](https://bracketspace.com/custo
 7. Default email disabler
 
 == Changelog ==
+
+= 8.0.15 =
+
+* [Fixed] Comment merge tags rendering empty values.
+* [Changed] Development dependencies got some security patches.
+* [Changed] `notification/merge_tag/value/resolve` now accepts unsanitized value.
+
+= 8.0.14 =
+
+* [Fixed] Outdated dochoooks compatibility file, causing a fatal error while adding new post in some environments.
+
+= 8.0.13 =
+
+* [Fixed] Regression with REST API check.
+* [Changed] `repeater_api` internal runtime component to `api`.
+* [Added] `get_endpoint` method to the API class.
+
+= 8.0.12 =
+
+* [Changed] Logic of assigning property name is moved to Abstract Merge Tag Class.
+* [Added] Property names to Term Merge Tags.
+* [Added] 6h cache expire to the user queries.
+* [Added] Email / Merge tag recipient now can also be separated with semicolon.
+* [Added] Endpoint to check whether the REST api is enabled.
+
+= 8.0.11 =
+
+* [Changed] Add php_xml to required php extensions.
+* [Changed] Background processing cache is being stored in transient instead of an option.
+* [Fixed] PHP 8.0 and 8.1 compatibility.
+* [Fixed] Improper caching expiration times.
+* [Fixed] Trigger keeping state between subsequent action runs.
+* [Fixed] Password reset trigger is not processed on user registration anymore.
+* [Added] Trigger `resume()` method to reset the stopped state.
 
 = 8.0.10 =
 

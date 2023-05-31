@@ -8,7 +8,7 @@ namespace The_SEO_Framework\Builders\SEOBar;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2019 - 2022 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2019 - 2023 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -94,15 +94,12 @@ final class Term extends Main {
 	 * @param array $query_cache The current query cache. Passed by reference.
 	 */
 	protected function prime_query_cache( array &$query_cache = [] ) {
-
-		$term = \get_term( static::$query['id'], static::$query['taxonomy'] );
-
 		$query_cache = [
-			'term'   => $term,
+			'term'   => \get_term( static::$query['id'], static::$query['taxonomy'] ),
 			'meta'   => static::$tsf->get_term_meta( static::$query['id'], true ), // Use TSF cache--TSF initializes it anyway.
 			'states' => [
 				'locale'       => \get_locale(),
-				'isempty'      => empty( $term->count ),
+				'isempty'      => ! static::$tsf->is_term_populated( static::$query['id'], static::$query['taxonomy'] ),
 				'posttypes'    => static::$tsf->get_post_types_from_taxonomy( static::$query['taxonomy'] ),
 				'robotsmeta'   => array_merge(
 					[
@@ -224,7 +221,7 @@ final class Term extends Main {
 		if ( \strlen( $title_part ) ) {
 			$item = $cache['defaults']['custom'];
 
-			if ( static::$tsf->has_yoast_syntax( $title_part, false ) ) {
+			if ( static::$tsf->has_unprocessed_syntax( $title_part, false ) ) {
 				$item['status']           = \The_SEO_Framework\Interpreters\SEOBar::STATE_BAD;
 				$item['reason']           = $cache['reason']['syntax'];
 				$item['assess']['syntax'] = $cache['assess']['syntax'];
@@ -417,7 +414,7 @@ final class Term extends Main {
 		if ( \strlen( $desc ) ) {
 			$item = $cache['defaults']['custom'];
 
-			if ( static::$tsf->has_yoast_syntax( $desc ) ) {
+			if ( static::$tsf->has_unprocessed_syntax( $desc ) ) {
 				$item['status']           = \The_SEO_Framework\Interpreters\SEOBar::STATE_BAD;
 				$item['reason']           = $cache['reason']['syntax'];
 				$item['assess']['syntax'] = $cache['assess']['syntax'];

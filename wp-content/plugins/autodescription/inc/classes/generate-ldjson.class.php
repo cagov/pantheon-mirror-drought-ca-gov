@@ -10,7 +10,7 @@ namespace The_SEO_Framework;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2015 - 2022 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2015 - 2023 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -146,18 +146,12 @@ class Generate_Ldjson extends Generate_Image {
 	 */
 	public function render_ld_json_scripts() {
 
-		if ( $this->is_real_front_page() ) {
-			// Homepage Schema.
-			$output = '';
+		// Homepage Schema.org
+		if ( $this->is_real_front_page() )
+			return $this->get_ld_json_website() . $this->get_ld_json_links();
 
-			$output .= $this->get_ld_json_website() ?: '';
-			$output .= $this->get_ld_json_links() ?: '';
-		} else {
-			// All other pages' Schema.
-			$output = $this->get_ld_json_breadcrumbs() ?: '';
-		}
-
-		return $output;
+		// All other pages' Schema.org
+		return $this->get_ld_json_breadcrumbs();
 	}
 
 	/**
@@ -166,6 +160,7 @@ class Generate_Ldjson extends Generate_Image {
 	 * @since 2.9.3
 	 * @since 3.0.0 This whole functions now only listens to the searchbox option.
 	 * @since 4.1.2 Now properly slashes the search URL.
+	 * @since 4.2.4 Added EntryPoint definition (from implied to implicit)
 	 *
 	 * @return string escaped LD+JSON Search and Sitename script.
 	 */
@@ -201,7 +196,7 @@ class Generate_Ldjson extends Generate_Image {
 		 */
 		$search_url = (string) \apply_filters( 'the_seo_framework_ld_json_search_url', $search_link );
 
-		if ( ! empty( $GLOBALS['wp_rewrite']->get_search_permastruct() ) ) {
+		if ( $GLOBALS['wp_rewrite']->get_search_permastruct() ) {
 			$pattern    = \user_trailingslashit( '%s{%s}', 'search' );
 			$search_url = \trailingslashit( $search_url );
 		}
@@ -210,7 +205,10 @@ class Generate_Ldjson extends Generate_Image {
 			'potentialAction' => [
 				'@type'       => 'SearchAction',
 				// not properly sanitized; however, search_term_string is inert.
-				'target'      => sprintf( $pattern, \esc_url( $search_url ), $action_name ),
+				'target'      => [
+					'@type'       => 'EntryPoint',
+					'urlTemplate' => sprintf( $pattern, \esc_url( $search_url ), $action_name ),
+				],
 				'query-input' => sprintf( 'required name=%s', $action_name ),
 			],
 		];
@@ -221,7 +219,7 @@ class Generate_Ldjson extends Generate_Image {
 		$json = $this->receive_json_data( $key );
 
 		if ( $json )
-			return '<script type="application/ld+json">' . $json . '</script>' . "\r\n";
+			return '<script type="application/ld+json">' . $json . '</script>' . "\n"; // Keep XHTML valid!
 
 		return '';
 	}
@@ -277,7 +275,7 @@ class Generate_Ldjson extends Generate_Image {
 		$sameurls = [];
 		foreach ( $sameurls_options as $_o ) {
 
-			$_ov = $this->get_option( $_o ) ?: '';
+			$_ov = $this->get_option( $_o );
 
 			if ( $_ov )
 				$sameurls[] = \esc_url_raw( $_ov, [ 'https', 'http' ] );
@@ -294,7 +292,7 @@ class Generate_Ldjson extends Generate_Image {
 		$json = $this->receive_json_data( $key );
 
 		if ( $json )
-			return '<script type="application/ld+json">' . $json . '</script>' . "\r\n";
+			return '<script type="application/ld+json">' . $json . '</script>' . "\n"; // Keep XHTML valid!
 
 		return '';
 	}
@@ -329,6 +327,7 @@ class Generate_Ldjson extends Generate_Image {
 	 * Generates LD+JSON Breadcrumbs script.
 	 *
 	 * @since 2.9.3
+	 * @since 4.2.4 Exchanged "is_single" test for "is_post_type_hierarchical".
 	 *
 	 * @return string LD+JSON Breadcrumbs script.
 	 */
@@ -340,11 +339,10 @@ class Generate_Ldjson extends Generate_Image {
 		$output = '';
 
 		if ( $this->is_singular() && ! $this->is_real_front_page() ) {
-			// TODO Shouldn't this be is_post_type_hierarchical()?
-			if ( $this->is_single() ) {
-				$output = $this->get_ld_json_breadcrumbs_post();
-			} else {
+			if ( \is_post_type_hierarchical( $this->get_post_type_real_ID() ) ) {
 				$output = $this->get_ld_json_breadcrumbs_page();
+			} else {
+				$output = $this->get_ld_json_breadcrumbs_post();
 			}
 		}
 
@@ -414,8 +412,8 @@ class Generate_Ldjson extends Generate_Image {
 		$output = '';
 
 		$post_id    = $this->get_the_real_ID();
-		$post_type  = \get_post_type( $post_id );
-		$taxonomies = $this->get_hierarchical_taxonomies_as( 'names', \get_post_type( $post_id ) );
+		$post_type  = $this->get_post_type_real_ID( $post_id );
+		$taxonomies = $this->get_hierarchical_taxonomies_as( 'names', $post_type );
 
 		/**
 		 * @since 3.0.0
@@ -461,7 +459,7 @@ class Generate_Ldjson extends Generate_Image {
 		if ( empty( $terms ) )
 			return '';
 
-		$terms = \wp_list_pluck( $terms, 'parent', 'term_id' );
+		$terms = \array_column( $terms, 'parent', 'term_id' );
 
 		$parents      = [];
 		$assigned_ids = [];
@@ -479,20 +477,16 @@ class Generate_Ldjson extends Generate_Image {
 				$parents[ $term_id ] = [];
 			}
 		endforeach;
-		// Circle of life...
+
 		unset( $terms );
 
 		if ( ! $parents )
 			return '';
 
 		// Seed out parents that have multiple assigned children.
-		foreach ( $parents as $pa_id => $child_id ) :
-			foreach ( $child_id as $ckey => $cid ) :
-				if ( isset( $parents[ $cid ] ) ) {
-					unset( $parents[ $cid ] );
-				}
-			endforeach;
-		endforeach;
+		foreach ( $parents as $child_id )
+			foreach ( $child_id as $cid )
+				unset( $parents[ $cid ] );
 
 		// Merge tree list.
 		$tree_ids = $this->build_ld_json_breadcrumb_trees( $parents );
@@ -500,8 +494,7 @@ class Generate_Ldjson extends Generate_Image {
 		if ( ! $tree_ids )
 			return '';
 
-		$primary_term    = $this->get_primary_term( $post_id, $taxonomy );
-		$primary_term_id = $primary_term ? (int) $primary_term->term_id : 0;
+		$primary_term_id = $this->get_primary_term_id( $post_id, $taxonomy );
 
 		$filtered = false;
 		/**
@@ -543,7 +536,6 @@ class Generate_Ldjson extends Generate_Image {
 						 ?: $this->get_static_untitled_title();
 			}
 
-			// Store in cache.
 			$items[] = [
 				'@type'    => 'ListItem',
 				'position' => $position,
@@ -592,7 +584,7 @@ class Generate_Ldjson extends Generate_Image {
 					// Nested categories.
 					$add = [];
 
-					foreach ( $kitten as $kit_id => $child_id ) {
+					foreach ( $kitten as $child_id ) {
 						// Only add if non-existent in $trees.
 						if ( ! \in_array( $child_id, $trees, true ) )
 							$add[] = $child_id;
@@ -757,7 +749,7 @@ class Generate_Ldjson extends Generate_Image {
 		$it++;
 
 		if ( $json )
-			return '<script type="application/ld+json">' . $json . '</script>' . "\r\n";
+			return '<script type="application/ld+json">' . $json . '</script>' . "\n"; // Keep XHTML valid!
 
 		return '';
 	}

@@ -1,21 +1,21 @@
 <?php
 /**
- * @link              http://www.deepenbajracharya.com.np
+ * @link              http://imdpen.com
  * @since             1.0.0
  * @package           Inactive Logout
  *
  * Plugin Name:       Inactive Logout
- * Plugin URI:        https://www.deepenbajracharya.com.np
+ * Plugin URI:        https://inactive-logout.com/
  * Description:       Automatically logout idle user sessions, even if they are on the front end! Fully configurable & easy to use.
- * Version:           2.0.2
+ * Version:           3.1.6
  * Author:            Deepen Bajracharya
- * Author URI:        https://www.deepenbajracharya.com.np
+ * Author URI:        https://inactive-logout.com/
  * License:           GPL-2.0+
  * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
  * Text Domain:       inactive-logout
  * Domain Path:       /lang
- * Requires at least: 5.3
- * Requires PHP:      5.6
+ * Requires at least: 5.8
+ * Requires PHP:      7.1
  **/
 
 // Not Permission to agree more or less then given.
@@ -23,21 +23,21 @@ if ( ! defined( 'ABSPATH' ) ) {
 	die( '-1' );
 }
 
-define( 'INA_PLUGIN_ABS_NAME', plugin_basename( __FILE__ ) );
-define( 'INACTIVE_LOGOUT_SLUG', 'inactive-logout' );
-define( 'INACTIVE_LOGOUT_DIR_PATH', trailingslashit( plugin_dir_path( __FILE__ ) ) );
-define( 'INACTIVE_LOGOUT_DIR_URI', trailingslashit( plugin_dir_url( __FILE__ ) ) );
-define( 'INACTIVE_LOGOUT_VIEWS', INACTIVE_LOGOUT_DIR_PATH . 'views' );
-define( 'INACTIVE_LOGOUT_ASSETS_URL', INACTIVE_LOGOUT_DIR_URI . 'assets/' );
-define( 'INACTIVE_LOGOUT_VENDOR_URL', INACTIVE_LOGOUT_DIR_URI . 'assets/vendor/' );
-define( 'INACTIVE_LOGOUT_VERSION', '2.0.2' );
+defined( 'INACTIVE_LOGOUT_ABS_NAME' ) || define( 'INACTIVE_LOGOUT_ABS_NAME', plugin_basename( __FILE__ ) );
+defined( 'INACTIVE_LOGOUT_REQUIRED_PHP' ) || define( 'INACTIVE_LOGOUT_REQUIRED_PHP', '7.1' );
+defined( 'INACTIVE_LOGOUT_SLUG' ) || define( 'INACTIVE_LOGOUT_SLUG', 'inactive-logout' );
+defined( 'INACTIVE_LOGOUT_DIR_PATH' ) || define( 'INACTIVE_LOGOUT_DIR_PATH', trailingslashit( plugin_dir_path( __FILE__ ) ) );
+defined( 'INACTIVE_LOGOUT_DIR_URI' ) || define( 'INACTIVE_LOGOUT_DIR_URI', trailingslashit( plugin_dir_url( __FILE__ ) ) );
+defined( 'INACTIVE_LOGOUT_BUILD_URI' ) || define( 'INACTIVE_LOGOUT_BUILD_URI', INACTIVE_LOGOUT_DIR_URI . 'build' );
+defined( 'INACTIVE_LOGOUT_VIEWS' ) || define( 'INACTIVE_LOGOUT_VIEWS', INACTIVE_LOGOUT_DIR_PATH . 'views' );
+defined( 'INACTIVE_LOGOUT_VERSION' ) || define( 'INACTIVE_LOGOUT_VERSION', '3.1.6' );
 
-//Helper Load
-require_once dirname( __FILE__ ) . '/src/class-inactive-logout-helpers.php';
+//Legacy support
+require_once dirname( __FILE__ ) . '/legacy/class-inactive-logout-helpers.php';
 
-// The main plugin class.
-require_once dirname( __FILE__ ) . '/src/class-inactive-logout-main.php';
+//require autoload
+require INACTIVE_LOGOUT_DIR_PATH . 'vendor/autoload.php';
+require INACTIVE_LOGOUT_DIR_PATH . 'core/Bootstrap.php';
 
-add_action( 'plugins_loaded', array( 'Inactive_Logout_Main', 'instance' ), 99 );
-register_activation_hook( __FILE__, array( 'Inactive_Logout_Main', 'ina_activate' ) );
-register_deactivation_hook( __FILE__, array( 'Inactive_Logout_Main', 'ina_deactivate' ) );
+register_activation_hook( __FILE__, 'Codemanas\InactiveLogout\Bootstrap::activate' );
+register_deactivation_hook( __FILE__, 'Codemanas\InactiveLogout\Bootstrap::deactivate' );

@@ -42,14 +42,16 @@ class Replacer
   {
       $this->post_id = $post_id;
 
+			$source_file = false;
       if (function_exists('wp_get_original_image_path')) // WP 5.3+
       {
           $source_file = wp_get_original_image_path($post_id);
-          if ($source_file === false) // if it's not an image, returns false, use the old way.
-            $source_file = trim(get_attached_file($post_id, apply_filters( 'emr_unfiltered_get_attached_file', true )));
-      }
-      else
-        $source_file = trim(get_attached_file($post_id, apply_filters( 'emr_unfiltered_get_attached_file', true )));
+			}
+
+			if (false === $source_file)
+			{
+				$source_file = trim(get_attached_file($post_id, apply_filters( 'emr_unfiltered_get_attached_file', true )));
+			}
 
       /* It happens that the SourceFile returns relative / incomplete when something messes up get_upload_dir with an error something.
          This case shoudl be detected here and create a non-relative path anyhow..
@@ -62,7 +64,7 @@ class Replacer
       }
 
       Log::addDebug('SourceFile ' . $source_file);
-      $this->sourceFile = new File($source_file);
+      $this->sourceFile = $this->fs()->getFile($source_file);
 
       $this->source_post = get_post($post_id);
       $this->source_is_image = wp_attachment_is('image', $this->source_post);
@@ -78,9 +80,13 @@ class Replacer
       }
       else
         $this->source_url = wp_get_attachment_url($post_id);
-    //  $this->ThumbnailUpdater = new \ThumbnailUpdater($post_id);
-      //$this->ThumbnailUpdater->setOldMetadata($this->source_metadata);
+
   }
+
+	private function fs()
+	{
+		return emr()->filesystem();
+	}
 
   public function setMode($mode)
   {
@@ -107,6 +113,7 @@ class Replacer
       $this->targetName = $fileName;
 
       $targetFile = $this->getTargetFile();
+			$fs = $this->fs();
 
       if (is_null($targetFile))
       {
@@ -115,34 +122,48 @@ class Replacer
       //  throw new \RuntimeException($ex);
       }
 
-      $targetFileObj = new File($targetFile);
-      $result = $targetFileObj->checkAndCreateFolder();
+      $targetFileObj = $fs->getFile($targetFile);
+      $directoryObj = $targetFileObj->getFileDir();
+			$result = $directoryObj->check();
+
       if ($result === false)
         Log::addError('Directory creation for targetFile failed');
 
+			$permissions = $this->sourceFile->getPermissions();
 
       $this->removeCurrent(); // tries to remove the current files.
-
       /* @todo See if wp_handle_sideload / wp_handle_upload can be more securely used for this */
-      $result_moved = move_uploaded_file($file,$targetFile);
+				// @todo Use FS / File copy for this.
 
-      if (false === $result_moved)
-      {
-        $ex = sprintf( esc_html__('The uploaded file could not be moved to %1$s. This is most likely an issue with permissions, or upload failed.', "enable-media-replace"), $targetFile );
-        throw new \RuntimeException($ex);
-      }
+				$fileObj = $fs->getFile($file);
+        $result_moved = $fileObj->move($targetFileObj);
+
+        if (false === $result_moved)
+        {
+					if ($targetFileObj->exists())
+					{
+						 Log::addDebug('Could remove file from tmp directory?');
+					}
+					else {
+						$ex = sprintf( esc_html__('The uploaded file could not be moved to %1$s. This is most likely an issue with permissions, or upload failed.', "enable-media-replace"), $targetFile );
+	          throw new \RuntimeException($ex);
+					}
+
+        }
 
       // init targetFile.
-      $this->targetFile = new File($targetFile);
+      $this->targetFile = $fs->getFile($targetFile);
 
-      if ($this->sourceFile->getPermissions() > 0)
-        chmod( $targetFile, $this->sourceFile->getPermissions() ); // restore permissions
+      if ($permissions > 0)
+        chmod( $targetFile, $permissions ); // restore permissions
       else {
         Log::addWarn('Setting permissions failed');
       }
 
+
       // update the file attached. This is required for wp_get_attachment_url to work.
-      $updated = update_attached_file($this->post_id, $this->targetFile->getFullFilePath() );
+			// Using RawFullPath because FullPath does normalize path, which update_attached_file doesn't so in case of windows / strange Apspaths it fails.
+      $updated = update_attached_file($this->post_id, $this->targetFile->getRawFullPath() );
       if (! $updated)
         Log::addError('Update Attached File reports as not updated or same value');
 
@@ -150,31 +171,31 @@ class Replacer
 
       // Run the filter, so other plugins can hook if needed.
       $filtered = apply_filters( 'wp_handle_upload', array(
-          'file' => $this->targetFile->getFullFilePath(),
+          'file' => $this->targetFile->getFullPath(),
           'url'  => $this->target_url,
-          'type' => $this->targetFile->getFileMime(),
+          'type' => $this->targetFile->getMime(),
       ), 'sideload');
 
       // check if file changed during filter. Set changed to attached file meta properly.
-      if (isset($filtered['file']) && $filtered['file'] != $this->targetFile->getFullFilePath() )
+      if (isset($filtered['file']) && $filtered['file'] != $this->targetFile->getFullPath() )
       {
         update_attached_file($this->post_id, $filtered['file'] );
-        $this->targetFile = new File($filtered['file']);  // handle as a new file
+        $this->targetFile = $this->fs()->getFile($filtered['file']);  // handle as a new file
         Log::addInfo('WP_Handle_upload filter returned different file', $filtered);
       }
 
 			// Check and update post mimetype, otherwise badly coded plugins cry.
 		  $post_mime = get_post_mime_type($this->post_id);
-			$target_mime = $this->targetFile->getFileMime();
+			$target_mime = $this->targetFile->getMime();
 
 			// update DB post mime type, if somebody decided to mess it up, and the target one is not empty.
 			if ($target_mime !== $post_mime && strlen($target_mime) > 0)
 			{
 
-				  \wp_update_post(array('post_mime_type' => $this->targetFile->getFileMime(), 'ID' => $this->post_id));
+				  \wp_update_post(array('post_mime_type' => $this->targetFile->getMime(), 'ID' => $this->post_id));
 			}
 
-      $metadata = wp_generate_attachment_metadata( $this->post_id, $this->targetFile->getFullFilePath() );
+      $metadata = wp_generate_attachment_metadata( $this->post_id, $this->targetFile->getFullPath() );
       wp_update_attachment_metadata( $this->post_id, $metadata );
       $this->target_metadata = $metadata;
 
@@ -189,6 +210,7 @@ class Replacer
       {
         delete_post_meta($this->post_id, '_emr_replace_author');
       }
+
 
       if ($this->replaceMode == self::MODE_SEARCHREPLACE)
       {
@@ -222,6 +244,8 @@ class Replacer
 
       }  // SEARCH REPLACE MODE
 
+
+// FROM HERE STATS THE MODULE
       $args = array(
           'thumbnails_only' => ($this->replaceMode == self::MODE_SEARCHREPLACE) ? false : true,
       );
@@ -259,7 +283,7 @@ class Replacer
   protected function getNewTitle()
   {
     // get basename without extension
-    $title = basename($this->targetFile->getFileName(), '.' . $this->targetFile->getFileExtension());
+    $title = basename($this->targetFile->getFileName(), '.' . $this->targetFile->getExtension());
     $meta = $this->target_metadata;
 
     if (isset($meta['image_meta']))
@@ -304,10 +328,23 @@ class Replacer
      return $this->sourceFile;
   }
 
+
+	public function getSourceUrl()
+	{
+		  return $this->source_url;
+	}
+
   public function setNewTargetLocation($new_rel_location)
   {
       $uploadDir = wp_upload_dir();
       $newPath = trailingslashit($uploadDir['basedir']) . $new_rel_location;
+
+      // Detect traversal by making sure the canonical path starts with uploads' basedir.
+      if (($newPath = realpath($newPath)) && strpos($newPath, $uploadDir['basedir']) !== 0)
+	  {
+        Notices::addError(__('Specificed directory is outside the upload directory. This is not allowed for security reasons', 'enable-media-replace'));
+        return false;
+      }
 
       if (! is_dir($newPath))
       {
@@ -324,14 +361,14 @@ class Replacer
     $targetPath = null;
     if ($this->replaceMode == self::MODE_REPLACE)
     {
-      $targetFile = $this->sourceFile->getFullFilePath(); // overwrite source
+      $targetFile = $this->sourceFile->getFullPath(); // overwrite source
     }
     elseif ($this->replaceMode == self::MODE_SEARCHREPLACE)
     {
-        $path = $this->sourceFile->getFilePath();
+        $path = (string) $this->sourceFile->getFileDir();
         if ($this->target_location) // Replace to another path.
         {
-           $otherTarget = new File($this->target_location . $this->targetName);
+           $otherTarget = $this->fs()->getFile($this->target_location . $this->targetName);
            if ($otherTarget->exists())
            {
               Notices::addError(__('In specificied directory there is already a file with the same name. Can\'t replace.', 'enable-media-replace'));
@@ -343,7 +380,7 @@ class Replacer
         $targetpath = $path . $this->targetName;
 
         // If the source and target path AND filename are identical, user has wrong mode, just overwrite the sourceFile.
-        if ($targetpath == $this->sourceFile->getFullFilePath())
+        if ($targetpath == $this->sourceFile->getFullPath())
         {
             $unique = $this->sourceFile->getFileName();
             $this->replaceMode == self::MODE_REPLACE;
@@ -390,7 +427,7 @@ class Replacer
     if (strpos($url, '://') === false)
     {
         $uploads = wp_get_upload_dir();
-        $url = str_replace($uploads['basedir'], $uploads['baseurl'], $this->targetFile->getFullFilePath());
+        $url = str_replace($uploads['basedir'], $uploads['baseurl'], $this->targetFile->getFullPath());
     }
     // This can happen when WordPress is not taking from attached file, but wrong /old GUID. Try to replace it to the new one.
     elseif ($this->targetFile->getFileName() != $url_basename)
@@ -399,7 +436,6 @@ class Replacer
     }
 
     return $url;
-    //$this->targetFile
 
   }
 
@@ -412,17 +448,19 @@ class Replacer
     $backup_sizes = get_post_meta( $this->post_id, '_wp_attachment_backup_sizes', true );
 
     // this must be -scaled if that exists, since wp_delete_attachment_files checks for original_files but doesn't recheck if scaled is included since that the one 'that exists' in WP . $this->source_file replaces original image, not the -scaled one.
-    $file = $this->sourceFile->getFullFilePath();
+    $file = $this->sourceFile->getFullPath();
     $result = \wp_delete_attachment_files($this->post_id, $meta, $backup_sizes, $file );
 
     // If Attached file is not the same path as file, this indicates a -scaled images is in play.
+	  // Also plugins like Polylang tend to block delete image while there is translation / duplicate item somewhere
+		// 10/06/22 : Added a hard delete if file still exists.  Be gone, hard way.
     $attached_file = get_attached_file($this->post_id);
-    if ($file !== $attached_file && file_exists($attached_file))
+    if (file_exists($attached_file))
     {
        @unlink($attached_file);
     }
 
-
+    do_action( 'emr_after_remove_current', $this->post_id, $meta, $backup_sizes, $file );
   }
 
   /** Handle new dates for the replacement */
@@ -466,8 +504,9 @@ class Replacer
     $base_url = str_replace('.' . pathinfo($base_url, PATHINFO_EXTENSION), '', $base_url);
 
 
+		$abspath = $this->fs()->getWPAbsPath();
     /** Fail-safe if base_url is a whole directory, don't go search/replace */
-    if (is_dir($base_url))
+    if (strpos($abspath, $base_url) === 0 && is_dir($base_url))
     {
       Log::addError('Search Replace tried to replace to directory - ' . $base_url);
       Notices::addError(__('Fail Safe :: Source Location seems to be a directory.', 'enable-media-replace'));
@@ -484,10 +523,11 @@ class Replacer
     // get relurls of both source and target.
     $urls = $this->getRelativeURLS();
 
-
     if ($args['thumbnails_only'])
     {
-      foreach($urls as $side => $data)
+//			if (isset($urls['source']['file']) && $urls['source'])
+
+      /*foreach($urls as $side => $data)
       {
         if (isset($data['base']))
         {
@@ -497,7 +537,7 @@ class Replacer
         {
           unset($urls[$side]['file']);
         }
-      }
+      } */
     }
 
     $search_urls = $urls['source'];
@@ -514,8 +554,18 @@ class Replacer
       }
     }
 
-    Log::addDebug('Source', $this->source_metadata);
-    Log::addDebug('Target', $this->target_metadata);
+		// Original can be unbalanced
+		if (isset($search_urls['original']))
+		{
+			 if (! isset($replace_urls['original']))
+			 {
+				  $replace_urls['original'] = $replace_urls['file'];
+			 }
+		}
+
+
+    Log::addDebug('Source', $search_urls);
+    Log::addDebug('Target', $replace_urls);
     /* If on the other hand, some sizes are available in source, but not in target, try to replace them with something closeby.  */
     foreach($search_urls as $size => $url)
     {
@@ -534,6 +584,11 @@ class Replacer
              Log::addDebug('Unset size ' . $size . ' - no closest found in source');
            }
         }
+				elseif ($url === $replace_urls[$size]) { // identical
+						unset($replace_urls[$size]);
+						unset($search_urls[$size]);
+						Log::addDebug('Unset size '  . $size . ' - search and replace identical');
+				}
     }
 
     /* If source and target are the same, remove them from replace. This happens when replacing a file with same name, and +/- same dimensions generated.
@@ -573,7 +628,7 @@ class Replacer
        Log::addDebug('Running additional replace for : '. $component, $run);
        $updated += $this->doReplaceQuery($run['base_url'], $run['search_urls'], $run['replace_urls']);
     }
-    //do_action('')
+
 
     Log::addDebug("Updated Records : " . $updated);
     return $updated;
@@ -603,13 +658,9 @@ class Replacer
 
         if ($replaced_content !== $post_content)
         {
-          //Log::addDebug('POST CONTENT TO SAVE', $replaced_content);
-
-        //  $result = wp_update_post($post_ar);
           $sql = 'UPDATE ' . $wpdb->posts . ' SET post_content = %s WHERE ID = %d';
           $sql = $wpdb->prepare($sql, $replaced_content, $post_id);
 
-  //Log::addTemp("POSt update query " . $sql);
           $result = $wpdb->query($sql);
 
           if ($result === false)
@@ -630,8 +681,18 @@ class Replacer
   {
     global $wpdb;
 
-    $meta_options = apply_filters('emr/metadata_tables', array('post', 'comment', 'term', 'user'));
+		$options = array('post', 'comment', 'term', 'user', 'options');
+    $meta_options = apply_filters('emr/metadata_tables', $options);
+
+
+		// fields in options to look for.
+		$option_fields = array('widget_block');
+		$option_fields = apply_filters('emr/replacer/option_fields', $option_fields);
+
+
+
     $number_of_updates = 0;
+		$prepare = array('%' . $url . '%');
 
     foreach($meta_options as $type)
     {
@@ -644,12 +705,25 @@ class Replacer
 
               $update_sql = ' UPDATE ' . $wpdb->postmeta . ' SET meta_value = %s WHERE meta_id = %d';
           break;
+					case "options": // basked case (for guten widgets).
+						 $in_str_arr = array_fill( 0, count( $option_fields ), '%s' );
+				 	 	 $in_str = join( ',', $in_str_arr );
+
+							$sql = 'SELECT option_id as id, option_name, option_value as meta_value FROM ' . $wpdb->options . '
+								WHERE option_value like %s and option_name in (' . $in_str . ')';
+							$type = 'option';
+
+							$prepare = array_merge($prepare, $option_fields);
+
+							$update_sql = ' UPDATE ' . $wpdb->options . ' SET option_value = %s WHERE option_id = %d';
+					break;
           default:
               $table = $wpdb->{$type . 'meta'};  // termmeta, commentmeta etc
 
               $meta_id = 'meta_id';
               if ($type == 'user')
                 $meta_id = 'umeta_id';
+
 
               $sql = 'SELECT ' . $meta_id . ' as id, meta_value FROM ' . $table . '
                 WHERE meta_value like %s';
@@ -658,7 +732,10 @@ class Replacer
           break;
         }
 
-        $sql = $wpdb->prepare($sql, '%' . $url . '%');
+        $sql = $wpdb->prepare($sql, $prepare);
+
+				if ($wpdb->last_error)
+					Log::addWarn('Error' . $wpdb->last_error, $wpdb->last_query);
 
         // This is a desparate solution. Can't find anyway for wpdb->prepare not the add extra slashes to the query, which messes up the query.
     //    $postmeta_sql = str_replace('[JSON_URL]', $json_url, $postmeta_sql);
@@ -680,6 +757,9 @@ class Replacer
 
            Log::addDebug('Update Meta SQl' . $prepared_sql);
            $result = $wpdb->query($prepared_sql);
+
+					 if ($wpdb->last_error)
+	 					Log::addWarn('Error' . $wpdb->last_error, $wpdb->last_query);
 
           }
         }
@@ -734,10 +814,11 @@ class Replacer
         }
       }
     }
-    elseif(is_object($content)) // metadata objects, they exist.
+    elseif(is_object($content) && '__PHP_Incomplete_Class' !== get_class($content)) // metadata objects, they exist. prevent incomplete classes from deactivated plugins or whatever.  They crash.
     {
       foreach($content as $key => $value)
       {
+
         $content->{$key} = $this->replaceContent($value, $search, $replace, true); //str_replace($value, $search, $replace);
       }
     }
@@ -772,6 +853,10 @@ class Replacer
         $fileArray = array();
         if (isset($meta['file']))
           $fileArray['file'] = $meta['file'];
+			  if (isset($meta['original_image']))
+				{
+					$fileArray['original'] = $meta['original_image'];
+				}
 
         if (isset($meta['sizes']))
         {
@@ -783,6 +868,8 @@ class Replacer
             }
           }
         }
+
+				// scaled
       return $fileArray;
   }
 
@@ -804,9 +891,6 @@ class Replacer
           'target' => array('url' => $this->target_url, 'metadata' => $this->getFilesFromMetadata($this->target_metadata) ),
       );
 
-    //  Log::addDebug('Source Metadata', $this->source_metadata);
-  //    Log::addDebug('Target Metadata', $this->target_metadata);
-
       $result = array();
 
       foreach($dataArray as $index => $item)
@@ -824,7 +908,7 @@ class Replacer
           }
 
       }
-  //    Log::addDebug('Relative URLS', $result);
+     Log::addDebug('Relative URLS', $result);
       return $result;
   }
 

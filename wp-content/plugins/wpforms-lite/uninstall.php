@@ -36,7 +36,8 @@ if ( class_exists( 'ActionScheduler_QueueRunner' ) ) {
 
 // Confirm user has decided to remove all data, otherwise stop.
 $settings = get_option( 'wpforms_settings', [] );
-if ( empty( $settings['uninstall-data'] ) ) {
+
+if ( empty( $settings['uninstall-data'] ) || is_plugin_active( 'wpforms/wpforms.php' ) || is_plugin_active( 'wpforms-lite/wpforms.php' ) ) {
 	return;
 }
 
@@ -59,8 +60,18 @@ $wpdb->query( 'DROP TABLE IF EXISTS ' . \WPForms\Tasks\Meta::get_table_name() );
 // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 $wpdb->query( 'DROP TABLE IF EXISTS ' . \WPForms\Logger\Repository::get_table_name() );
 
+/**
+ * Delete tables that might be created by "Add-ons".
+ *
+ * 1. Form Locker.
+ * 2. User Journey.
+ */
+$wpdb->query( 'DROP TABLE IF EXISTS ' . $wpdb->prefix . 'wpforms_form_locker_email_verification' );
+$wpdb->query( 'DROP TABLE IF EXISTS ' . $wpdb->prefix . 'wpforms_user_journey' );
+
 // Delete Preview page.
 $preview_page = get_option( 'wpforms_preview_page', false );
+
 if ( ! empty( $preview_page ) ) {
 	wp_delete_post( $preview_page, true );
 }
@@ -74,6 +85,7 @@ $wpforms_posts = get_posts(
 		'fields'      => 'ids',
 	]
 );
+
 if ( $wpforms_posts ) {
 	foreach ( $wpforms_posts as $wpforms_post ) {
 		wp_delete_post( $wpforms_post, true );
@@ -106,6 +118,7 @@ global $wp_filesystem;
 
 // Remove uploaded files.
 $uploads_directory = wp_upload_dir();
+
 if ( empty( $uploads_directory['error'] ) ) {
 	$wp_filesystem->rmdir( $uploads_directory['basedir'] . '/wpforms/', true );
 }
@@ -113,6 +126,7 @@ if ( empty( $uploads_directory['error'] ) ) {
 // Remove translation files.
 $languages_directory = defined( 'WP_LANG_DIR' ) ? trailingslashit( WP_LANG_DIR ) : trailingslashit( WP_CONTENT_DIR ) . 'languages/';
 $translations        = glob( wp_normalize_path( $languages_directory . 'plugins/wpforms-*' ) );
+
 if ( ! empty( $translations ) ) {
 	foreach ( $translations as $file ) {
 		$wp_filesystem->delete( $file );

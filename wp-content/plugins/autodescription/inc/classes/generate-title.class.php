@@ -10,7 +10,7 @@ namespace The_SEO_Framework;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2015 - 2022 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2015 - 2023 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -252,7 +252,7 @@ class Generate_Title extends Generate_Description {
 	 * Falls back to Open Graph title.
 	 *
 	 * @since 3.1.0
-	 * @since 3.2.2 Now tests for the homepage as page prior getting custom field data.
+	 * @since 3.2.2 Now tests for the static frontpage metadata prior getting fallback data.
 	 * @since 4.0.0 Added term meta item checks.
 	 * @since 4.2.0 Can now return custom post type archive titles.
 	 * @see $this->get_twitter_title()
@@ -262,35 +262,28 @@ class Generate_Title extends Generate_Description {
 	 */
 	protected function get_custom_twitter_title_from_query() {
 
-		$title = '';
-
 		if ( $this->is_real_front_page() ) {
 			if ( $this->is_static_frontpage() ) {
 				$title = $this->get_option( 'homepage_twitter_title' )
 					  ?: $this->get_post_meta_item( '_twitter_title' )
 					  ?: $this->get_option( 'homepage_og_title' )
-					  ?: $this->get_post_meta_item( '_open_graph_title' )
-					  ?: '';
+					  ?: $this->get_post_meta_item( '_open_graph_title' );
 			} else {
 				$title = $this->get_option( 'homepage_twitter_title' )
-					  ?: $this->get_option( 'homepage_og_title' )
-					  ?: '';
+					  ?: $this->get_option( 'homepage_og_title' );
 			}
 		} elseif ( $this->is_singular() ) {
 			$title = $this->get_post_meta_item( '_twitter_title' )
-				  ?: $this->get_post_meta_item( '_open_graph_title' )
-				  ?: '';
+				  ?: $this->get_post_meta_item( '_open_graph_title' );
 		} elseif ( $this->is_term_meta_capable() ) {
 			$title = $this->get_term_meta_item( 'tw_title' )
-				  ?: $this->get_term_meta_item( 'og_title' )
-				  ?: '';
+				  ?: $this->get_term_meta_item( 'og_title' );
 		} elseif ( \is_post_type_archive() ) {
 			$title = $this->get_post_type_archive_meta_item( 'tw_title' )
-				  ?: $this->get_post_type_archive_meta_item( 'og_title' )
-				  ?: '';
+				  ?: $this->get_post_type_archive_meta_item( 'og_title' );
 		}
 
-		return $title;
+		return $title ?? '' ?: '';
 	}
 
 	/**
@@ -298,7 +291,7 @@ class Generate_Title extends Generate_Description {
 	 * Falls back to Open Graph title.
 	 *
 	 * @since 3.1.0
-	 * @since 3.2.2 Now tests for the homepage as page prior getting custom field data.
+	 * @since 3.2.2 Now tests for the static frontpage metadata prior getting fallback data.
 	 * @since 4.0.0 Added term meta item checks.
 	 * @since 4.2.0 Now supports the `$args['pta']` index.
 	 * @see $this->get_twitter_title()
@@ -311,31 +304,26 @@ class Generate_Title extends Generate_Description {
 
 		if ( $args['taxonomy'] ) {
 			$title = $this->get_term_meta_item( 'tw_title', $args['id'] )
-				  ?: $this->get_term_meta_item( 'og_title', $args['id'] )
-				  ?: '';
+				  ?: $this->get_term_meta_item( 'og_title', $args['id'] );
 		} elseif ( $args['pta'] ) {
 			$title = $this->get_post_type_archive_meta_item( 'tw_title', $args['pta'] )
-				  ?: $this->get_post_type_archive_meta_item( 'og_title', $args['pta'] )
-				  ?: '';
+				  ?: $this->get_post_type_archive_meta_item( 'og_title', $args['pta'] );
 		} else {
 			if ( $this->is_static_frontpage( $args['id'] ) ) {
 				$title = $this->get_option( 'homepage_twitter_title' )
 					  ?: $this->get_post_meta_item( '_twitter_title', $args['id'] )
 					  ?: $this->get_option( 'homepage_og_title' )
-					  ?: $this->get_post_meta_item( '_open_graph_title', $args['id'] )
-					  ?: '';
+					  ?: $this->get_post_meta_item( '_open_graph_title', $args['id'] );
 			} elseif ( $this->is_real_front_page_by_id( $args['id'] ) ) {
 				$title = $this->get_option( 'homepage_twitter_title' )
-					  ?: $this->get_option( 'homepage_og_title' )
-					  ?: '';
+					  ?: $this->get_option( 'homepage_og_title' );
 			} else {
 				$title = $this->get_post_meta_item( '_twitter_title', $args['id'] )
-					  ?: $this->get_post_meta_item( '_open_graph_title', $args['id'] )
-					  ?: '';
+					  ?: $this->get_post_meta_item( '_open_graph_title', $args['id'] );
 			}
 		}
 
-		return $title;
+		return $title ?: '';
 	}
 
 	/**
@@ -408,7 +396,7 @@ class Generate_Title extends Generate_Description {
 	 * Falls back to meta title.
 	 *
 	 * @since 3.1.0
-	 * @since 3.2.2 Now tests for the homepage as page prior getting custom field data.
+	 * @since 3.2.2 Now tests for the static frontpage metadata prior getting fallback data.
 	 * @since 4.0.0 Added term meta item checks.
 	 * @since 4.2.0 Can now return custom post type archive titles.
 	 * @see $this->get_open_graph_title()
@@ -418,24 +406,22 @@ class Generate_Title extends Generate_Description {
 	 */
 	protected function get_custom_open_graph_title_from_query() {
 
-		$title = '';
 		if ( $this->is_real_front_page() ) {
 			if ( $this->is_static_frontpage() ) {
 				$title = $this->get_option( 'homepage_og_title' )
-					  ?: $this->get_post_meta_item( '_open_graph_title' )
-					  ?: '';
+					  ?: $this->get_post_meta_item( '_open_graph_title' );
 			} else {
-				$title = $this->get_option( 'homepage_og_title' ) ?: '';
+				$title = $this->get_option( 'homepage_og_title' );
 			}
 		} elseif ( $this->is_singular() ) {
-			$title = $this->get_post_meta_item( '_open_graph_title' ) ?: '';
+			$title = $this->get_post_meta_item( '_open_graph_title' );
 		} elseif ( $this->is_term_meta_capable() ) {
-			$title = $this->get_term_meta_item( 'og_title' ) ?: '';
+			$title = $this->get_term_meta_item( 'og_title' );
 		} elseif ( \is_post_type_archive() ) {
-			$title = $this->get_post_type_archive_meta_item( 'og_title' ) ?: '';
+			$title = $this->get_post_type_archive_meta_item( 'og_title' );
 		}
 
-		return $title;
+		return $title ?? '' ?: '';
 	}
 
 	/**
@@ -443,7 +429,7 @@ class Generate_Title extends Generate_Description {
 	 * Falls back to meta title.
 	 *
 	 * @since 3.1.0
-	 * @since 3.2.2 Now tests for the homepage as page prior getting custom field data.
+	 * @since 3.2.2 Now tests for the static frontpage metadata prior getting fallback data.
 	 * @since 4.0.0 Added term meta item checks.
 	 * @since 4.2.0 Now supports the `$args['pta']` index.
 	 * @see $this->get_open_graph_title()
@@ -455,22 +441,21 @@ class Generate_Title extends Generate_Description {
 	protected function get_custom_open_graph_title_from_args( $args ) {
 
 		if ( $args['taxonomy'] ) {
-			$title = $this->get_term_meta_item( 'og_title', $args['id'] ) ?: '';
+			$title = $this->get_term_meta_item( 'og_title', $args['id'] );
 		} elseif ( $args['pta'] ) {
-			$title = $this->get_post_type_archive_meta_item( 'og_title', $args['pta'] ) ?: '';
+			$title = $this->get_post_type_archive_meta_item( 'og_title', $args['pta'] );
 		} else {
 			if ( $this->is_static_frontpage( $args['id'] ) ) {
 				$title = $this->get_option( 'homepage_og_title' )
-					  ?: $this->get_post_meta_item( '_open_graph_title', $args['id'] )
-					  ?: '';
+					  ?: $this->get_post_meta_item( '_open_graph_title', $args['id'] );
 			} elseif ( $this->is_real_front_page_by_id( $args['id'] ) ) {
-				$title = $this->get_option( 'homepage_og_title' ) ?: '';
+				$title = $this->get_option( 'homepage_og_title' );
 			} else {
-				$title = $this->get_post_meta_item( '_open_graph_title', $args['id'] ) ?: '';
+				$title = $this->get_post_meta_item( '_open_graph_title', $args['id'] );
 			}
 		}
 
-		return $title;
+		return $title ?: '';
 	}
 
 	/**
@@ -508,8 +493,6 @@ class Generate_Title extends Generate_Description {
 	 */
 	public function get_raw_custom_field_title( $args = null ) {
 
-		$title = '';
-
 		if ( null === $args ) {
 			$title = $this->get_custom_field_title_from_query();
 		} else {
@@ -517,14 +500,14 @@ class Generate_Title extends Generate_Description {
 			$title = $this->get_custom_field_title_from_args( $args );
 		}
 
-		return $title;
+		return $title ?: '';
 	}
 
 	/**
 	 * Gets a custom title, based on current query, without additions or prefixes.
 	 *
 	 * @since 3.1.0
-	 * @since 3.2.2 Now tests for the homepage as page prior getting custom field data.
+	 * @since 3.2.2 Now tests for the static frontpage metadata prior getting fallback data.
 	 * @since 4.2.0 Can now return custom post type archive titles.
 	 * @internal
 	 * @see $this->get_raw_custom_field_title()
@@ -533,20 +516,17 @@ class Generate_Title extends Generate_Description {
 	 */
 	protected function get_custom_field_title_from_query() {
 
-		$title = '';
-
 		if ( $this->is_real_front_page() ) {
 			if ( $this->is_static_frontpage() ) {
 				$title = $this->get_option( 'homepage_title' )
-					  ?: $this->get_post_meta_item( '_genesis_title' )
-					  ?: '';
+					  ?: $this->get_post_meta_item( '_genesis_title' );
 			} else {
-				$title = $this->get_option( 'homepage_title' ) ?: '';
+				$title = $this->get_option( 'homepage_title' );
 			}
 		} elseif ( $this->is_singular() ) {
-			$title = $this->get_post_meta_item( '_genesis_title' ) ?: '';
+			$title = $this->get_post_meta_item( '_genesis_title' );
 		} elseif ( $this->is_term_meta_capable() ) {
-			$title = $this->get_term_meta_item( 'doctitle' ) ?: '';
+			$title = $this->get_term_meta_item( 'doctitle' );
 		} elseif ( \is_post_type_archive() ) {
 			/**
 			 * @since 4.0.6
@@ -558,10 +538,10 @@ class Generate_Title extends Generate_Description {
 				'the_seo_framework_pta_title',
 				[ $this->get_post_type_archive_meta_item( 'doctitle' ) ],
 				'4.2.0 of The SEO Framework'
-			) ?: '';
+			);
 		}
 
-		return $title;
+		return $title ?? '' ?: '';
 	}
 
 	/**
@@ -569,7 +549,7 @@ class Generate_Title extends Generate_Description {
 	 *
 	 * @since 3.1.0
 	 * @since 3.1.4 Now uses the 'id' to get custom singular title.
-	 * @since 3.2.2 Now tests for the homepage as page prior getting custom field data.
+	 * @since 3.2.2 Now tests for the static frontpage metadata prior getting fallback data.
 	 * @since 4.2.0 Now supports the `$args['pta']` index.
 	 * @internal
 	 * @see $this->get_raw_custom_field_title()
@@ -580,22 +560,21 @@ class Generate_Title extends Generate_Description {
 	protected function get_custom_field_title_from_args( $args ) {
 
 		if ( $args['taxonomy'] ) {
-			$title = $this->get_term_meta_item( 'doctitle', $args['id'] ) ?: '';
+			$title = $this->get_term_meta_item( 'doctitle', $args['id'] );
 		} elseif ( $args['pta'] ) {
-			$title = $this->get_post_type_archive_meta_item( 'doctitle', $args['pta'] ) ?: '';
+			$title = $this->get_post_type_archive_meta_item( 'doctitle', $args['pta'] );
 		} else {
 			if ( $this->is_static_frontpage( $args['id'] ) ) {
 				$title = $this->get_option( 'homepage_title' )
-					  ?: $this->get_post_meta_item( '_genesis_title', $args['id'] )
-					  ?: '';
+					  ?: $this->get_post_meta_item( '_genesis_title', $args['id'] );
 			} elseif ( $this->is_real_front_page_by_id( $args['id'] ) ) {
-				$title = $this->get_option( 'homepage_title' ) ?: '';
+				$title = $this->get_option( 'homepage_title' );
 			} else {
-				$title = $this->get_post_meta_item( '_genesis_title', $args['id'] ) ?: '';
+				$title = $this->get_post_meta_item( '_genesis_title', $args['id'] );
 			}
 		}
 
-		return $title;
+		return $title ?: '';
 	}
 
 	/**
@@ -631,7 +610,7 @@ class Generate_Title extends Generate_Description {
 	}
 
 	/**
-	 * Removes default title filters, for consistent output and sanitation.
+	 * Removes default title filters, for consistent output and sanitization.
 	 * Memoizes the filters removed, so it can add them back on reset.
 	 *
 	 * Performance test: 0.007ms per remove+reset on PHP 8.0, single core VPN.
@@ -713,6 +692,7 @@ class Generate_Title extends Generate_Description {
 	 *
 	 * @since 3.1.0
 	 * @since 4.2.0 Flipped order of query tests.
+	 * @since 4.2.7 Added failover filter for failed queries.
 	 * @internal
 	 * @see $this->get_raw_generated_title()
 	 *
@@ -720,9 +700,7 @@ class Generate_Title extends Generate_Description {
 	 */
 	protected function generate_title_from_query() {
 
-		$title = '';
-
-		if ( $this->is_404() ) {
+		if ( \is_404() ) {
 			$title = $this->get_static_404_title();
 		} elseif ( $this->is_search() ) {
 			$title = $this->get_generated_search_query_title();
@@ -734,7 +712,7 @@ class Generate_Title extends Generate_Description {
 			$title = $this->get_generated_archive_title();
 		}
 
-		return $title;
+		return $title ?? '';
 	}
 
 	/**
@@ -749,8 +727,6 @@ class Generate_Title extends Generate_Description {
 	 * @return string The generated title. Empty if query can't be replicated.
 	 */
 	protected function generate_title_from_args( $args ) {
-
-		$title = '';
 
 		if ( $args['taxonomy'] ) {
 			$title = $this->get_generated_archive_title( \get_term( $args['id'], $args['taxonomy'] ) );
@@ -786,7 +762,7 @@ class Generate_Title extends Generate_Description {
 	/**
 	 * Returns the archive title. Also works in admin.
 	 *
-	 * @NOTE Taken from WordPress core. Altered to work for metadata.
+	 * @NOTE Taken from WordPress core. Altered to work for metadata and in admin.
 	 * @see WP Core get_the_archive_title()
 	 *
 	 * @since 3.1.0
@@ -798,8 +774,7 @@ class Generate_Title extends Generate_Description {
 	 *
 	 * @param \WP_Term|\WP_User|\WP_Post_Type|\WP_Error|null $object The Term object or error.
 	 *                                                               Leave null to autodetermine query.
-	 * @return string|string[] The generated archive title, not escaped.
-	 *                         When $get is 'admin', it returns an map of [prefix,title].
+	 * @return string The generated archive title, not escaped.
 	 */
 	public function get_generated_archive_title( $object = null ) {
 
@@ -930,14 +905,14 @@ class Generate_Title extends Generate_Description {
 		} elseif ( $this->is_author() ) {
 			$title  = \get_queried_object()->display_name ?? '';
 			$prefix = \_x( 'Author:', 'author archive title prefix', 'default' );
-		} elseif ( $this->is_date() ) {
-			if ( $this->is_year() ) {
+		} elseif ( \is_date() ) {
+			if ( \is_year() ) {
 				$title  = \get_the_date( \_x( 'Y', 'yearly archives date format', 'default' ) );
 				$prefix = \_x( 'Year:', 'date archive title prefix', 'default' );
-			} elseif ( $this->is_month() ) {
+			} elseif ( \is_month() ) {
 				$title  = \get_the_date( \_x( 'F Y', 'monthly archives date format', 'default' ) );
 				$prefix = \_x( 'Month:', 'date archive title prefix', 'default' );
-			} elseif ( $this->is_day() ) {
+			} elseif ( \is_day() ) {
 				$title  = \get_the_date( \_x( 'F j, Y', 'daily archives date format', 'default' ) );
 				$prefix = \_x( 'Day:', 'date archive title prefix', 'default' );
 			}
@@ -1030,28 +1005,29 @@ class Generate_Title extends Generate_Description {
 	 * @see WP Core single_post_title()
 	 *
 	 * @since 3.1.0
+	 * @since 4.2.8 Now tests for post type support of 'title' before parsing the title.
 	 *
 	 * @param int|\WP_Post $id The Post ID or post object.
 	 * @return string The generated post title.
 	 */
 	public function get_generated_single_post_title( $id = 0 ) {
 
-		//? Home queries can be tricky. Use get_the_real_ID to be certain.
-		$_post = \get_post( $id ?: $this->get_the_real_ID() );
+		// Home queries can be tricky. Use get_the_real_ID to be certain.
+		$post = \get_post( $id ?: $this->get_the_real_ID() );
 
-		if ( isset( $_post->post_title ) ) {
+		if ( isset( $post->post_title ) && \post_type_supports( $post->post_type, 'title' ) ) {
 			/**
 			 * Filters the page title for a single post.
 			 *
 			 * @since WP Core 0.71
 			 *
-			 * @param string   $_post_title The single post page title.
-			 * @param \WP_Post $_post       The current queried object as returned by get_queried_object().
+			 * @param string   $post_title The single post page title.
+			 * @param \WP_Post $post       The current queried object as returned by get_queried_object().
 			 */
-			$title = \apply_filters( 'single_post_title', $_post->post_title, $_post );
+			$title = \apply_filters( 'single_post_title', $post->post_title, $post );
 		}
 
-		return $title ?? '';
+		return $title ?? '' ?: '';
 	}
 
 	/**
@@ -1066,6 +1042,7 @@ class Generate_Title extends Generate_Description {
 	 * @since 3.1.0
 	 * @since 4.0.0 No longer redundantly tests the query, now only uses the term input or queried object.
 	 * @since 4.0.2 Now asserts the correct tag taxonomy condition.
+	 * @since 4.2.7 Now invokes proper filters when 'category' or 'tag' taxonomies are used.
 	 *
 	 * @param null|\WP_Term $term The term name, required in the admin area.
 	 * @return string The generated single term title.
@@ -1077,7 +1054,7 @@ class Generate_Title extends Generate_Description {
 
 		if ( ! isset( $term->name ) ) return '';
 
-		switch ( $term->category ) :
+		switch ( $term->taxonomy ) :
 			case 'category':
 				/**
 				 * Filter the category archive page title.
@@ -1165,6 +1142,7 @@ class Generate_Title extends Generate_Description {
 	 * @return string The untitled title.
 	 */
 	public function get_static_untitled_title() {
+		// FIXME: WordPress no longer outputs 'Untitled' for the title. It still actively holds this translation, but other context (Widget).
 		return \__( 'Untitled', 'default' );
 	}
 
@@ -1293,7 +1271,7 @@ class Generate_Title extends Generate_Description {
 		if ( $paged >= 2 || $page >= 2 ) {
 			$sep = $this->get_title_separator();
 
-			// phpcs:ignore, WordPress.WP.I18n -- WP didn't add translator code either.
+			/* translators: %s: Page number. */
 			$paging = sprintf( \__( 'Page %s', 'default' ), max( $paged, $page ) );
 
 			if ( \is_rtl() ) {
@@ -1311,6 +1289,7 @@ class Generate_Title extends Generate_Description {
 	 * @since 3.1.2 Added strict taxonomical checks for title protection.
 	 * @since 3.1.3 Fixed conditional logic.
 	 * @since 4.2.0 Now supports the `$args['pta']` index.
+	 * @since 4.2.4 Resolved regression where $run-test was reversed (renamed to $merge).
 	 * @see $this->merge_title_prefixes()
 	 *
 	 * @param string     $title The title. Passed by reference.
@@ -1321,19 +1300,23 @@ class Generate_Title extends Generate_Description {
 	public function merge_title_protection( &$title, $args = null ) {
 
 		if ( null === $args ) {
-			$id  = $this->get_the_real_ID();
-			$run = $this->is_singular();
+			$id    = $this->get_the_real_ID();
+			$merge = $this->is_singular();
 		} else {
 			$this->fix_generation_args( $args );
-			$id  = $args['id'];
-			$run = ! $args['taxonomy'] && ! $args['pta'];
+			$id    = $args['id'];
+			$merge = ! $args['taxonomy'] && ! $args['pta'];
 		}
 
-		if ( $run ) return;
+		if ( ! $merge ) return;
 
 		$post = $id ? \get_post( $id ) : null;
 
-		if ( isset( $post->post_password ) && '' !== $post->post_password ) {
+		if ( ! empty( $post->post_password ) ) {
+
+			/* translators: %s: Protected post title. */
+			$prepend = \__( 'Protected: %s', 'default' );
+
 			/**
 			 * Filters the text prepended to the post title of private posts.
 			 *
@@ -1345,10 +1328,13 @@ class Generate_Title extends Generate_Description {
 			 *                         Default 'Private: %s'.
 			 * @param WP_Post $post    Current post object.
 			 */
-			// phpcs:ignore, WordPress.WP.I18n -- WordPress doesn't have a comment, either.
-			$protected_title_format = (string) \apply_filters( 'protected_title_format', \__( 'Protected: %s', 'default' ), $post );
+			$protected_title_format = (string) \apply_filters( 'protected_title_format', $prepend, $post );
 			$title                  = sprintf( $protected_title_format, $title );
-		} elseif ( isset( $post->post_status ) && 'private' === $post->post_status ) {
+		} elseif ( 'private' === ( $post->post_status ?? null ) ) {
+
+			/* translators: %s: Private post title. */
+			$prepend = \__( 'Private: %s', 'default' );
+
 			/**
 			 * Filters the text prepended to the post title of private posts.
 			 *
@@ -1360,8 +1346,7 @@ class Generate_Title extends Generate_Description {
 			 *                         Default 'Private: %s'.
 			 * @param WP_Post $post    Current post object.
 			 */
-			// phpcs:ignore, WordPress.WP.I18n -- WordPress doesn't have a comment, either.
-			$private_title_format = (string) \apply_filters( 'private_title_format', \__( 'Private: %s', 'default' ), $post );
+			$private_title_format = (string) \apply_filters( 'private_title_format', $prepend, $post );
 			$title                = sprintf( $private_title_format, $title );
 		}
 	}
@@ -1452,9 +1437,9 @@ class Generate_Title extends Generate_Description {
 	 */
 	public function use_title_pagination( $args = null ) {
 
-		//? Only add pagination if the query is autodetermined, and on a real page.
+		// Only add pagination if the query is autodetermined, and on a real page.
 		if ( null === $args ) {
-			if ( $this->is_404() || \is_admin() ) {
+			if ( \is_404() || \is_admin() ) {
 				$use = false;
 			} else {
 				$use = true;

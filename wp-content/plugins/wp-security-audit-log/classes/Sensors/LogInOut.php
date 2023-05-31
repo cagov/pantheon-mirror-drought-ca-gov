@@ -9,6 +9,9 @@
  * @subpackage sensors
  */
 
+use WSAL\Helpers\WP_Helper;
+use WSAL\Helpers\User_Helper;
+
 // Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -27,14 +30,16 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @package    wsal
  * @subpackage sensors
  */
-class WSAL_Sensors_LogInOut extends WSAL_AbstractSensor {
+class WSAL_Sensors_LogInOut {//extends WSAL_AbstractSensor {
 
 	/**
 	 * Transient name.
 	 * WordPress will prefix the name with "_transient_" or "_transient_timeout_" in the options table.
 	 */
-	const TRANSIENT_FAILEDLOGINS         = 'wsal-failedlogins-known';
-	const TRANSIENT_FAILEDLOGINS_UNKNOWN = 'wsal-failedlogins-unknown';
+	const TRANSIENT_FAILEDLOGINS              = 'wsal-failedlogins-known';
+	const TRANSIENT_FAILEDLOGINS_LAST         = 'wsal-failedlogins-last';
+	const TRANSIENT_FAILEDLOGINS_NO_INCREMENT = 'wsal-failedlogins-no-increment';
+	const TRANSIENT_FAILEDLOGINS_UNKNOWN      = 'wsal-failedlogins-unknown';
 
 	/**
 	 * Current user object
@@ -54,13 +59,18 @@ class WSAL_Sensors_LogInOut extends WSAL_AbstractSensor {
 		add_action( 'clear_auth_cookie', array( $this, 'get_current_user' ), 10 );
 		add_action( 'lostpassword_post', array( $this, 'event_user_requested_pw_reset' ), 10, 2 );
 
-		if ( WpSecurityAuditLog::is_twofactor_active() ) {
-			add_action( 'login_redirect', array( $this, 'event_2fa_login' ), 10, 1 );
-		}
-
-		if ( WpSecurityAuditLog::is_plugin_active( 'user-switching/user-switching.php' ) ) {
+		if ( WP_Helper::is_plugin_active( 'user-switching/user-switching.php' ) ) {
 			add_action( 'switch_to_user', array( $this, 'user_switched_event' ), 10, 2 );
 		}
+	}
+
+	/**
+	 * Init used when loading sensor early.
+	 *
+	 * @return void
+	 */
+	public function init() {
+		$this->hook_events();
 	}
 
 	/**
@@ -68,51 +78,6 @@ class WSAL_Sensors_LogInOut extends WSAL_AbstractSensor {
 	 */
 	public function get_current_user() {
 		$this->current_user = wp_get_current_user();
-	}
-
-	/**
-	 * Login Event for Two-Factor plugin.
-	 *
-	 * @since 3.3
-	 *
-	 * @param string $redirect_url – Redirect URL.
-	 * @return string
-	 */
-	public function event_2fa_login( $redirect_url ) {
-		// @codingStandardsIgnoreStart
-		$provider = isset( $_POST['provider'] ) ? sanitize_text_field( wp_unslash( $_POST['provider'] ) ) : '';
-		$user_id  = isset( $_POST['wp-auth-id'] ) ? (int) sanitize_text_field( wp_unslash( $_POST['wp-auth-id'] ) ) : '';
-		// @codingStandardsIgnoreEnd
-
-		// Default Two-Factor options.
-		$providers_2fa = array( 'Two_Factor_Email', 'Two_Factor_Totp', 'Two_Factor_FIDO_U2F', 'Two_Factor_Backup_Codes', 'Two_Factor_Dummy' );
-
-		// Get users.
-		$user = get_userdata( $user_id );
-		if ( ! $user ) {
-			return $redirect_url;
-		}
-
-		// If provider and user are set and provider is known then log the event.
-		if ( $provider && $user && in_array( $provider, $providers_2fa, true ) ) {
-			// Get user roles.
-			$user_roles = $this->plugin->settings()->get_current_user_roles( $user->roles );
-
-			if ( $this->plugin->settings()->is_login_super_admin( $user->user_login ) ) {
-				$user_roles[] = 'superadmin';
-			}
-
-			$this->plugin->alerts->trigger_event(
-				1000,
-				array(
-					'Username'         => $user->user_login,
-					'CurrentUserRoles' => $user_roles,
-				),
-				true
-			);
-		}
-
-		return $redirect_url;
 	}
 
 	/**
@@ -157,7 +122,13 @@ class WSAL_Sensors_LogInOut extends WSAL_AbstractSensor {
 
 				// Log user changed password alert.
 				if ( ! empty( $user ) ) {
-					$user_roles = $this->plugin->settings()->get_current_user_roles( $user->roles );
+					$user_roles = User_Helper::get_user_roles( $user );
+
+					if ( ! isset( $this->plugin->alerts ) ) {
+						$wsal                 = \WpSecurityAuditLog::get_instance();
+						$this->plugin->alerts = new WSAL_AlertManager( $wsal );
+					}
+
 					$this->plugin->alerts->trigger_event(
 						4003,
 						array(
@@ -177,18 +148,19 @@ class WSAL_Sensors_LogInOut extends WSAL_AbstractSensor {
 			return;
 		}
 		$user_login = $user->data->user_login;
-		$user_roles = $this->plugin->settings()->get_current_user_roles( $user->roles );
-
-		if ( $this->plugin->settings()->is_login_super_admin( $user_login ) ) {
-			$user_roles[] = 'superadmin';
-		}
+		$user_roles = User_Helper::get_user_roles( $user );
 
 		$alert_data = array(
 			'Username'         => $user_login,
 			'CurrentUserRoles' => $user_roles,
 		);
-		if ( class_exists( 'WSAL_UserSessions_Helpers' ) ) {
-			$alert_data['SessionID'] = WSAL_UserSessions_Helpers::hash_token( $token );
+		if ( class_exists( '\WSAL\Helpers\User_Sessions_Helper' ) ) {
+			$alert_data['SessionID'] = \WSAL\Helpers\User_Sessions_Helper::hash_token( $token );
+		}
+
+		if ( ! isset( $this->plugin->alerts ) ) {
+			$wsal                 = \WpSecurityAuditLog::get_instance();
+			$this->plugin->alerts = new WSAL_AlertManager( $wsal );
 		}
 
 		$this->plugin->alerts->trigger_event_if(
@@ -202,7 +174,7 @@ class WSAL_Sensors_LogInOut extends WSAL_AbstractSensor {
 			 * @return bool
 			 */
 			function ( $manager ) {
-				return ! $manager->will_or_has_triggered( 4003 );
+				return ! ( $manager->will_or_has_triggered( 4003 ) || $manager->has_triggered( 1000 ) || $manager->will_or_has_triggered( 1005 ) );
 			}
 		);
 
@@ -214,7 +186,7 @@ class WSAL_Sensors_LogInOut extends WSAL_AbstractSensor {
 	public function event_logout() {
 		if ( $this->current_user->ID ) {
 			// get the list of excluded users.
-			$excluded_users    = $this->plugin->settings()->get_excluded_monitoring_users();
+			$excluded_users    = \WSAL\Helpers\Settings_Helper::get_excluded_monitoring_users();
 			$excluded_user_ids = array();
 			// convert excluded usernames into IDs.
 			if ( ! empty( $excluded_users ) && is_array( $excluded_users ) ) {
@@ -227,11 +199,17 @@ class WSAL_Sensors_LogInOut extends WSAL_AbstractSensor {
 			if ( in_array( $this->current_user->ID, $excluded_user_ids, true ) ) {
 				return;
 			}
+
+			if ( ! isset( $this->plugin->alerts ) ) {
+				$wsal                 = \WpSecurityAuditLog::get_instance();
+				$this->plugin->alerts = new WSAL_AlertManager( $wsal );
+			}
+
 			$this->plugin->alerts->trigger_event(
 				1001,
 				array(
 					'CurrentUserID'    => $this->current_user->ID,
-					'CurrentUserRoles' => $this->plugin->settings()->get_current_user_roles( $this->current_user->roles ),
+					'CurrentUserRoles' => User_Helper::get_user_roles( $this->current_user ),
 				),
 				true
 			);
@@ -268,25 +246,25 @@ class WSAL_Sensors_LogInOut extends WSAL_AbstractSensor {
 	/**
 	 * Check failure limit.
 	 *
-	 * @param string  $ip - IP address.
+	 * @param string  $ip      - IP address.
 	 * @param integer $site_id - Blog ID.
-	 * @param WP_User $user - User object.
+	 * @param WP_User $user    - User object.
+	 *
 	 * @return boolean - Passed limit true|false.
 	 */
 	protected function is_past_login_failure_limit( $ip, $site_id, $user ) {
-		$get_fn = $this->is_multisite() ? 'get_site_transient' : 'get_transient';
 		if ( $user ) {
 			if ( -1 === (int) $this->get_login_failure_log_limit() ) {
 				return false;
 			} else {
-				$data_known = $get_fn( self::TRANSIENT_FAILEDLOGINS );
+				$data_known = WP_Helper::get_transient( self::TRANSIENT_FAILEDLOGINS );
 				return ( false !== $data_known ) && isset( $data_known[ $site_id . ':' . $user->ID . ':' . $ip ] ) && ( $data_known[ $site_id . ':' . $user->ID . ':' . $ip ] >= $this->get_login_failure_log_limit() );
 			}
 		} else {
 			if ( -1 === (int) $this->get_visitor_login_failure_log_limit() ) {
 				return false;
 			} else {
-				$data_unknown = $get_fn( self::TRANSIENT_FAILEDLOGINS_UNKNOWN );
+				$data_unknown = WP_Helper::get_transient( self::TRANSIENT_FAILEDLOGINS_UNKNOWN );
 				return ( false !== $data_unknown ) && isset( $data_unknown[ $site_id . ':' . $ip ] ) && ( $data_unknown[ $site_id . ':' . $ip ] >= $this->get_visitor_login_failure_log_limit() );
 			}
 		}
@@ -300,10 +278,15 @@ class WSAL_Sensors_LogInOut extends WSAL_AbstractSensor {
 	 * @param WP_User $user - User object.
 	 */
 	protected function increment_login_failure( $ip, $site_id, $user ) {
-		$get_fn = $this->is_multisite() ? 'get_site_transient' : 'get_transient';
-		$set_fn = $this->is_multisite() ? 'set_site_transient' : 'set_transient';
 		if ( $user ) {
-			$data_known = $get_fn( self::TRANSIENT_FAILEDLOGINS );
+			$data_known      = WP_Helper::get_transient( self::TRANSIENT_FAILEDLOGINS );
+			$last_inc        = WP_Helper::get_transient( self::TRANSIENT_FAILEDLOGINS_LAST );
+
+			// Check if this has already been logged and counted.
+			if ( $last_inc && $last_inc == $user->ID ) {
+				WP_Helper::set_transient( self::TRANSIENT_FAILEDLOGINS_NO_INCREMENT, $user->ID, 10 );
+				return;
+			}
 			if ( ! $data_known ) {
 				$data_known = array();
 			}
@@ -311,9 +294,10 @@ class WSAL_Sensors_LogInOut extends WSAL_AbstractSensor {
 				$data_known[ $site_id . ':' . $user->ID . ':' . $ip ] = 1;
 			}
 			$data_known[ $site_id . ':' . $user->ID . ':' . $ip ]++;
-			$set_fn( self::TRANSIENT_FAILEDLOGINS, $data_known, $this->get_login_failure_expiration() );
+			WP_Helper::set_transient( self::TRANSIENT_FAILEDLOGINS, $data_known, $this->get_login_failure_expiration() );			
+			WP_Helper::set_transient( self::TRANSIENT_FAILEDLOGINS_LAST, $user->ID, 10 );
 		} else {
-			$data_unknown = $get_fn( self::TRANSIENT_FAILEDLOGINS_UNKNOWN );
+			$data_unknown = WP_Helper::get_transient( self::TRANSIENT_FAILEDLOGINS_UNKNOWN );
 			if ( ! $data_unknown ) {
 				$data_unknown = array();
 			}
@@ -321,7 +305,7 @@ class WSAL_Sensors_LogInOut extends WSAL_AbstractSensor {
 				$data_unknown[ $site_id . ':' . $ip ] = 1;
 			}
 			$data_unknown[ $site_id . ':' . $ip ]++;
-			$set_fn( self::TRANSIENT_FAILEDLOGINS_UNKNOWN, $data_unknown, $this->get_login_failure_expiration() );
+			WP_Helper::set_transient( self::TRANSIENT_FAILEDLOGINS_UNKNOWN, $data_unknown, $this->get_login_failure_expiration() );
 		}
 	}
 
@@ -331,9 +315,9 @@ class WSAL_Sensors_LogInOut extends WSAL_AbstractSensor {
 	 * @param string $username Username.
 	 */
 	public function event_login_failure( $username ) {
-		list($y, $m, $d) = explode( '-', date( 'Y-m-d' ) ); // phpcs:ignore WordPress.DateTime.RestrictedFunctions.date_date
+		list($y, $m, $d) = explode( '-', gmdate( 'Y-m-d' ) );
 
-		$ip = $this->plugin->settings()->get_main_client_ip();
+		$ip = \WSAL\Helpers\Settings_Helper::get_main_client_ip();
 
 		// Filter $_POST global array for security.
 		$post_array = filter_input_array( INPUT_POST );
@@ -350,10 +334,12 @@ class WSAL_Sensors_LogInOut extends WSAL_AbstractSensor {
 		$site_id = ( function_exists( 'get_current_blog_id' ) ? get_current_blog_id() : 0 );
 		if ( $user ) {
 			$new_alert_code = 1002;
-			$user_roles     = $this->plugin->settings()->get_current_user_roles( $user->roles );
-			if ( $this->plugin->settings()->is_login_super_admin( $username ) ) {
-				$user_roles[] = 'superadmin';
-			}
+			$user_roles     = User_Helper::get_user_roles( $user );
+		}
+
+		if ( ! isset( $this->plugin->alerts ) ) {
+			$wsal                 = \WpSecurityAuditLog::get_instance();
+			$this->plugin->alerts = new WSAL_AlertManager( $wsal );
 		}
 
 		// Check if the alert is disabled from the "Enable/Disable Alerts" section.
@@ -391,8 +377,9 @@ class WSAL_Sensors_LogInOut extends WSAL_AbstractSensor {
 			if ( ! empty( $occ ) ) {
 				// Update existing record exists user.
 				$this->increment_login_failure( $ip, $site_id, $user );
-				$new = $occ->get_meta_value( 'Attempts', 0 ) + 1;
 
+				$no_increment = WP_Helper::get_transient( self::TRANSIENT_FAILEDLOGINS_NO_INCREMENT );				
+				$new = ( $no_increment && $no_increment == $user->ID ) ? $occ->get_meta_value( 'Attempts', 0 ) : $occ->get_meta_value( 'Attempts', 0 ) + 1;
 				$login_failure_log_limit = $this->get_login_failure_log_limit();
 				if ( - 1 !== $login_failure_log_limit && $new > $login_failure_log_limit ) {
 					$new = $login_failure_log_limit . '+';
@@ -403,8 +390,9 @@ class WSAL_Sensors_LogInOut extends WSAL_AbstractSensor {
 				$occ->created_on = null;
 				$occ->save();
 			} else {
+				
 				// Create a new record exists user.
-				$this->plugin->alerts->trigger_event(
+				$this->plugin->alerts->trigger_event_if(
 					$new_alert_code,
 					array(
 						'Attempts'         => 1,
@@ -420,7 +408,7 @@ class WSAL_Sensors_LogInOut extends WSAL_AbstractSensor {
 					 * @return bool
 					 */
 					function ( $manager ) {
-						return ! $manager->will_or_has_triggered( 1004 );
+						return ! ( $manager->will_or_has_triggered( 1004 ) || $this->plugin->alerts->has_triggered( 1002 ) );
 					}
 				);
 			}
@@ -492,7 +480,13 @@ class WSAL_Sensors_LogInOut extends WSAL_AbstractSensor {
 	 */
 	public function event_password_reset( $user, $new_pass ) {
 		if ( ! empty( $user ) ) {
-			$user_roles = $this->plugin->settings()->get_current_user_roles( $user->roles );
+			$user_roles = User_Helper::get_user_roles( $user );
+
+			if ( ! isset( $this->plugin->alerts ) ) {
+				$wsal                 = \WpSecurityAuditLog::get_instance();
+				$this->plugin->alerts = new WSAL_AlertManager( $wsal );
+			}
+
 			$this->plugin->alerts->trigger_event(
 				4003,
 				array(
@@ -516,10 +510,15 @@ class WSAL_Sensors_LogInOut extends WSAL_AbstractSensor {
 	 */
 	public function user_switched_event( $new_user_id, $old_user_id ) {
 		$target_user       = get_user_by( 'ID', $new_user_id );
-		$target_user_roles = $this->plugin->settings()->get_current_user_roles( $target_user->roles );
+		$target_user_roles = User_Helper::get_user_roles( $target_user );
 		$target_user_roles = implode( ', ', $target_user_roles );
 		$old_user          = get_user_by( 'ID', $old_user_id );
-		$old_user_roles    = $this->plugin->settings()->get_current_user_roles( $old_user->roles );
+		$old_user_roles    = User_Helper::get_user_roles( $old_user );
+
+		if ( ! isset( $this->plugin->alerts ) ) {
+			$wsal                 = \WpSecurityAuditLog::get_instance();
+			$this->plugin->alerts = new WSAL_AlertManager( $wsal );
+		}
 
 		$this->plugin->alerts->trigger_event(
 			1008,
@@ -545,12 +544,20 @@ class WSAL_Sensors_LogInOut extends WSAL_AbstractSensor {
 			return;
 		}
 
-		$user_roles = $this->plugin->settings()->get_current_user_roles( $user->roles );
+		$user_roles = User_Helper::get_user_roles( $user );
+
+		if ( ! isset( $this->plugin->alerts ) ) {
+			$wsal                 = \WpSecurityAuditLog::get_instance();
+			$this->plugin->alerts = new WSAL_AlertManager( $wsal );
+		}
+
 		$this->plugin->alerts->trigger_event(
 			1010,
 			array(
 				'Username'         => $user->user_login,
 				'CurrentUserRoles' => $user_roles,
+				// Current user ID must be set explicitly as the user is not logged in when this happens.
+				'CurrentUserID'    => $user->ID,
 			),
 			true
 		);

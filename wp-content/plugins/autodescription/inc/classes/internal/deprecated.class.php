@@ -8,7 +8,7 @@ namespace The_SEO_Framework\Internal;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2015 - 2022 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2015 - 2023 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -144,7 +144,7 @@ final class Deprecated {
 					. $tsf->yandex_site_output()
 					. $tsf->baidu_site_output()
 					. $tsf->pint_site_output();
-		elseif ( $tsf->is_404() ) :
+		elseif ( \is_404() ) :
 			$output = $tsf->theme_color()
 					. $tsf->google_site_output()
 					. $tsf->bing_site_output()
@@ -153,7 +153,7 @@ final class Deprecated {
 					. $tsf->pint_site_output();
 		elseif ( $tsf->is_query_exploited() ) :
 			// aqp = advanced query protection
-			$output = '<meta name="tsf:aqp" value="1" />' . PHP_EOL;
+			$output = '<meta name="tsf:aqp" value="1" />' . "\n"; // Keep XHTML valid!
 		else :
 			// Inefficient concatenation is inefficient. Improve this?
 			$output = $tsf->the_description()
@@ -299,8 +299,7 @@ final class Deprecated {
 		$tsf->_deprecated_function( 'tsf()->can_do_sitemap_robots()', '4.2.0' );
 
 		if ( $check_option ) {
-			if ( ! $tsf->get_option( 'sitemaps_output' )
-			|| ! $tsf->get_option( 'sitemaps_robots' ) )
+			if ( ! $tsf->get_option( 'sitemaps_output' ) || ! $tsf->get_option( 'sitemaps_robots' ) )
 				return false;
 		}
 
@@ -562,7 +561,7 @@ final class Deprecated {
 		if ( isset( $id ) ) {
 			$is_shop = (int) \get_option( 'woocommerce_shop_page_id' ) === $id;
 		} else {
-			$is_shop = ! \is_admin() && \function_exists( 'is_shop' ) && \is_shop();
+			$is_shop = ! \is_admin() && \function_exists( '\\is_shop' ) && \is_shop();
 		}
 
 		return $is_shop;
@@ -595,7 +594,7 @@ final class Deprecated {
 		if ( $post ) {
 			$is_product = 'product' === \get_post_type( $post );
 		} else {
-			$is_product = \function_exists( 'is_product' ) && \is_product();
+			$is_product = \function_exists( '\\is_product' ) && \is_product();
 		}
 
 		return $is_product;
@@ -1504,13 +1503,17 @@ final class Deprecated {
 	 * @since 3.2.2 Removed SEO settings page check. This now returns false on that page.
 	 * @since 4.2.0 1. No longer casts input $id to integer.
 	 *              2. Deprecated.
+	 * @since 4.2.4 No longer causes a fatal error.
 	 * @deprecated
 	 *
 	 * @param int $id The page ID, required. Can be 0.
 	 * @return bool True if ID if for the homepage.
 	 */
 	public function is_front_page_by_id( $id ) {
-		\tsf()->_deprecated_function( 'tsf()->is_front_page_by_id()', '4.2.0', 'tsf()->is_real_front_page_by_id()' );
+
+		$tsf = \tsf();
+
+		$tsf->_deprecated_function( 'tsf()->is_front_page_by_id()', '4.2.0', 'tsf()->is_real_front_page_by_id()' );
 
 		$pof = (int) \get_option( 'page_on_front' );
 
@@ -1521,13 +1524,13 @@ final class Deprecated {
 
 			case 'posts':
 				$is_front_page =
-					( 0 === $pof && $this->is_home() )
+					( 0 === $pof && $tsf->is_home() )
 					|| $pof === $id;
 				break;
 
 			default:
 				// Elegant Themes's Extra support
-				$is_front_page = 0 === $id && $this->is_home();
+				$is_front_page = 0 === $id && $tsf->is_home();
 				break;
 		endswitch;
 
@@ -1551,7 +1554,7 @@ final class Deprecated {
 		$tsf = \tsf();
 		\tsf()->_deprecated_function( 'tsf()->prepend_tax_label_prefix()', '4.2.0' );
 
-		$prefix = $tsf->get_tax_type_label( $taxonomy ) ?: '';
+		$prefix = $tsf->get_tax_type_label( $taxonomy );
 
 		if ( $prefix ) {
 			$title = sprintf(
@@ -1578,6 +1581,7 @@ final class Deprecated {
 	 * @since 4.0.5 1. The shop ID is now handled via the filter.
 	 *              2. The question ID (AnsPress) is no longer called. This should work out-of-the-box since AnsPress 4.1.
 	 * @since 4.2.0 Deprecated
+	 * @since 4.2.4 No longer causes a fatal error.
 	 * @deprecated
 	 *
 	 * @return int The admin ID.
@@ -1592,7 +1596,7 @@ final class Deprecated {
 		 */
 		return (int) \apply_filters(
 			'the_seo_framework_real_id',
-			$this->is_feed() ? \get_the_ID() : 0
+			\is_feed() ? \get_the_ID() : 0
 		);
 	}
 

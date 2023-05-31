@@ -8,7 +8,7 @@ namespace The_SEO_Framework\Builders\Sitemap;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2019 - 2022 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2019 - 2023 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -131,7 +131,7 @@ abstract class Main {
 			$tabs = str_repeat( "\t", $level );
 
 			if ( \is_array( $value ) )
-				$value = "\n" . $this->create_xml_entry( $value, $level + 1 ) . $tabs;
+				$value = "\n{$this->create_xml_entry( $value, $level + 1 )}$tabs";
 
 			$out .= "$tabs<$key>$value</$key>\n";
 		}
@@ -162,8 +162,8 @@ abstract class Main {
 	 */
 	final public function is_post_included_in_sitemap( $post_id ) {
 
-		static $excluded = null;
-		if ( null === $excluded ) {
+		static $excluded;
+		if ( ! isset( $excluded ) ) {
 			/**
 			 * @since 2.5.2
 			 * @since 2.8.0 No longer accepts '0' as entry.
@@ -214,8 +214,8 @@ abstract class Main {
 	 */
 	final public function is_term_included_in_sitemap( $term_id, $taxonomy ) {
 
-		static $excluded = null;
-		if ( null === $excluded ) {
+		static $excluded;
+		if ( ! isset( $excluded ) ) {
 			/**
 			 * @since 4.0.0
 			 * @param int[] $excluded Sequential list of excluded IDs: [ int ...term_id ]

@@ -8,7 +8,7 @@
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2019 - 2022 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2019 - 2023 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -140,7 +140,10 @@ window.tsfTerm = function() {
 	 */
 	const _initTitleListeners = () => {
 
-		tsfTitle.setInputElement( document.getElementById( _titleId ) );
+		const titleInput = document.getElementById( _titleId );
+		if ( ! titleInput ) return;
+
+		tsfTitle.setInputElement( titleInput );
 
 		const state = JSON.parse(
 			document.getElementById( `tsf-title-data_${_titleId}` )?.dataset.state || 0
@@ -180,7 +183,7 @@ window.tsfTerm = function() {
 		}
 
 		//!? Disabled as we don't add prefixes when using a custom title:
-		// const setTermPrefixValue = ( event ) => {
+		// const setTermPrefixValue = event => {
 		// 	let prefixValue    = '';
 		// 	if ( ! event.target.value.length )
 		// 		prefixValue = l10n.params.termPrefix;
@@ -226,7 +229,10 @@ window.tsfTerm = function() {
 	 */
 	const _initDescriptionListeners = () => {
 
-		tsfDescription.setInputElement( document.getElementById( _descId ) );
+		const descInput = document.getElementById( _descId );
+		if ( ! descInput ) return;
+
+		tsfDescription.setInputElement( descInput );
 
 		const state = JSON.parse(
 			document.getElementById( `tsf-description-data_${_descId}` )?.dataset.state || 0

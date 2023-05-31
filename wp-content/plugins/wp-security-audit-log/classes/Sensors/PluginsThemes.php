@@ -4,9 +4,12 @@
  *
  * Plugins & Themes sensor file.
  *
- * @since   1.0.0
- * @package wsal
+ * @since      1.0.0
+ * @package    wsal
+ * @subpackage sensors
  */
+
+use WSAL\Helpers\Plugins_Helper;
 
 // Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
@@ -29,7 +32,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @package    wsal
  * @subpackage sensors
  */
-class WSAL_Sensors_PluginsThemes extends WSAL_AbstractSensor {
+class WSAL_Sensors_PluginsThemes {//extends WSAL_AbstractSensor {
 
 	/**
 	 * List of Themes.
@@ -58,6 +61,69 @@ class WSAL_Sensors_PluginsThemes extends WSAL_AbstractSensor {
 		}
 		add_action( 'switch_theme', array( $this, 'event_theme_activated' ) );
 		add_action( 'upgrader_overwrote_package', array( $this, 'OnPackageOverwrite' ), 10, 3 );
+
+		add_action( 'deleted_theme', array( $this, 'on_deleted_theme' ), 10, 2 );
+		add_action( 'upgrader_process_complete', array( $this, 'detect_upgrade_completed' ), 10, 2 );
+	}
+
+	/**
+	 * Trigger event once an automatic theme or plugin update has occured
+	 *
+	 * @param WP_Upgrader $upgrader_object - WP Upgrader object.
+	 * @param array       $hook_extra - Update details.
+	 * @return void
+	 */
+	public function detect_upgrade_completed( $upgrader_object, $hook_extra ) {
+
+		if ( is_array( $hook_extra ) && isset( $hook_extra['plugin'] ) && 'wp-security-audit-log.php' === $hook_extra['plugin'] ) {
+			/**
+			 * Our own plugin gets updated, unfortunately we have no idea (and most probably that is the old version of our plugin) what is the state of the plugin and what has been changed in the new version - check code reference here - https://developer.wordpress.org/reference/hooks/upgrader_process_complete/ especially the part that stays:
+			 * Use with caution: When you use the upgrader_process_complete action hook in your plugin and your plugin is the one which under upgrade, then this action will run the old version of your plugin.
+			 */
+
+			 return;
+		}
+
+		if ( isset( $hook_extra['plugin'] ) ) {
+			self::log_plugin_updated_event( $hook_extra['plugin'] );
+		} elseif ( isset( $hook_extra['theme'] ) ) {
+			self::log_theme_updated_event( $hook_extra['theme'] );
+		}
+	}
+
+	/**
+	 * Handles a theme deletion attempt.
+	 *
+	 * @param string $stylesheet Stylesheet of the theme to delete.
+	 * @param bool   $deleted    Whether the theme deletion was successful.
+	 *
+	 * @since 4.4.2.1
+	 *
+	 * phpcs:disable WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
+	 */
+	public function on_deleted_theme( $stylesheet, $deleted ) {
+		if ( ! $deleted ) {
+			return;
+		}
+
+		if ( ! array_key_exists( $stylesheet, $this->old_themes ) ) {
+			return;
+		}
+
+		$theme = $this->old_themes[ $stylesheet ];
+		$this->plugin->alerts->trigger_event(
+			5007,
+			array(
+				'Theme' => (object) array(
+					'Name'                   => $theme->Name,
+					'ThemeURI'               => $theme->ThemeURI,
+					'Description'            => $theme->Description,
+					'Author'                 => $theme->Author,
+					'Version'                => $theme->Version,
+					'get_template_directory' => $theme->get_template_directory(),
+				),
+			)
+		);
 	}
 
 	/**
@@ -101,9 +167,36 @@ class WSAL_Sensors_PluginsThemes extends WSAL_AbstractSensor {
 		$is_plugins = 'plugins' === $actype;
 
 		// Install plugin.
-		if ( in_array( $action, array( 'install-plugin', 'upload-plugin', 'run_addon_install' ), true ) && current_user_can( 'install_plugins' ) ) {
-			$plugin = array_values( array_diff( array_keys( get_plugins() ), array_keys( $this->old_plugins ) ) );
-			if ( count( $plugin ) != 1 ) {
+		if ( in_array( $action, array( 'install-plugin', 'upload-plugin', 'wsal_run_addon_install' ), true ) && current_user_can( 'install_plugins' ) ) {
+			$plugin = array_merge( array_diff( array_keys( get_plugins() ), array_keys( $this->old_plugins ) ), array_diff( array_keys( $this->old_plugins ), array_keys( get_plugins() ) ) );
+
+			// Check for premium version being installed / updated.
+			if ( in_array( 'wp-security-audit-log-premium/wp-security-audit-log.php', $plugin ) ) {
+				/**
+				 * It looks like our own plugin is installed / updated. That means that we have no idea if there is a version on server or the plugin is in memory only (if it is he don't know which parts of it are there), that could lead to PHP errors which will prevent plugin install / update, better approach is to do nothing in terms of logging.
+				 *
+				 * TODO: the plugin name (see comparison in if clause above) could be whatever, we must introduce constant for that probably
+				 */
+				return;
+			}
+			// Check for free version being installed / updated.
+			if ( in_array( 'wp-security-audit-log/wp-security-audit-log.php', $plugin ) ) {
+				/**
+				 * It looks like our own plugin is installed / updated. That means that we have no idea if there is a version on server or the plugin is in memory only (if it is he don't know which parts of it are there), that could lead to PHP errors which will prevent plugin install / update, better approach is to do nothing in terms of logging.
+				 *
+				 * TODO: the plugin name (see comparison in if clause above) could be whatever, we must introduce constant for that probably
+				 */
+				return;
+			}
+
+			if ( ! count( $plugin ) ) {
+				/**
+				 * No changed plugins - there is nothing we suppose to log.
+				 */
+				return;
+			}
+
+			if ( count( $plugin ) > 1 ) {
 				$this->log_error(
 					'Expected exactly one new plugin but found ' . count( $plugin ),
 					array(
@@ -160,10 +253,10 @@ class WSAL_Sensors_PluginsThemes extends WSAL_AbstractSensor {
 			if ( isset( $get_array['checked'] ) && ! empty( $get_array['checked'] ) ) {
 				$latest_event = $this->plugin->alerts->get_latest_events();
 				$latest_event = isset( $latest_event[0] ) ? $latest_event[0] : false;
-				$event_meta   = $latest_event ? $latest_event->get_meta_array() : false;
+				$event_meta   = $latest_event ? $latest_event['meta_values'] : false;
 
 				foreach ( $get_array['checked'] as $plugin_file ) {
-					if ( $latest_event && 5001 === $latest_event->alert_id && $event_meta && isset( $event_meta['PluginFile'] ) ) {
+					if ( $latest_event && 5001 === $latest_event['alert_id'] && $event_meta && isset( $event_meta['PluginFile'] ) ) {
 						if ( basename( WSAL_BASE_NAME ) === basename( $event_meta['PluginFile'] ) ) {
 							continue;
 						}
@@ -391,25 +484,6 @@ class WSAL_Sensors_PluginsThemes extends WSAL_AbstractSensor {
 				);
 			}
 		}
-
-		// Uninstall theme.
-		if ( in_array( $action, array( 'delete-theme' ), true ) && current_user_can( 'install_themes' ) ) {
-			foreach ( $this->get_removed_themes() as $theme ) {
-				$this->plugin->alerts->trigger_event(
-					5007,
-					array(
-						'Theme' => (object) array(
-							'Name'                   => $theme->Name,
-							'ThemeURI'               => $theme->ThemeURI,
-							'Description'            => $theme->Description,
-							'Author'                 => $theme->Author,
-							'Version'                => $theme->Version,
-							'get_template_directory' => $theme->get_template_directory(),
-						),
-					)
-				);
-			}
-		}
 	}
 
 	/**
@@ -450,21 +524,6 @@ class WSAL_Sensors_PluginsThemes extends WSAL_AbstractSensor {
 				),
 			)
 		);
-	}
-
-	/**
-	 * Get removed themes.
-	 *
-	 * @return array of WP_Theme objects
-	 */
-	protected function get_removed_themes() {
-		$result = $this->old_themes;
-		foreach ( $result as $i => $theme ) {
-			if ( file_exists( $theme->get_template_directory() ) ) {
-				unset( $result[ $i ] );
-			}
-		}
-		return array_values( $result );
 	}
 
 	/**
@@ -579,7 +638,7 @@ class WSAL_Sensors_PluginsThemes extends WSAL_AbstractSensor {
 		}
 
 		// Grab list of plugins we have addons for.
-		$predefined_plugins       = WSAL_PluginInstallAndActivate::get_installable_plugins();
+		$predefined_plugins       = Plugins_Helper::get_installable_plugins();
 		$predefined_plugins_addon = array_column( $predefined_plugins, 'addon_for' );
 		$all_plugins              = array_keys( get_plugins() );
 		foreach ( $predefined_plugins_addon as $plugin ) {
@@ -591,15 +650,15 @@ class WSAL_Sensors_PluginsThemes extends WSAL_AbstractSensor {
 				$addon_slug         = array( array_search( $plugin, array_column( $predefined_plugins, 'addon_for', 'plugin_slug' ) ) ); // phpcs:ignore
 				$is_addon_installed = array_intersect( $all_plugins, $addon_slug );
 				if ( empty( $is_addon_installed ) ) {
-					$current_value   = $this->plugin->get_global_setting( 'installed_plugin_addon_available' );
+					$current_value   = \WSAL\Helpers\Settings_Helper::get_option_value( 'installed_plugin_addon_available' );
 					$plugin_filename = array( $plugin_filename );
 					if ( isset( $current_value ) && is_array( $current_value ) ) {
 						$new_plugin_filenames = array_unique( array_merge( $current_value, $plugin_filename ) );
 					} else {
 						$new_plugin_filenames = $plugin_filename;
 					}
-					$this->plugin->set_global_setting( 'installed_plugin_addon_available', $new_plugin_filenames );
-					$this->plugin->delete_global_setting( 'addon_available_notice_dismissed' );
+					\WSAL\Helpers\Settings_Helper::set_option_value( 'installed_plugin_addon_available', $new_plugin_filenames );
+					\WSAL\Helpers\Settings_Helper::delete_option_value( 'addon_available_notice_dismissed' );
 				}
 			}
 		}
@@ -619,7 +678,7 @@ class WSAL_Sensors_PluginsThemes extends WSAL_AbstractSensor {
 		}
 
 		// Grab list of plugins we have addons for.
-		$predefined_plugins       = WSAL_PluginInstallAndActivate::get_installable_plugins();
+		$predefined_plugins       = Plugins_Helper::get_installable_plugins();
 		$predefined_plugins_addon = array_column( $predefined_plugins, 'addon_for' );
 		foreach ( $predefined_plugins_addon as $plugin ) {
 
@@ -627,7 +686,7 @@ class WSAL_Sensors_PluginsThemes extends WSAL_AbstractSensor {
 
 			// Check if plugin file starts with the same string as our addon_for, or if its equal.
 			if ( $plugin_filename === $plugin ) {
-				$current_installed = $wsal->get_global_setting( 'installed_plugin_addon_available' );
+				$current_installed = \WSAL\Helpers\Settings_Helper::get_option_value( 'installed_plugin_addon_available' );
 				if ( isset( $current_installed ) && ! empty( $current_installed ) ) {
 					$key = array_search( $plugin, $current_installed ); // phpcs:ignore
 					if ( false !== $key ) {
@@ -635,7 +694,7 @@ class WSAL_Sensors_PluginsThemes extends WSAL_AbstractSensor {
 					}
 				}
 
-				$wsal->set_global_setting( 'installed_plugin_addon_available', $current_installed );
+				\WSAL\Helpers\Settings_Helper::set_option_value( 'installed_plugin_addon_available', $current_installed );
 			}
 		}
 	}
@@ -653,6 +712,16 @@ class WSAL_Sensors_PluginsThemes extends WSAL_AbstractSensor {
 	public function OnPackageOverwrite( $package, $new_plugin_data, $package_type ) {
 		if ( 'plugin' !== $package_type ) {
 			return;
+		}
+
+		if ( is_array( $new_plugin_data ) && isset( $new_plugin_data['TextDomain'] ) && 'wp-security-audit-log' === $new_plugin_data['TextDomain'] ) {
+			/**
+			 * Out own plugin gets updated, unfortunately we have no idea (and most probably that is the old version of our plugin  ) what is the state of the plugin and what has been changed in the new version - check code reference here - https://developer.wordpress.org/reference/hooks/upgrader_process_complete/ especially the part that stays:
+			 * Use with caution: When you use the upgrader_process_complete action hook in your plugin and your plugin is the one which under upgrade, then this action will run the old version of your plugin.
+			 * Yes - that is not upgrader_overwrote_package but same applies to it im afraid
+			 */
+
+			 return;
 		}
 
 		if ( array_key_exists( 'Name', $new_plugin_data ) ) {

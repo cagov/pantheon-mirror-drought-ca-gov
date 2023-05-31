@@ -220,13 +220,14 @@ function WsalDisableCustom(link, meta_key) {
 	});
 }
 
-function WsalDBChange(value) {
+function WsalDBChange(value, nonce) {
 	jQuery.ajax({
 		type: 'POST',
 		url: ajaxurl,
 		async: true,
 		data: {
 			action: 'AjaxSwitchDB',
+			nonce: nonce,
 			selected_db: value
 		},
 		success: function () {
@@ -576,7 +577,8 @@ jQuery( document ).ready( function() {
 		});
 	});
 
-	jQuery( '[data-shortened-text]' ).on( 'click', function( event ) {
+    jQuery( document ).on( 'click', '[data-shortened-text]', function(event) {
+        event.preventDefault();
 		var elm = jQuery( this );
 		var full_text = elm.data( 'shortened-text' );
 		elm.parent().find( 'span' ).text( full_text );

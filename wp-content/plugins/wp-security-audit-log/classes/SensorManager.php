@@ -13,6 +13,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+use WSAL\Helpers\WP_Helper;
+use \WSAL\Helpers\Classes_Helper;
 /**
  * Sensor Manager.
  *
@@ -30,19 +32,37 @@ final class WSAL_SensorManager extends WSAL_AbstractSensor {
 	protected $sensors = array();
 
 	/**
-	 * {@inheritDoc}
+	 * Extends the default constructor.
+	 *
+	 * @param WpSecurityAuditLog $plugin - Instance of WpSecurityAuditLog.
+	 *
+	 * @since 4.4.2.1
 	 */
 	public function __construct( WpSecurityAuditLog $plugin ) {
+
 		parent::__construct( $plugin );
+
+		$sensors = Classes_Helper::get_classes_by_namespace( '\WSAL\WP_Sensors' );
+
+		foreach ( $sensors as $sensor ) {
+			if ( method_exists( $sensor, 'init' ) ) {
+				call_user_func_array( array( $sensor, 'init' ), array() );
+			}
+		}
 
 		// Check sensors before loading for optimization.
 		add_filter( 'wsal_before_sensor_load', array( $this, 'check_sensor_before_load' ), 10, 2 );
-		foreach ( WSAL_Utilities_FileSystemUtils::read_files_in_folder( dirname( __FILE__ ) . '/Sensors', '*.php' ) as $file ) {
-			$this->add_from_file( $file );
+
+		$class_map = Classes_Helper::get_subclasses_of_class( __CLASS__, 'WSAL_AbstractSensor' );
+
+		foreach ( $class_map as $class_name ) {
+			$this->add_instance( new $class_name( $this->plugin ) );
 		}
 
-		/*
+		/**
 		 * Get an array of directories to loop through to add custom sensors.
+		 *
+		 * TODO: remove all that logic as it is wrongly written
 		 *
 		 * Passed through a filter so other plugins or code can add own custom
 		 * sensor class files by adding the containing directory to this array.
@@ -65,7 +85,7 @@ final class WSAL_SensorManager extends WSAL_AbstractSensor {
 						continue;
 					}
 
-					/*
+					/**
 					 * @since 3.5.1 Allow loading classes where names match the
 					 * filename 1:1. Prior to version 3.5.1 sensors were always
 					 * assumed to be defined WITH `WSAL_Sensors_` prefix in the
@@ -77,22 +97,6 @@ final class WSAL_SensorManager extends WSAL_AbstractSensor {
 				}
 			}
 		}
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	public function hook_events() {
-		foreach ( $this->sensors as $sensor ) {
-			$sensor->hook_events();
-		}
-	}
-
-	/**
-	 * Method: Get the sensors.
-	 */
-	public function get_sensors() {
-		return $this->sensors;
 	}
 
 	/**
@@ -126,6 +130,23 @@ final class WSAL_SensorManager extends WSAL_AbstractSensor {
 		$this->add_instance( new $class( $this->plugin ) );
 	}
 
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function hook_events() {
+		foreach ( $this->sensors as $sensor ) {
+			$sensor->hook_events();
+		}
+	}
+
+	/**
+	 * Method: Get the sensors.
+	 */
+	public function get_sensors() {
+		return $this->sensors;
+	}
+
 	/**
 	 * Add newly created sensor to list.
 	 *
@@ -144,7 +165,7 @@ final class WSAL_SensorManager extends WSAL_AbstractSensor {
 	 */
 	public function check_sensor_before_load( $load_sensor, $filepath ) {
 		global $pagenow;
-		if ( ! $this->plugin->is_multisite() ) {
+		if ( ! WP_Helper::is_multisite() ) {
 			$admin_page = $pagenow;
 		} else {
 			/**
@@ -186,10 +207,10 @@ final class WSAL_SensorManager extends WSAL_AbstractSensor {
 		// Get file name.
 		$filename = basename( $filepath, '.php' );
 
-		$frontend_events = WSAL_Settings::get_frontend_events();
+		$frontend_events = WSAL\Helpers\Settings_Helper::get_frontend_events();
 
 		// Only LogInOut and Register sensors should load on login page.
-		if ( WpSecurityAuditLog::is_login_screen() ) {
+		if ( WP_Helper::is_login_screen() ) {
 			if ( in_array( $filename, array( 'Register', 'LogInOut' ), true ) ) {
 				return true;
 			}
@@ -197,7 +218,7 @@ final class WSAL_SensorManager extends WSAL_AbstractSensor {
 		}
 
 		$default_public_sensors = array( 'Register', 'LogInOut' );
-		if ( $this->plugin->is_multisite() ) {
+		if ( WP_Helper::is_multisite() ) {
 			// Multisite sign-up is happening on front-end.
 			array_push( $default_public_sensors, 'MultisiteSignUp' );
 		}
@@ -219,7 +240,7 @@ final class WSAL_SensorManager extends WSAL_AbstractSensor {
 		}
 
 		// Get current page query argument via $_GET array.
-		$current_page = filter_input( INPUT_GET, 'page', FILTER_SANITIZE_STRING );
+		$current_page = \sanitize_text_field( \wp_unslash( $_GET['page'] ) );
 
 		// Check these conditions before loading sensors.
 		if (
@@ -257,7 +278,7 @@ final class WSAL_SensorManager extends WSAL_AbstractSensor {
 
 				case 'Multisite':
 					// If site is not multisite then don't load it.
-					if ( ! $this->plugin->is_multisite() ) {
+					if ( ! WP_Helper::is_multisite() ) {
 						$load_sensor = false;
 					}
 					break;

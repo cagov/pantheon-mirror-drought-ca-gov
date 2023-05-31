@@ -9,7 +9,7 @@ namespace {
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2018 - 2022 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2018 - 2023 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -260,6 +260,7 @@ namespace The_SEO_Framework {
 	 * @see umemo() -- sacrifices cleanliness for performance.
 	 * @ignore We couldn't find a use for this... yet. Probably once we support only PHP7.4+
 	 * @api
+	 * TODO Can we use callables as $fn? If so, adjust docs and apply internally.
 	 *
 	 * @param \Closure $fn The Closure or function to memoize.
 	 * @return mixed : {
@@ -282,14 +283,12 @@ namespace The_SEO_Framework {
 			+ debug_backtrace( 0, 2 )[1]
 		);
 
-		// If the hash is stored, return null back to the caller.
-		if ( isset( $memo[ $hash ] ) )
-			return $memo[ $hash ] === $hash ? null : $memo[ $hash ];
+		// Normally, I try to avoid NOTs for they add (tiny) overhead. Here, I chose readability over performance.
+		if ( ! isset( $memo[ $hash ] ) ) {
+			// Store the result of the function. If that's null/void, store hash.
+			$memo[ $hash ] = \call_user_func( $fn ) ?? $hash;
+		}
 
-		// Store the result of the function. If that's null/void, store hash.
-		$memo[ $hash ] = \call_user_func( $fn ) ?? $hash;
-
-		// If the hash is stored, return null back to the caller.
 		return $memo[ $hash ] === $hash ? null : $memo[ $hash ];
 	}
 }

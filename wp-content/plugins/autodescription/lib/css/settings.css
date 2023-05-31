@@ -5,42 +5,57 @@
 }
 
 .tsf-top-wrap {
+	/* About half of notification height */
+	margin-bottom: 8px;
+}
+
+.tsf-top-wrap,
+.tsf-bottom-wrap {
 	width: 100%;
-	display: inline-block;
-	vertical-align: top;
+	display: flex;
+	justify-content: space-between;
+	flex: 1 1 100%;
+	flex-flow: row wrap;
+	gap: 10px;
 }
 
-.tsf-top-wrap > h1 {
-	float: left;
+/* Matches .wrap h1 */
+.tsf-top-buttons {
+	padding: 9px 0 4px;
+}
+.tsf-top-buttons,
+.tsf-bottom-buttons {
+	display: flex;
+	flex: 1 1 auto;
+	justify-content: start;
+	flex-flow: row wrap;
+	gap: 10px;
+}
+.tsf-top-buttons.tsf-end,
+.tsf-bottom-buttons.tsf-end {
+	justify-content: flex-end;
 }
 
-body.rtl .tsf-top-wrap > h1 {
-	float: right;
+@media screen and (max-width: 782px) {
+	.tsf-top-wrap,
+	.tsf-bottom-wrap,
+	.tsf-top-buttons.tsf-end,
+	.tsf-bottom-buttons.tsf-end {
+		justify-content: start;
+	}
+	.tsf-top-buttons,
+	.tsf-bottom-buttons {
+		width: 100%;
+	}
+}
+
+.tsf-metaboxes .tsf-top-buttons > *,
+.tsf-metaboxes .tsf-bottom-buttons > * {
+	text-align: center;
 }
 
 .tsf-metaboxes .metabox-holder {
 	clear: both;
-}
-
-.tsf-top-buttons {
-	float: right;
-}
-
-body.rtl .tsf-top-buttons {
-	float: left;
-}
-
-.tsf-bottom-buttons {
-	text-align: right;
-}
-
-body.rtl .tsf-bottom-buttons {
-	text-align: left;
-}
-
-.tsf-metaboxes .tsf-top-buttons input,
-.tsf-metaboxes .tsf-bottom-buttons input {
-	margin-left: 10px;
 }
 
 #tsf-title-separator {
@@ -182,7 +197,6 @@ body.rtl .tsf-bottom-buttons {
 	font-weight: 600;
 	border-radius: 3px 3px 0 0;
 }
-
 body.rtl .tsf-nav-tab-label {
 	float: right;
 	margin-left: 0;

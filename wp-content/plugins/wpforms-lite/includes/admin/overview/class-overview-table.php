@@ -1,5 +1,9 @@
 <?php
 
+use WPForms\Forms\Locator;
+use WPForms\Integrations\LiteConnect\LiteConnect;
+use WPForms\Integrations\LiteConnect\Integration as LiteConnectIntegration;
+
 /**
  * Generate the table on the plugin overview page.
  *
@@ -60,6 +64,22 @@ class WPForms_Overview_Table extends WP_List_Table {
 	}
 
 	/**
+	 * Get the instance of a class and store it in itself.
+	 *
+	 * @since 1.7.5
+	 */
+	public static function get_instance() {
+
+		static $instance;
+
+		if ( ! $instance ) {
+			$instance = new self();
+		}
+
+		return $instance;
+	}
+
+	/**
 	 * Retrieve the table columns.
 	 *
 	 * @since 1.0.0
@@ -71,10 +91,15 @@ class WPForms_Overview_Table extends WP_List_Table {
 		$columns = [
 			'cb'        => '<input type="checkbox" />',
 			'name'      => esc_html__( 'Name', 'wpforms-lite' ),
+			'tags'      => esc_html__( 'Tags', 'wpforms-lite' ),
 			'author'    => esc_html__( 'Author', 'wpforms-lite' ),
 			'shortcode' => esc_html__( 'Shortcode', 'wpforms-lite' ),
 			'created'   => esc_html__( 'Created', 'wpforms-lite' ),
 		];
+
+		if ( LiteConnect::is_allowed() && LiteConnect::is_enabled() ) {
+			$columns['entries'] = esc_html__( 'Entries', 'wpforms-lite' );
+		}
 
 		return apply_filters( 'wpforms_overview_table_columns', $columns );
 	}
@@ -118,6 +143,16 @@ class WPForms_Overview_Table extends WP_List_Table {
 				$value = get_the_date( get_option( 'date_format' ), $form );
 				break;
 
+			case 'entries':
+				$value = sprintf(
+					'<span class="wpforms-lite-connect-entries-count"><a href="%s" data-title="%s">%s%d</a></span>',
+					esc_url( admin_url( 'admin.php?page=wpforms-entries' ) ),
+					esc_attr__( 'Entries are securely backed up in the cloud. Upgrade to restore.', 'wpforms-lite' ),
+					'<svg viewBox="0 0 16 12"><path d="M10.8 2c1.475 0 2.675 1.175 2.775 2.625C15 5.125 16 6.475 16 8a3.6 3.6 0 0 1-3.6 3.6H4a3.98 3.98 0 0 1-4-4 4.001 4.001 0 0 1 2.475-3.7A4.424 4.424 0 0 1 6.8.4c1.4 0 2.625.675 3.425 1.675C10.4 2.025 10.6 2 10.8 2ZM4 10.4h8.4a2.4 2.4 0 0 0 0-4.8.632.632 0 0 0-.113.013.678.678 0 0 1-.112.012c.125-.25.225-.525.225-.825 0-.875-.725-1.6-1.6-1.6a1.566 1.566 0 0 0-1.05.4 3.192 3.192 0 0 0-2.95-2 3.206 3.206 0 0 0-3.2 3.2v.05A2.757 2.757 0 0 0 1.2 7.6 2.795 2.795 0 0 0 4 10.4Zm6.752-4.624a.64.64 0 1 0-.905-.905L6.857 7.86 5.38 6.352a.64.64 0 1 0-.914.896l1.93 1.97a.64.64 0 0 0 .91.004l3.446-3.446Z"/></svg>',
+					LiteConnectIntegration::get_form_entries_count( $form->ID )
+				);
+				break;
+
 			case 'modified':
 				$value = get_post_modified_time( get_option( 'date_format' ), false, $form );
 				break;
@@ -156,6 +191,8 @@ class WPForms_Overview_Table extends WP_List_Table {
 	 *
 	 * @param string[]  $hidden Array of IDs of columns hidden by default.
 	 * @param WP_Screen $screen WP_Screen object of the current screen.
+	 *
+	 * @return string[]
 	 */
 	public function default_hidden_columns( $hidden, $screen ) {
 
@@ -163,7 +200,11 @@ class WPForms_Overview_Table extends WP_List_Table {
 			return $hidden;
 		}
 
-		return [ 'author' ];
+		return [
+			'tags',
+			'author',
+			Locator::COLUMN_NAME,
+		];
 	}
 
 	/**
@@ -179,6 +220,20 @@ class WPForms_Overview_Table extends WP_List_Table {
 
 		// Build the row action links and return the value.
 		return $this->get_column_name_title( $form ) . $this->get_column_name_row_actions( $form );
+	}
+
+	/**
+	 * Render the form tags column.
+	 *
+	 * @since 1.7.5
+	 *
+	 * @param WP_Post $form Form.
+	 *
+	 * @return string
+	 */
+	public function column_tags( $form ) {
+
+		return wpforms()->get( 'forms_tags' )->column_tags( $form );
 	}
 
 	/**
@@ -261,7 +316,7 @@ class WPForms_Overview_Table extends WP_List_Table {
 
 		// phpcs:disable WPForms.Comments.PHPDocHooks.RequiredHookDocumentation, WPForms.PHP.ValidateHooks.InvalidHookName
 
-		/*
+		/**
 		 * Filters row action links on the 'All Forms' admin page.
 		 *
 		 * @since 1.0.0
@@ -271,7 +326,7 @@ class WPForms_Overview_Table extends WP_List_Table {
 		 */
 		return $this->row_actions( apply_filters( 'wpforms_overview_row_actions', [], $form ) );
 
-        // phpcs:enable
+		// phpcs:enable
 	}
 
 	/**
@@ -309,6 +364,8 @@ class WPForms_Overview_Table extends WP_List_Table {
 				<?php $this->bulk_actions( $which ); ?>
 			</div>
 			<?php
+			$this->extra_tablenav( $which );
+
 			if ( $which === 'top' ) {
 				$this->pagination( $which );
 			}
@@ -327,6 +384,7 @@ class WPForms_Overview_Table extends WP_List_Table {
 	 */
 	protected function extra_tablenav( $which ) {
 
+		wpforms()->get( 'forms_tags' )->extra_tablenav( $which, $this );
 		wpforms()->get( 'forms_views' )->extra_tablenav( $which );
 	}
 
@@ -418,7 +476,7 @@ class WPForms_Overview_Table extends WP_List_Table {
 
 		/**
 		 * Allow counting forms filtered by a given search criteria.
-         *
+		 *
 		 * If result will not contain `all` key, count All Forms without filtering will be performed.
 		 *
 		 * @since 1.7.2

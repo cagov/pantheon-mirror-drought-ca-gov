@@ -10,7 +10,7 @@ namespace The_SEO_Framework;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2015 - 2022 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2015 - 2023 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -50,6 +50,8 @@ class Site_Options extends Sanitize {
 	 * @since 2.6.0
 	 * @since 3.1.0 Now applies filters 'the_seo_framework_default_site_options'
 	 * @since 4.0.0 `home_title_location` is now switched from right to left, or vice-versa.
+	 * @since 4.2.4 `max_image_preview` now defaults to `large`, from `standard`, matching WordPress's default.
+	 * @since 4.2.7 Added `auto_descripton_html_method`, defaults to `fast`.
 	 *
 	 * @return array Default site options.
 	 */
@@ -107,7 +109,8 @@ class Site_Options extends Sanitize {
 				'title_strip_tags'    => 1,         // Apply 'strip tags' on titles.
 
 				// Description.
-				'auto_description' => 1, // Enables auto description.
+				'auto_description'            => 1, // Enables auto description.
+				'auto_descripton_html_method' => 'fast', // Auto description HTML passes.
 
 				// Robots index.
 				'author_noindex' => 0, // Author Archive robots noindex
@@ -147,7 +150,7 @@ class Site_Options extends Sanitize {
 				// Robots copyright.
 				'set_copyright_directives' => 1,          // Allow copyright directive settings.
 				'max_snippet_length'       => -1,         // Max text-snippet length. -1 = unlimited, 0 = disabled, R>0 = characters.
-				'max_image_preview'        => 'standard', // Max image-preview size. 'none', 'standard', 'large'.
+				'max_image_preview'        => 'large',    // Max image-preview size. 'none', 'standard', 'large'.
 				'max_video_preview'        => -1,         // Max video-preview size. -1 = unlimited, 0 = disabled, R>0 = seconds.
 
 				// Robots home.
@@ -339,7 +342,8 @@ class Site_Options extends Sanitize {
 	 * @uses THE_SEO_FRAMEWORK_SITE_OPTIONS
 	 *
 	 * @param string|string[] $key       Option name, or a map of indexes therefor.
-	 *                                   If you send an empty array, you'll get all options. Don't.
+	 *                                   If you send an empty array, you'll get all options.
+	 *                                   Don't do that; use get_all_options() instead.
 	 * @param boolean         $use_cache Optional. Whether to use the cache value or not. Defaults to true.
 	 * @return mixed The value of this $key in the database. Empty string when not set.
 	 */
@@ -846,7 +850,7 @@ class Site_Options extends Sanitize {
 	 * @param string $item      The item to get.
 	 * @param string $post_type The post type.
 	 * @param bool   $use_cache Whether to use caching.
-	 * @return array|null The post type archive's meta item's value. Null when item isn't registered.
+	 * @return ?mixed The post type archive's meta item value. Null when item isn't registered.
 	 */
 	public function get_post_type_archive_meta_item( $item, $post_type = '', $use_cache = true ) {
 		return $this->get_post_type_archive_meta(

@@ -1,7 +1,6 @@
 <?php
 namespace BracketSpace\Notification\Dependencies\enshrined\svgSanitize\data;
 
-
 /**
  * Class AttributeInterface
  *

@@ -8,7 +8,7 @@ namespace The_SEO_Framework\Bridges;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2019 - 2022 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2019 - 2023 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -267,7 +267,7 @@ final class Sitemap {
 			echo 'Sitemap is locked temporarily. Try again later.';
 		}
 
-		echo PHP_EOL;
+		echo "\n";
 		exit;
 	}
 
@@ -425,7 +425,7 @@ final class Sitemap {
 	 */
 	public function output_sitemap_header() {
 
-		echo '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
+		echo '<?xml version="1.0" encoding="UTF-8"?>', "\n";
 
 		if ( static::$tsf->get_option( 'sitemap_styles' ) ) {
 			printf(

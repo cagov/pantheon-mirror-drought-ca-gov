@@ -8,7 +8,7 @@
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2019 - 2022 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2019 - 2023 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -29,7 +29,9 @@
  * Holds tsfPT (tsf primary term) values in an object to avoid polluting global namespace.
  *
  * This is a self-constructed function assigned as an object.
- * This also is deprecated in favor for `pt-gb.js`. We might de-jQuery-fy this, though.
+ * This also is deprecated in favor for `pt-gb.js`.
+ *
+ * We might de-jQuery-fy this, though. TODO let's do it... Classic Editor won't go away.
  *
  * @since 3.1.0
  *
@@ -74,23 +76,25 @@ window.tsfPT = function( $ ) {
 			termSelector.appendChild( radio );
 		})();
 
+		// These are better set as Maps... oh well, Classic Editor will be with us for only 10 more years.
 		let input$         = {},
 			checked$       = {},
 			uniqueChecked$ = {},
 			box$           = {},
 			primaries      = {};
 
-		const nsAction = ( action, taxonomy ) => action + '.tsfShowPrimary' + taxonomy;
+		// Namespaces an action for jQuery
+		const nsAction = ( action, taxonomy ) => `${action}.tsfShowPrimary${taxonomy}`;
 
-		const addInput = ( taxonomy ) => {
-			let $wrap    = $( '#' + taxonomy + 'div' ),
-				template = inputTemplate( { 'taxonomy' : taxonomies[ taxonomy ] } );
+		const addInput = taxonomy => {
+			let $wrap    = $( `#${taxonomy}div` ),
+				template = inputTemplate( { taxonomy: taxonomies[ taxonomy ] } );
 			$wrap.append( template );
 		}
-		const addHelp = ( taxonomy ) => {
-			let $wrap    = $( '#taxonomy-' + taxonomy ),
-				template = helpTemplate( { 'taxonomy' : taxonomies[ taxonomy ] } ),
-				$ulChild  = $wrap.children( 'ul:first' );
+		const addHelp = taxonomy => {
+			let $wrap    = $( `#taxonomy-${taxonomy}` ),
+				template = helpTemplate( { taxonomy: taxonomies[ taxonomy ] } ),
+				$ulChild = $wrap.children( 'ul:first' );
 
 			if ( $ulChild.length ) {
 				$( template ).insertAfter( $ulChild ); // Maintain tab order.
@@ -100,14 +104,14 @@ window.tsfPT = function( $ ) {
 			tsfTT.triggerReset();
 			fixHelpPos( taxonomy );
 		}
-		const fixHelpPos = ( taxonomy ) => {
-			let wrap = document.getElementById( 'taxonomy-' + taxonomy ),
+		const fixHelpPos = taxonomy => {
+			let wrap = document.getElementById( `taxonomy-${taxonomy}` ),
 				tabs = wrap.querySelectorAll( '.tabs-panel' );
 
 			let postbox = wrap.closest( '.postbox' );
 			if ( postbox && postbox.classList.contains( 'closed' ) ) return;
 
-			let tab = [].slice.call( tabs ).filter( ( el ) => {
+			let tab = [].slice.call( tabs ).filter( el => {
 				return el.offsetWidth > 0 || el.offsetHeight > 0 || el.getClientRects().length > 0;
 			} )[0];
 
@@ -118,22 +122,22 @@ window.tsfPT = function( $ ) {
 					   : 25;
 
 			if ( window.isRtl ) {
-				wrap.querySelector( '.tsf-primary-term-selector-help-wrap' ).style.left = offset + 'px';
+				wrap.querySelector( '.tsf-primary-term-selector-help-wrap' ).style.left = `${offset}px`;
 			} else {
-				wrap.querySelector( '.tsf-primary-term-selector-help-wrap' ).style.right = offset + 'px';
+				wrap.querySelector( '.tsf-primary-term-selector-help-wrap' ).style.right = `${offset}px`;
 			}
 		}
-		const fixHelpPosOnTabToggle = ( event ) => {
+		const fixHelpPosOnTabToggle = event => {
 			fixHelpPos( event.data.taxonomy );
 		}
-		const createSelector = ( taxonomy ) => {
+		const createSelector = taxonomy => {
 			let selector = termSelector.cloneNode( true );
 			selector.setAttribute( 'title', taxonomies[ taxonomy ].i18n.makePrimary );
 			selector.setAttribute( 'aria-label', taxonomies[ taxonomy ].i18n.makePrimary );
 			return selector;
 		}
 		const setPostValue = ( taxonomy, value ) => {
-			let element = document.getElementById( 'autodescription[_primary_term_' + taxonomy + ']' );
+			let element = document.getElementById( `autodescription[_primary_term_${taxonomy}]` );
 			if ( element && element instanceof Element )
 				element.value = value || 0;
 		}
@@ -142,10 +146,10 @@ window.tsfPT = function( $ ) {
 			if ( ! reset && box$[ taxonomy ] )
 				return box$[ taxonomy ];
 
-			box$[ taxonomy ] = $( '#' + taxonomy + 'checklist, #' + taxonomy + 'checklist-pop' );
+			box$[ taxonomy ] = $( `#${taxonomy}checklist, #${taxonomy}checklist-pop` );
 			return box$[ taxonomy ];
 		}
-		const getInputWithVal = ( taxonomy, value ) => input$[ taxonomy ].filter( '[value="' + value + '"]' );
+		const getInputWithVal = ( taxonomy, value ) => input$[ taxonomy ].filter( `[value="${value}"]` );
 
 		const makePrimary = ( taxonomy, value ) => {
 			let $label = getInputWithVal( taxonomy, value ).closest( 'label' );
@@ -162,7 +166,7 @@ window.tsfPT = function( $ ) {
 				makeFirstPrimary( taxonomy );
 			}
 		}
-		const unsetPrimaries = ( taxonomy ) => {
+		const unsetPrimaries = taxonomy => {
 			let $label = getBox( taxonomy ).find( 'label' );
 			$label.removeClass( 'tsf-is-primary-term' );
 			$label.find( '.tsf-set-primary-term' ).each( function( index, e ) {
@@ -173,7 +177,7 @@ window.tsfPT = function( $ ) {
 			setPostValue( taxonomy, 0 );
 			primaries[ taxonomy ] = 0;
 		}
-		const makeFirstPrimary = ( taxonomy ) => {
+		const makeFirstPrimary = taxonomy => {
 			let $checked = uniqueChecked$[ taxonomy ].first(),
 				value;
 			if ( $checked.length ) {
@@ -185,7 +189,7 @@ window.tsfPT = function( $ ) {
 			}
 		}
 
-		const setPrimary = ( event ) => {
+		const setPrimary = event => {
 			let taxonomy = event.data.taxonomy;
 
 			if ( event.target instanceof HTMLInputElement ) {
@@ -203,7 +207,7 @@ window.tsfPT = function( $ ) {
 			//= Stop default, don't deselect the term.
 			return false;
 		}
-		const toggleShowSwitch = ( event ) => {
+		const toggleShowSwitch = event => {
 			let taxonomy = event.data.taxonomy;
 
 			if ( event.target.checked ) {
@@ -259,7 +263,7 @@ window.tsfPT = function( $ ) {
 			fixHelpPos( event.data.taxonomy );
 		}
 
-		const initVars = ( taxonomy ) => {
+		const initVars = taxonomy => {
 			let $box = getBox( taxonomy, 1 );
 
 			input$[ taxonomy ]   = $box.find( 'input[type=checkbox]' );
@@ -284,8 +288,8 @@ window.tsfPT = function( $ ) {
 				fixHelpPos( wpList.settings.what );
 			}
 		}
-		const initActions = ( taxonomy ) => {
-			let data      = { 'taxonomy': taxonomy },
+		const initActions = taxonomy => {
+			let data     = { taxonomy },
 				$box     = getBox( taxonomy ),
 				$div     = $( `#${taxonomy}div` ),
 				$tabs    = $( `#${taxonomy}-tabs` ),
@@ -294,7 +298,7 @@ window.tsfPT = function( $ ) {
 			let defaultClickAction = nsAction( 'click', taxonomy );
 
 			$box.off( defaultClickAction )
-				.on( defaultClickAction, 'input[type="checkbox"]', data, toggleShowSwitch )
+				.on( defaultClickAction, 'input[type=checkbox]', data, toggleShowSwitch )
 				.on( defaultClickAction, '.tsf-primary-term-selector', data, setPrimary );
 
 			$div.off( nsAction( 'wpListAddEnd', taxonomy ) )
@@ -306,31 +310,31 @@ window.tsfPT = function( $ ) {
 			$postbox.off( nsAction( 'click.postboxes', taxonomy ) )
 				.on( nsAction( 'click.postboxes', taxonomy ), data, togglePostbox );
 		}
-		const reload = ( taxonomy ) => {
-			getBox( taxonomy ).find( 'input[type="checkbox"]:checked' )
+		const reload = taxonomy => {
+			getBox( taxonomy ).find( 'input[type=checkbox]:checked' )
 				.each( ( index, element ) => {
 					appendButton( taxonomy, element );
 				} );
 
 			if ( primaries[ taxonomy ] ) {
-				//? One has been set previously via this script, reselect it.
+				// One has been set previously via this script, reselect it.
 				makePrimary( taxonomy, primaries[ taxonomy ] );
 			} else {
-				//? Select one according to WordPress's term list sorting.
+				// Select one according to WordPress's term list sorting.
 				makeFirstPrimary( taxonomy );
 			}
 		}
-		const load = ( taxonomy ) => {
-			getBox( taxonomy ).find( 'input[type="checkbox"]:checked' )
+		const load = taxonomy => {
+			getBox( taxonomy ).find( 'input[type=checkbox]:checked' )
 				.each( ( index, element ) => {
 					appendButton( taxonomy, element );
 				} );
 
 			if ( taxonomies[ taxonomy ].primary ) {
-				//? One has been saved earlier via this script.
+				// One has been saved earlier via this script.
 				makePrimary( taxonomy, taxonomies[ taxonomy ].primary );
 			} else {
-				//? Select one according to WordPress's term list sorting.
+				// Select one according to WordPress's term list sorting.
 				makeFirstPrimary( taxonomy );
 			}
 		}

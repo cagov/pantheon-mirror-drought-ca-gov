@@ -14,18 +14,16 @@ jQuery( document ).ready( function() {
 	if ( wsalCommonData.liveEvents ) {
 		function wsalRefresh() {
 			jQuery.ajax({
-				type: 'POST',
+				type: 'GET',
 				url: wsalCommonData.ajaxURL,
 				async: true,
 				dataType: 'json',
 				data: {
 					action: 'wsal_adminbar_events_refresh',
-					nonce: wsalCommonData.commonNonce,
-					eventsCount: wsalCommonData.eventsCount
+					nonce: wsalCommonData.commonNonce
 				},
 				success: function( data ) {
 					if ( data.success ) {
-						wsalCommonData.eventsCount = data.count;
 						jQuery( '.wsal-live-notif-item a' ).html( data.message );
 					}
 				}
@@ -139,5 +137,14 @@ jQuery( document ).ready( function() {
 		jQuery('.submit #submit').hide(0);
 	} else {
 		jQuery('.submit #submit').show(0);
+	}
+
+	// Change URL and attributes for 'Upgrade' admin menu link.
+	if ( jQuery( '.fs-submenu-item.wp-security-audit-log.pricing' ).length ) {
+		var linkItem = jQuery( '.fs-submenu-item.wp-security-audit-log.pricing' ).parent();
+		jQuery( linkItem ).attr( {
+			target: '_blank', 
+			href: 'https://wpactivitylog.com/pricing/?utm_source=plugin&utm_medium=referral&utm_campaign=WSAL&utm_content=upgrade+now+menu',
+		} );
 	}
 });

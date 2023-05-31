@@ -34,9 +34,10 @@ class WPForms_Field_Number extends WPForms_Field {
 		 */
 
 		// Options open markup.
-		$args = array(
+		$args = [
 			'markup' => 'open',
-		);
+		];
+
 		$this->field_option( 'basic-options', $field, $args );
 
 		// Label.
@@ -49,9 +50,10 @@ class WPForms_Field_Number extends WPForms_Field {
 		$this->field_option( 'required', $field );
 
 		// Options close markup.
-		$args = array(
+		$args = [
 			'markup' => 'close',
-		);
+		];
+
 		$this->field_option( 'basic-options', $field, $args );
 
 		/*
@@ -98,13 +100,14 @@ class WPForms_Field_Number extends WPForms_Field {
 	public function field_preview( $field ) {
 
 		// Define data.
-		$placeholder = ! empty( $field['placeholder'] ) ? $field['placeholder'] : '';
+		$placeholder   = ! empty( $field['placeholder'] ) ? $field['placeholder'] : '';
+		$default_value = ! empty( $field['default_value'] ) ? $field['default_value'] : '';
 
 		// Label.
 		$this->field_preview_option( 'label', $field );
 
 		// Primary input.
-		echo '<input type="text" placeholder="' . esc_attr( $placeholder ) . '" class="primary-input" readonly>';
+		echo '<input type="text" placeholder="' . esc_attr( $placeholder ) . '" value="' . esc_attr( $default_value ) . '" class="primary-input" readonly>';
 
 		// Description.
 		$this->field_preview_option( 'description', $field );
@@ -177,12 +180,12 @@ class WPForms_Field_Number extends WPForms_Field {
 		$name = ! empty( $form_data['fields'][ $field_id ]['label'] ) ? $form_data['fields'][ $field_id ]['label'] : '';
 
 		// Set final field details.
-		wpforms()->process->fields[ $field_id ] = array(
+		wpforms()->process->fields[ $field_id ] = [
 			'name'  => sanitize_text_field( $name ),
 			'value' => $this->sanitize_value( $field_submit ),
 			'id'    => absint( $field_id ),
 			'type'  => $this->type,
-		);
+		];
 	}
 
 	/**

@@ -104,8 +104,7 @@ function _do_upgrade() {
 
 	$tsf = \tsf();
 
-	if ( ! $tsf->loaded ) return;
-	if ( \wp_doing_ajax() ) return;
+	if ( ! $tsf->loaded || \wp_doing_ajax() ) return;
 
 	if ( $tsf->is_seo_settings_page( false ) ) {
 		// phpcs:ignore, WordPress.Security.SafeRedirect -- self_admin_url() is safe.
@@ -187,7 +186,6 @@ function _do_upgrade() {
  * @return string $current_version The current database version.
  */
 function _downgrade( $previous_version ) { // phpcs:ignore,VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
-
 	// We aren't (currently) expecting issues where downgrading causes mayem. 4051 did cause some, though. This was added later; just set to current.
 	return _set_to_current_version();
 }
@@ -209,10 +207,10 @@ function _upgrade( $previous_version ) {
 	$current_version = $previous_version;
 
 	//! From update 3103 henceforth, the upgrade procedures should be backward compatible.
-	//? This means no data may be erased for at least 1 major version, or 1 year, whichever is later.
-	//? We must manually delete settings that are no longer used; we merge them otherwise.
-	//? When a user upgrades beyond this scope, they aren't expected to roll back.
-	$versions = [ '1', '2701', '2802', '2900', '3001', '3103', '3300', '4051', '4103', '4110', '4120', '4200' ];
+	// This means no data may be erased for at least 1 major version, or 1 year, whichever is later.
+	// We must manually delete settings that are no longer used; we merge them otherwise.
+	// When a user upgrades beyond this scope, they aren't expected to roll back.
+	$versions = [ '1', '2701', '2802', '2900', '3001', '3103', '3300', '4051', '4103', '4110', '4120', '4200', '4270' ];
 
 	foreach ( $versions as $_version ) {
 		if ( $current_version < $_version ) {
@@ -397,6 +395,8 @@ function _prepare_downgrade_notice( $previous_version, $current_version ) {
  *              2. Now registers persistent notice for the update version.
  * @since 4.1.2 No longer can accidentally show the install notice after stale upgrade.
  * @since 4.2.0 The installation notice is now persistent, shown twice, to users with activate_plugins capability, on the main site.
+ * @since 4.2.7 Added data checker directing users to the Transport extension.
+ * @since 4.2.8 Now displays the installation notice 3 times.
  * @TODO Add browser cache flush notice? Or set a pragma/cache-control header?
  *       Users that remove query strings (thanks to YSlow) are to blame, though.
  *       The authors of the plugin that allowed this to happen are even more to blame.
@@ -407,10 +407,10 @@ function _prepare_downgrade_notice( $previous_version, $current_version ) {
  */
 function _prepare_upgrade_notice( $previous_version, $current_version ) {
 
+	$tsf = \tsf();
+
 	// phpcs:ignore, WordPress.PHP.StrictComparisons.LooseComparison -- might be mixed types.
 	if ( $previous_version && $previous_version != $current_version ) { // User successfully upgraded.
-		$tsf = \tsf();
-
 		$tsf->register_dismissible_persistent_notice(
 			$tsf->convert_markdown(
 				sprintf(
@@ -438,10 +438,8 @@ function _prepare_upgrade_notice( $previous_version, $current_version ) {
 	} elseif ( ! $previous_version && $current_version ) { // User successfully installed.
 		$network_mode = (bool) ( \get_site_option( 'active_sitewide_plugins' )[ THE_SEO_FRAMEWORK_PLUGIN_BASENAME ] ?? false );
 
-		// Only show notice when not in network mode, or on main site otherwise.
+		// Only show notices when not in network mode, or on main site otherwise.
 		if ( ! $network_mode || \is_main_site() ) {
-			$tsf = \tsf();
-
 			$tsf->register_dismissible_persistent_notice(
 				sprintf(
 					'<p>%s</p><p>%s</p>',
@@ -467,11 +465,81 @@ function _prepare_upgrade_notice( $previous_version, $current_version ) {
 					'excl_screens' => [ 'post', 'term', 'upload', 'media', 'plugin-editor', 'plugin-install', 'themes' ],
 					'capability'   => 'activate_plugins',
 					'user'         => 0,
-					'count'        => 1,
+					'count'        => 3,
 					'timeout'      => 2 * MINUTE_IN_SECONDS,
 				]
 			);
 		}
+
+		global $wpdb;
+
+		// Not everything's included. Only data likely to be inserted by the user manually, and which is actually carried over.
+		$meta_types = [
+			'wordpress-seo'    => [
+				'title' => 'Yoast SEO',
+				'from'  => $wpdb->postmeta,
+				'in'    => [ '_yoast_wpseo_title', '_yoast_wpseo_metadesc', '_yoast_wpseo_opengraph-title', '_yoast_wpseo_opengraph-description', '_yoast_wpseo_twitter-title', '_yoast_wpseo_twitter-description', '_yoast_wpseo_meta-robots-noindex', '_yoast_wpseo_meta-robots-nofollow', '_yoast_wpseo_canonical', '_yoast_wpseo_redirect' ],
+			],
+			'seo-by-rank-math' => [
+				'title' => 'Rank Math',
+				'from'  => $wpdb->postmeta,
+				'in'    => [ 'rank_math_title', 'rank_math_description', 'rank_math_facebook_title', 'rank_math_facebook_description', 'rank_math_twitter_title', 'rank_math_twitter_description', 'rank_math_canonical_url', 'rank_math_robots' ],
+			],
+		];
+
+		$esc_sql_in = function( $var ) {
+			if ( ! is_scalar( $var ) )
+				$var = array_filter( (array) $var, 'is_scalar' );
+			return \esc_sql( $var );
+		};
+
+		$found_titles = [];
+
+		foreach ( $meta_types as $data ) {
+			// in WP 6.2 we can use %i and whatnot. <https://core.trac.wordpress.org/ticket/52506>
+			// <https://make.wordpress.org/core/2022/10/08/escaping-table-and-field-names-with-wpdbprepare-in-wordpress-6-1/>
+			$indexes = implode( "', '", $esc_sql_in( $data['in'] ) );
+			$table   = \esc_sql( $data['from'] );
+
+			if ( $wpdb->get_var(
+				// phpcs:ignore, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table/$indexes are escaped.
+				"SELECT 1 FROM `$table` WHERE meta_key IN ('$indexes') LIMIT 1"
+			) ) {
+				$found_titles[] = $data['title'];
+			}
+		}
+
+		$found_titles and $tsf->register_dismissible_persistent_notice(
+			sprintf(
+				'<p>%s</p>',
+				$tsf->convert_markdown(
+					sprintf(
+						/* translators: 1: SEO plugin name(s), 2: link to guide, in Markdown! */
+						\esc_html__( 'The SEO Framework detected metadata from %1$s. Whenever you are set, read our [migration guide](%2$s).', 'autodescription' ),
+						\esc_html(
+							count( $found_titles ) > 1 ? wp_sprintf_l( '%l', $found_titles ) : current( $found_titles )
+						),
+						'https://theseoframework.com/docs/seo-data-migration/'
+					),
+					[ 'a' ],
+					[ 'a_internal' => false ]
+				)
+			),
+			'installed-migration-notice',
+			[
+				'type'   => 'info',
+				'icon'   => true,
+				'escape' => false,
+			],
+			[
+				'screens'      => [ 'edit', 'edit-tags', 'dashboard', 'toplevel_page_theseoframework-settings' ],
+				'excl_screens' => [],
+				'capability'   => 'activate_plugins',
+				'user'         => 0,
+				'count'        => 69,
+				'timeout'      => WEEK_IN_SECONDS,
+			]
+		);
 	}
 }
 
@@ -808,8 +876,7 @@ function _do_upgrade_4110() {
  */
 function _do_upgrade_4120() {
 	if ( \get_option( 'the_seo_framework_initial_db_version' ) < '4120' ) {
-		$tsf = \tsf();
-		$tsf->update_option( 'ping_use_cron_prerender', 0 );
+		\tsf()->update_option( 'ping_use_cron_prerender', 0 );
 	}
 }
 
@@ -821,5 +888,16 @@ function _do_upgrade_4120() {
 function _do_upgrade_4200() {
 	if ( \get_option( 'the_seo_framework_initial_db_version' ) < '4200' ) {
 		\delete_option( 'the_seo_framework_tested_upgrade_version' );
+	}
+}
+
+/**
+ * Registers the `auto_descripton_html_method` option, string.
+ *
+ * @since 4.2.7
+ */
+function _do_upgrade_4270() {
+	if ( \get_option( 'the_seo_framework_initial_db_version' ) < '4270' ) {
+		\tsf()->update_option( 'auto_descripton_html_method', 'fast' );
 	}
 }

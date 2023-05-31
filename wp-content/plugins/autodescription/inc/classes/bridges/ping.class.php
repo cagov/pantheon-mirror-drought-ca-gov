@@ -8,7 +8,7 @@ namespace The_SEO_Framework\Bridges;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2019 - 2022 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2019 - 2023 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -80,7 +80,12 @@ final class Ping {
 	}
 
 	/**
-	 * Retries pinging the search engines.
+	 * Retries pinging the search engines for the base sitemap only.
+	 *
+	 * Devs: If you need to retry pinging another sitemap, please engage a custom scheduler,
+	 *       first call `engage_pinging_retry_cron( [ 'id' => 'my_sitemap_id' ] )`, then hook
+	 *       into action `tsf_sitemap_cron_hook_retry` and test `$args['id']` like below.
+	 *       Alternatively, hitch with `the_seo_framework_ping_search_engines`.
 	 *
 	 * @since 4.1.2
 	 * @see static::engage_pinging_retry_cron()
@@ -96,7 +101,7 @@ final class Ping {
 	}
 
 	/**
-	 * Pings search engines.
+	 * Pings search engines the base sitemap.
 	 *
 	 * @since 2.2.9
 	 * @since 2.8.0 Only worked when the blog was not public...

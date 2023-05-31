@@ -3,8 +3,8 @@ Contributors: jeffrey-wp
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=SSNQMST6R28Q2
 Tags: category, categories, media, library, medialibrary, image, images, media category, media categories
 Requires at least: 4.0
-Tested up to: 5.8
-Stable tag: 1.9.9
+Tested up to: 6.2
+Stable tag: 2.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -23,7 +23,7 @@ There is even an option to filter on categories when using the gallery shortcode
 * filter on categories in the media library
 * filter on categories in the gallery shortcode
 * taxonomy filter
-* support for WordPress 4.0 – 5.7
+* support for WordPress 4.0 – 6.2
 
 > <strong>Try Premium version - 100% money back guarantee</strong>
 > WordPress Media Library Categories Premium adds the option to filter on categories when inserting media into a post or page.
@@ -96,6 +96,9 @@ Maintaining a plugin and keeping it up to date is hard work. Please support me b
 3. Filter by category when inserting media [(premium version)](https://1.envato.market/c/1206953/275988/4415?subId1=wpmlcp&subId2=readme&u=https%3A%2F%2Fcodecanyon.net%2Fitem%2Fmedia-library-categories-premium%2F6691290)
 
 == Changelog ==
+
+= 2.0.0 =
+* Add escape function for input field custom taxonomy slug
 
 = 1.9.9 =
 * Fix 'jQuery.fn.load() is deprecated' warning

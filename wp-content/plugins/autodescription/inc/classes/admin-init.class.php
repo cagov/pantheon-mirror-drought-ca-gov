@@ -10,7 +10,7 @@ namespace The_SEO_Framework;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2015 - 2022 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2015 - 2023 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -93,47 +93,22 @@ class Admin_Init extends Init {
 	 * @since 4.1.2 Now autoenqueues on edit.php and edit-tags.php regardless of SEO Bar output (for quick/bulk-edit support).
 	 * @since 4.1.4 Now considers headlessness.
 	 * @access private
-	 *
-	 * @param string|null $hook The current page hook.
 	 */
-	public function _init_admin_scripts( $hook = null ) {
+	public function _init_admin_scripts() {
 
-		$autoenqueue = false;
-
-		if ( $this->is_seo_settings_page() ) {
-			$autoenqueue = true;
-		} elseif ( $hook ) {
-
-			$enqueue_hooks = [];
-
-			$prepare_edit_screen = false;
-
-			if ( ! $this->is_headless['meta'] ) {
-				if ( $this->is_archive_admin() ) {
-					$prepare_edit_screen = $this->is_taxonomy_supported();
-				} elseif ( $this->is_singular_admin() ) {
-					$prepare_edit_screen = $this->is_post_type_supported( $this->get_admin_post_type() );
-				}
-			}
-
-			if ( $prepare_edit_screen ) {
-				$enqueue_hooks = [
-					'edit.php',
-					'post.php',
-					'post-new.php',
-					'edit-tags.php',
-					'term.php',
-				];
-			}
-
-			if ( \in_array( $hook, $enqueue_hooks, true ) )
-				$autoenqueue = true;
-
-			if ( $this->get_static_cache( 'persistent_notices', [] ) )
-				$autoenqueue = true;
+		if (
+			   $this->is_seo_settings_page()
+			// Notices can be outputted if not entirely headless -- this very method only runs when not entirely headless.
+			|| $this->get_static_cache( 'persistent_notices', [] )
+			|| (
+				! $this->is_headless['meta'] && (
+					   ( $this->is_archive_admin() && $this->is_taxonomy_supported() )
+					|| ( $this->is_singular_admin() && $this->is_post_type_supported( $this->get_admin_post_type() ) )
+				)
+			)
+		) {
+			$this->init_admin_scripts();
 		}
-
-		$autoenqueue and $this->init_admin_scripts();
 	}
 
 	/**
@@ -218,81 +193,88 @@ class Admin_Init extends Init {
 		// phpcs:disable, WordPress.Arrays.MultipleStatementAlignment.DoubleArrowNotAligned
 		/**
 		 * @since 3.1.0
-		 * @param array $guidelines The title and description guidelines.
-		 *              Don't alter the format. Only change the numeric values.
+		 * @since 4.2.7 Added two more paramters (`$c_adjust` and `$locale`)
+		 * @param array                      $guidelines The title and description guidelines.
+		 *                                   Don't alter the format. Only change the numeric values.
+		 * @param array[$c_adjust,$p_adjust] The guideline calibration (Character and Pixels respectively).
+		 * @param string                     $locale The current locale.
 		 */
 		return memo(
-			(array) \apply_filters(
+			(array) \apply_filters_ref_array(
 				'the_seo_framework_input_guidelines',
 				[
-					'title' => [
-						'search' => [
-							'chars'  => [
-								'lower'     => (int) ( 25 * $c_adjust ),
-								'goodLower' => (int) ( 35 * $c_adjust ),
-								'goodUpper' => (int) ( 65 * $c_adjust ),
-								'upper'     => (int) ( 75 * $c_adjust ),
+					[
+						'title' => [
+							'search' => [
+								'chars'  => [
+									'lower'     => (int) ( 25 * $c_adjust ),
+									'goodLower' => (int) ( 35 * $c_adjust ),
+									'goodUpper' => (int) ( 65 * $c_adjust ),
+									'upper'     => (int) ( 75 * $c_adjust ),
+								],
+								'pixels' => [
+									'lower'     => (int) ( 200 * $p_adjust ),
+									'goodLower' => (int) ( 280 * $p_adjust ),
+									'goodUpper' => (int) ( 520 * $p_adjust ),
+									'upper'     => (int) ( 600 * $p_adjust ),
+								],
 							],
-							'pixels' => [
-								'lower'     => (int) ( 200 * $p_adjust ),
-								'goodLower' => (int) ( 280 * $p_adjust ),
-								'goodUpper' => (int) ( 520 * $p_adjust ),
-								'upper'     => (int) ( 600 * $p_adjust ),
+							'opengraph' => [
+								'chars'  => [
+									'lower'     => 15,
+									'goodLower' => 25,
+									'goodUpper' => 88,
+									'upper'     => 100,
+								],
+								'pixels' => [],
+							],
+							'twitter' => [
+								'chars'  => [
+									'lower'     => 15,
+									'goodLower' => 25,
+									'goodUpper' => 69,
+									'upper'     => 70,
+								],
+								'pixels' => [],
 							],
 						],
-						'opengraph' => [
-							'chars'  => [
-								'lower'     => 15,
-								'goodLower' => 25,
-								'goodUpper' => 88,
-								'upper'     => 100,
+						'description' => [
+							'search' => [
+								'chars'  => [
+									'lower'     => (int) ( 45 * $c_adjust ),
+									'goodLower' => (int) ( 80 * $c_adjust ),
+									'goodUpper' => (int) ( 160 * $c_adjust ),
+									'upper'     => (int) ( 320 * $c_adjust ),
+								],
+								'pixels' => [
+									'lower'     => (int) ( 256 * $p_adjust ),
+									'goodLower' => (int) ( 455 * $p_adjust ),
+									'goodUpper' => (int) ( 910 * $p_adjust ),
+									'upper'     => (int) ( 1820 * $p_adjust ),
+								],
 							],
-							'pixels' => [],
-						],
-						'twitter' => [
-							'chars'  => [
-								'lower'     => 15,
-								'goodLower' => 25,
-								'goodUpper' => 69,
-								'upper'     => 70,
+							'opengraph' => [
+								'chars'  => [
+									'lower'     => 45,
+									'goodLower' => 80,
+									'goodUpper' => 200,
+									'upper'     => 300,
+								],
+								'pixels' => [],
 							],
-							'pixels' => [],
+							'twitter' => [
+								'chars'  => [
+									'lower'     => 45,
+									'goodLower' => 80,
+									'goodUpper' => 200,
+									'upper'     => 200,
+								],
+								'pixels' => [],
+							],
 						],
 					],
-					'description' => [
-						'search' => [
-							'chars'  => [
-								'lower'     => (int) ( 45 * $c_adjust ),
-								'goodLower' => (int) ( 80 * $c_adjust ),
-								'goodUpper' => (int) ( 160 * $c_adjust ),
-								'upper'     => (int) ( 320 * $c_adjust ),
-							],
-							'pixels' => [
-								'lower'     => (int) ( 256 * $p_adjust ),
-								'goodLower' => (int) ( 455 * $p_adjust ),
-								'goodUpper' => (int) ( 910 * $p_adjust ),
-								'upper'     => (int) ( 1820 * $p_adjust ),
-							],
-						],
-						'opengraph' => [
-							'chars'  => [
-								'lower'     => 45,
-								'goodLower' => 80,
-								'goodUpper' => 200,
-								'upper'     => 300,
-							],
-							'pixels' => [],
-						],
-						'twitter' => [
-							'chars'  => [
-								'lower'     => 45,
-								'goodLower' => 80,
-								'goodUpper' => 200,
-								'upper'     => 200,
-							],
-							'pixels' => [],
-						],
-					],
+					[ $c_adjust, $p_adjust ],
+					$locale,
 				]
 			),
 			$locale
@@ -369,6 +351,8 @@ class Admin_Init extends Init {
 	 * @since 2.9.3 1. Query arguments work again (regression 2.9.2).
 	 *              2. Now only accepts http and https protocols.
 	 * @since 4.2.0 Now allows query arguments with value 0|'0'.
+	 * @TODO WP 5.2/5.4 will cause this method to never run on wp_die().
+	 *       We should further investigate the cause and remove WP's blockade. This is a corner-case, however.
 	 *
 	 * @param string $page Menu slug. This slug must exist, or the redirect will loop back to the current page.
 	 * @param array  $query_args Optional. Associative array of query string arguments
@@ -389,17 +373,10 @@ class Admin_Init extends Init {
 		// Predict white screen:
 		$headers_sent = headers_sent();
 
-		/**
-		 * Dev debug:
-		 * 1. Change 302 to 500 if you wish to test headers.
-		 * 2. Also force handle_admin_redirect_error() to run.
-		 */
 		\wp_safe_redirect( $target, 302 );
 
 		// White screen of death for non-debugging users. Let's make it friendlier.
 		if ( $headers_sent && $target ) {
-			$this->handle_admin_redirect_error( $target );
-
 			$headers_list = headers_list();
 			$location     = sprintf( 'Location: %s', \wp_sanitize_redirect( $target ) );
 
@@ -539,7 +516,7 @@ class Admin_Init extends Init {
 	 * @return bool True on success, false on failure.
 	 */
 	public function clear_persistent_notice( $key ) {
-
+		// TODO We could make a oneliner using array_diff_key?: array_diff_key( cache, [ $key ] )
 		$notices = $this->get_static_cache( 'persistent_notices', [] );
 		unset( $notices[ $key ] );
 
@@ -581,7 +558,7 @@ class Admin_Init extends Init {
 	public function _dismiss_notice() {
 
 		// phpcs:ignore, WordPress.Security.NonceVerification.Missing -- We require the POST data to find locally stored nonces.
-		$key = $_POST['tsf-notice-submit'] ?? '';
+		$key = \sanitize_key( $_POST['tsf-notice-submit'] ?? '' );
 
 		if ( ! $key ) return;
 
@@ -589,9 +566,10 @@ class Admin_Init extends Init {
 		// Notice was deleted already elsewhere, or key was faulty. Either way, ignore--should be self-resolving.
 		if ( empty( $notices[ $key ]['conditions']['capability'] ) ) return;
 
-		if ( ! \current_user_can( $notices[ $key ]['conditions']['capability'] )
-		// phpcs:ignore, WordPress.Security.NonceVerification.Missing -- We require the POST data to find locally stored nonces.
-		|| ! \wp_verify_nonce( $_POST['tsf_notice_nonce'] ?? '', $this->_get_dismiss_notice_nonce_action( $key ) ) ) {
+		if (
+			   ! \current_user_can( $notices[ $key ]['conditions']['capability'] )
+			|| ! \wp_verify_nonce( $_POST['tsf_notice_nonce'] ?? '', $this->_get_dismiss_notice_nonce_action( $key ) )
+		) {
 			\wp_die( -1, 403 );
 		}
 

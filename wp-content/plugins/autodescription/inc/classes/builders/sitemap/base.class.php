@@ -8,7 +8,7 @@ namespace The_SEO_Framework\Builders\Sitemap;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2019 - 2022 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2019 - 2023 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -24,8 +24,6 @@ namespace The_SEO_Framework\Builders\Sitemap;
  */
 
 \defined( 'THE_SEO_FRAMEWORK_PRESENT' ) or die;
-
-use function \The_SEO_Framework\umemo;
 
 /**
  * Generates the base sitemap.
@@ -152,11 +150,22 @@ class Base extends Main {
 	 *              2. Improved performance by a factor of two+.
 	 *              3. Renamed method from "generate_sitemap" to abstract extension "build_sitemap".
 	 *              4. Moved to \The_SEO_Framework\Builders\Sitemap\Base
-	 * @abstract
+	 * @override
+	 * @slow The queried results are not stored in WP Post's cache, which would allow direct access
+	 *       to all values of the post (if requested). This is because we're using
+	 *       `'fields' => 'ids'` instead of `'fields' => 'all'`. However, this would fill RAM
+	 *       linearly: at 1000 posts, we'd hit 28MB already, 10 000 would be ~280MB, exceeding max.
+	 * @link <https://w.org/support/topic/sitemap-and-memory-exhaustion/#post-13331896>
 	 *
 	 * @return string The sitemap content.
 	 */
 	public function build_sitemap() {
+
+		/**
+		 * @since 4.2.7
+		 * @param \The_SEO_Framework\Builders\Sitemap\Base
+		 */
+		\do_action( 'the_seo_framework_build_sitemap_base', $this );
 
 		$content = '';
 		$count   = 0;
@@ -223,6 +232,7 @@ class Base extends Main {
 			/**
 			 * @since 4.0.0
 			 * @param array $args The query arguments.
+			 * @link <https://w.org/support/topic/sitemap-and-memory-exhaustion/#post-13331896>
 			 */
 			$_args = (array) \apply_filters(
 				'the_seo_framework_sitemap_hpt_query_args',
@@ -312,6 +322,10 @@ class Base extends Main {
 			$content .= $this->build_url_item( $_values );
 		}
 
+		/**
+		 * NOTE to devs: Use this filter if you want to let the generator build the string (lower memory usage).
+		 * This filter also keeps track toward the sitemap limit via $count.
+		 */
 		if ( \has_filter( 'the_seo_framework_sitemap_additional_urls' ) ) {
 			foreach ( $this->generate_additional_base_urls(
 				compact( 'show_modified', 'count' ),
@@ -322,8 +336,7 @@ class Base extends Main {
 		}
 
 		/**
-		 * NOTE: This filter is slower than `the_seo_framework_sitemap_additional_urls`, because it's not a generator.
-		 * If you only need to add a few URLs (fewer than 500), then you can safely use this.
+		 * This filter accepts a simple string, which may strain the memory usage if not generated (via co-routine).
 		 *
 		 * @since 2.5.2
 		 * @since 4.0.0 Added $args parameter.
@@ -331,7 +344,7 @@ class Base extends Main {
 		 * @param string $extend Custom sitemap extension. Must be escaped.
 		 * @param array $args : {
 		 *   bool $show_modified : Whether to display modified date.
-		 *   int  $total_itemns  : Estimate: The total sitemap items before adding additional URLs.
+		 *   int  $count         : The total sitemap items before adding additional URLs.
 		 * }
 		 */
 		$extend = (string) \apply_filters_ref_array(
@@ -342,9 +355,8 @@ class Base extends Main {
 			]
 		);
 
-		if ( $extend ) {
-			$content .= "\t" . $extend . "\n";
-		}
+		if ( $extend )
+			$content .= "\t$extend\n";
 
 		return $content;
 	}
@@ -463,9 +475,9 @@ class Base extends Main {
 	 * @generator
 	 * @iterator
 	 *
-	 * @param iterable $post_ids The post IDs to go over.
-	 * @param array    $args    The generator arguments.
-	 * @param int      $count   The iteration count. Passed by reference.
+	 * @param int[] $post_ids The post IDs to go over.
+	 * @param array $args    The generator arguments.
+	 * @param int   $count   The iteration count. Passed by reference.
 	 * @yield array|void : {
 	 *   string loc
 	 *   string lastmod
@@ -490,8 +502,8 @@ class Base extends Main {
 				yield $_values;
 			}
 
-			// Only clean post cache when NOT using an external object caching plugin.
-			\wp_using_ext_object_cache() or \clean_post_cache( $post );
+			// Only clean post cache when NOT using a caching plugin.
+			WP_CACHE or \clean_post_cache( $post );
 		}
 	}
 

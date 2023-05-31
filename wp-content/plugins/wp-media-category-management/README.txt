@@ -1,10 +1,10 @@
 === Plugin Name ===
-Contributors: DeBAAT
+Contributors: DeBAAT, freemius
 Donate link: https://www.de-baat.nl/WP_MCM
-Tags: media library, bulk action, bulk toggle, toggle category, taxonomy, taxonomies, attachment, media category, media categories, media tag, media tags, media taxonomy, media taxonomies, media filter, media organizer, media types, media uploader, custom, media management, attachment management, files management, user experience, wp-admin, admin
+Tags: media library, bulk action, bulk toggle, toggle category, taxonomy, taxonomies, attachment, media category, media categories, media tag, media tags, media taxonomy, media taxonomies, media filter, media organizer, media types, media uploader, custom, media management, attachment management, files management, user experience, wp-admin, admin, user media management, export
 Requires at least: 5.0
-Tested up to: 5.8.2
-Stable tag: 1.9.8.1
+Tested up to: 6.2.2
+Stable tag: 2.1.1
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -18,12 +18,21 @@ It now also supports post tags and media taxonomies defined by other plugins.
 
 = Main Features =
 
-* Use post categories or dedicated media categories.
+* Use post categories or dedicated MCM media categories.
 * Control your media categories via admin the same way as post categories.
 * Bulk toggle any media taxonomy assignment from Media Library via admin.
-* Filter media files in Media Library by your custom taxonomies, both in list and grid view.
-* Use new or existing shortcode to filter the media on galleries in posts.
+* Filter media files in Media Library by your custom taxonomies, both in List and Grid view.
+* Use new or existing shortcode to filter the media on galleries in posts and pages.
 * Use a default category while uploading (see FAQ section). 
+
+= Premium Features =
+
+* Use functionality to manage whether users are allowed or disallowed to manage media.
+* Use WPMCM Gallery block to filter the media on galleries in posts and pages.
+* Filter media per user on several places like List or Grid view and showing media with block or shortcode.
+* Export MCM Categories and / or attachment information filtered by user.
+* Use WP Importer functionality for exported information, even on sites without WP MCM Premium installed.
+* Use WPMCM Gallery block layout when using wp-mcm shortcode to filter the media in posts and pages.
 
 == Installation ==
 
@@ -83,195 +92,58 @@ Use the `[wp_mcm]` shortcode. Various shortcode uses are explained in the **WP M
 6. Media List page view showing filter options for Media Categories.
 7. Media Grid page view showing filter options for Media Categories.
 8. The admin page showing the shortcode explanations for this plugin.
-9. The post edit page showing an example using the [wp-mcm category="mediafoto,medialogo"] shortcode.
-10. The post page showing the results of the example using the [wp-mcm category="mediafoto,medialogo"] shortcode.
+9. The post edit page showing an example using the [wp-mcm category="fotos"] shortcode.
+10. The post page showing the results of the example using the [wp-mcm category="fotos"] shortcode.
+11. User List page view showing additional user settings for managing media.
+12. User Profile page view showing additional user settings for managing media.
+13. The post edit page showing an example using the WPMCM Gallery block filtering on MCM Categories Fotos.
+14. The post page showing the results of the example using the WPMCM Gallery block filtering on MCM Categories Fotos.
+15. The admin page showing the options for Import - Export using this plugin.
 
 == Changelog ==
+
+= 2.1.1 =
+* Fixed issue when searching media on front page
+* Improved language translation strings
+
+= 2.1.0 =
+* Fixed issue with wp_get_list_item_separator to support pre-6.0.0 WordPress versions
+* Only flush rewrite rules when updating WP MCM Options
+* Improved handling WP MCM Category archives
+* Added new block WPMCM Categories to show a list of WP MCM Categories [Premium only]
+* Added size and link to attributes to WPMCM Gallery block [Premium only]
+* Added new template page to optionally use for WP MCM Category archive pages [Premium only]
+* Updated Freemius sdk to v2.5.8
+
+= 2.0.2 =
+* Added remove_menu_page for Media Menu for preventing disallowed users to manage any media
+* Fixed issue with error_log message showing when not appropriate
+* Added some premium features to the details section above [Premium only]
+
+= 2.0.1 =
+* Fixed create roles for update
+
+= 2.0.0 =
+* Tested for WP 6.2.
+* Refactored complete plugin base
+* Reworked to support Freemius premium functionality
+* Reworked debugMP functionality
+
+= 1.9.9.1 =
+* Tested for WP 6.1.
+
+= 1.9.9 =
+* Tested for WP 6.0.
+* Reworked debugMP functionality
+* Fixed handling wp_mcm_flush_rewrite_rules to take less performance
 
 = 1.9.8(.1) =
 * Tested for WP 5.8.2.
 * Fixed CSS bug preventing showing selector when inserting images
 
-= 1.9.7 =
-* Tested for WP 5.4.1.
-* Added option to disable filter for media with Gutenberg blocks
-
-= 1.9.6 =
-* Tested for WP 5.4.0.
-* Added support for adding media with Gutenberg blocks
-
-= 1.9.5 =
-* Tested for WP 5.3.2.
-* Fixed deprecated use of screen_icon()
-* Implemented notice function to ask for help
-
-= 1.9.4 =
-* Tested for WP 5.1.1.
-* Fixed issue with shortcode showing default no category
-* Fixed issue with post_save for attachments
-
-= 1.9.3 =
-* Tested for WP 5.1.
-* Fixed issue with counting large amounts of media
-
-= 1.9.2 =
-* Tested for WP 5.0.3.
-
-= 1.9.1 =
-* Added support for category base permalink.
-
-= 1.9.0 =
-* Tested for WP 4.6.
-* Added support for new shortcode attribute 'show_category_link'.
-* Fixed support for MCM Categories Widget.
-* Fixed rewrite rules when changing taxonomy.
-
-= 1.8.3 =
-* Tested for WP 4.5.
-
-= 1.8.2 =
-* Tested for WP 4.4.2.
-
-= 1.8.1 =
-* Fixed Text Domain and Author to support translations on WordPress.org.
-
-= 1.8.0 =
-* Using media filter on more relevant pages than only for posts and media.
-* When selected also show Post Categories together with MCM Categories in Media List View.
-* Improved labels when showing Tags or Post Categories.
-* Removed WP-MCM shortcode parameters when using alternative_shortcode, e.g. [dg] for [Document Gallery] (https://wordpress.org/plugins/document-gallery/).
-
-= 1.7.4 =
-* Fixed issue with using post categories when selected as MCM Category.
-
-= 1.7.3 =
-* Fixed issue with filtering posts, only perform additional media search on non-admin pages.
-
-= 1.7.2 =
-* Fixed issue with translating "MCM Shortcodes"
-* Change textdomain to 'wp-media-category-management' from MCM_LANG per forthcoming translate.wordpress.org standards.
-* Added Portuguese (pt_PT) translation as provided by Pedro Mendonça [www.pedromendonca.pt]
-
-= 1.7.1 =
-* Fixed issue with showing bulk actions when filtering.
-
-= 1.7.0 =
-* Update to support WordPress 4.3.
-* Allow use of admin functions in front-end.
-* Added Settings link to action links on Installed Plugins page.
-* Added screen-reader-text to filter.
-* Fixed handling checkbox options.
-* Used check for search to skip searching completely.
-
-= 1.6.1 =
-* Fixed issue with filtering media in combination with search function.
-
-= 1.6.0 =
-* Added support for media category permalinks.
-* Added support for MCM Category widgets using the permalinks.
-* Added option to search the media library.
-* Removed trailing spaces from translatable key words.
-
-= 1.5.2 =
-* Fixed issue with filtering media.
-
-= 1.5.1 =
-* Added German translation (thanks Marcel Dischinger).
-* Fixed issue filtering media on 'No categories' for post categories.
-* Fixed a non-translatable text.
-
-= 1.5.0 =
-* Tested up to WP 4.2.1.
-* Added support for tags also used by posts.
-
-= 1.4.5 =
-* Added Serbo-Croatian translation (thanks Andrijana Nikolic [andrijanan@webhostinggeeks.com].
-
-= 1.4.4 =
-* Added French translation (thanks Pierre).
-
-= 1.4.3 =
-* Tested up to WP 4.1.1.
-* Added filter support for MCM categories when adding media to new post.
-
-= 1.4.2 =
-* Fixed issue with display of filter when adding media in posts and pages.
-* Changed menu icon into a dashicon to improve visibility.
-* Changed urls to https.
-
-= 1.4.1 =
-* Tested up to WP 4.1.
-* Changed row actions text to only show 'Toggle' for first category to save space.
-
-= 1.4.0 =
-* Added filter to view uncategorized media files only.
-
-= 1.3.1 =
-* Fixed issue with finding taxonomies to use.
-
-= 1.3.0 =
-* Fixed issue with updating options.
-* Improved support for MCM categories in modal edit mode.
-* Improved support for Custom MCM names.
-* Improved support for use of POST categories.
-* Added support for new shortcode parameter "alternative_shortcode".
-
-= 1.2.0 =
-* Renamed "Media Categories" to "MCM Categories" for easier distinction from other taxonomies.
-* Added support for media categories as defined by other plugins.
-* Updated MCM Settings page to reflect support for other media categories.
-* Added support for new shortcode parameter "taxonomy".
-
-= 1.1.0 =
-* Create default options when activating.
-* Limit dark table header to WP_MCM shortcode screen only.
-
-= 1.0.0 =
-* Added category filter functionality when adding media to posts or pages.
-* Added functionality to define default category when adding or editing a media file.
-* Added a switch to enable and disable the assignment of default category.
-* Added category filter functionality to the media grid view.
-* Added a new screenshot showing filter in media grid view.
-
-= 0.2.0 =
-* Fixed bug managing post categories in combination with "Use Post Taxonomy" flag.
-* Improved asset images for repository.
-
-= 0.1.0 =
-* First version starting the plugin.
+= 1.x.y =
+* Previous upates...
 
 == Upgrade Notice ==
 
-= 1.4.3 =
-* Fixed some issues, see change log.
-
-= 1.4.2 =
-* Fixed some issues, see change log.
-
-= 1.4.1 =
-* Fixed some issues, see change log.
-
-= 1.4.0 =
-* Added new functionality and fixed some issues, see change log.
-
-= 1.3.1 =
-* Fixed some issues, see change log.
-
-= 1.3.0 =
-* Added new functionality and fixed some issues, see change log.
-
-= 1.2.0 =
-* Added new functionality, see change log.
-
-= 1.1.0 =
-* Added new functionality, see change log.
-
-= 1.0.0 =
-* Added new functionality, see change log.
-
-= 0.2.0 =
-* Fixed bug managing post categories in combination with "Use Post Taxonomy" flag.
-* Improved asset images for repository.
-
-= 0.1.0 =
-As this is the first version, there is no upgrade info yet.
+* See change log.

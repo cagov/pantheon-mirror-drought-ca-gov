@@ -61,12 +61,12 @@ class Meta extends \WPForms_DB {
 	 */
 	public function get_columns() {
 
-		return array(
+		return [
 			'id'     => '%d',
 			'action' => '%s',
 			'data'   => '%s',
 			'date'   => '%s',
-		);
+		];
 	}
 
 	/**
@@ -78,11 +78,11 @@ class Meta extends \WPForms_DB {
 	 */
 	public function get_column_defaults() {
 
-		return array(
+		return [
 			'action' => '',
 			'data'   => '',
 			'date'   => gmdate( 'Y-m-d H:i:s' ),
-		);
+		];
 	}
 
 	/**
@@ -106,7 +106,7 @@ class Meta extends \WPForms_DB {
 			$charset_collate .= " COLLATE {$wpdb->collate}";
 		}
 
-		$sql = "CREATE TABLE {$this->table_name} (
+		$sql = "CREATE TABLE IF NOT EXISTS {$this->table_name} (
 			id bigint(20) NOT NULL AUTO_INCREMENT,
 			action varchar(255) NOT NULL,
 			data longtext NOT NULL,

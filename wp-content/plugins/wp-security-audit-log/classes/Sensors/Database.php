@@ -33,7 +33,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @package    wsal
  * @subpackage sensors
  */
-class WSAL_Sensors_Database extends WSAL_AbstractSensor {
+class WSAL_Sensors_Database {//extends WSAL_AbstractSensor {
 
 	/**
 	 * Local cache for basename of current script. It is used to improve performance
@@ -383,8 +383,8 @@ class WSAL_Sensors_Database extends WSAL_AbstractSensor {
 		$latest_events = $this->plugin->alerts->get_latest_events( 25 );
 
 		foreach ( $latest_events as $latest_event ) {
-			if ( intval( $latest_event->alert_id ) === $alert_id ) {
-				$event_meta  = $latest_event ? $latest_event->get_meta_array() : false;
+			if ( intval( $latest_event['alert_id'] ) === $alert_id ) {
+				$event_meta  = $latest_event ? $latest_event['meta_values'] : false;
 				$plugin_name = $event_meta['PluginData']->Name;
 			}
 		}
@@ -407,13 +407,18 @@ class WSAL_Sensors_Database extends WSAL_AbstractSensor {
 		try {
 			global $wpdb;
 
+			$wpdb->suppress_errors( true );
+
 			// Output buffering is here to prevent from error log messages that would be fired if the table didn't exist.
 			ob_start();
 			$db_result = $wpdb->query( "SELECT COUNT(1) FROM {$table_name};" ); // phpcs:ignore
 			ob_clean();
 
+			$wpdb->suppress_errors( false );
+
 			return ( 1 === $db_result );
 		} catch ( Exception $e ) {
+			$wpdb->suppress_errors( false );
 			return false;
 		}
 	}

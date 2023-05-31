@@ -21,8 +21,8 @@ class WPForms_Field_Text extends WPForms_Field {
 		$this->order = 30;
 
 		// Define additional field properties.
-		add_filter( 'wpforms_field_properties_text', array( $this, 'field_properties' ), 5, 3 );
-		add_action( 'wpforms_frontend_js', array( $this, 'frontend_js' ) );
+		add_filter( 'wpforms_field_properties_text', [ $this, 'field_properties' ], 5, 3 );
+		add_action( 'wpforms_frontend_js', [ $this, 'frontend_js' ] );
 	}
 
 	/**
@@ -50,28 +50,28 @@ class WPForms_Field_Text extends WPForms_Field {
 
 		// Convert jquery.inputmask format into amp-inputmask format.
 		$amp_mask            = '';
-		$req_mask_mapping    = array(
+		$req_mask_mapping    = [
 			'9' => '0', // Numeric.
 			'a' => 'L', // Alphabetical (a-z or A-Z).
 			'A' => 'L', // Upper-alphabetical (A-Z). Note: AMP does not have an uppercase-alphabetical mask type, so same as previous.
 			'*' => 'A', // Alphanumeric (0-9, a-z, A-Z).
 			'&' => 'A', // Upper-alphanumeric (A-Z, 0-9). Note: AMP does not have an uppercase-alphanumeric mask type, so same as previous.
 			' ' => '_', // Automatically insert spaces.
-		);
-		$opt_mask_mapping    = array(
+		];
+		$opt_mask_mapping    = [
 			'9' => '9', // The user may optionally add a numeric character.
 			'a' => 'l', // The user may optionally add an alphabetical character.
 			'A' => 'l', // The user may optionally add an alphabetical character.
 			'*' => 'a', // The user may optionally add an alphanumeric character.
 			'&' => 'a', // The user may optionally add an alphanumeric character.
-		);
-		$placeholder_mapping = array(
+		];
+		$placeholder_mapping = [
 			'9' => '0',
 			'a' => 'a',
 			'A' => 'a',
 			'*' => '_',
 			'&' => '_',
-		);
+		];
 		$is_inside_optional  = false;
 		$last_mask_token     = null;
 		for ( $i = 0, $len = strlen( $mask ); $i < $len; $i++ ) {
@@ -124,7 +124,8 @@ class WPForms_Field_Text extends WPForms_Field {
 				$placeholder .= $mask[ $i ];
 			}
 		}
-		return array( $amp_mask, $placeholder );
+
+		return [ $amp_mask, $placeholder ];
 	}
 
 	/**
@@ -141,33 +142,64 @@ class WPForms_Field_Text extends WPForms_Field {
 	public function field_properties( $properties, $field, $form_data ) {
 
 		// Input primary: Detect custom input mask.
-		if ( ! empty( $field['input_mask'] ) ) {
+		if ( empty( $field['input_mask'] ) ) {
+			return $properties;
+		}
 
-			// Add class that will trigger custom mask.
-			$properties['inputs']['primary']['class'][] = 'wpforms-masked-input';
+		// Add class that will trigger custom mask.
+		$properties['inputs']['primary']['class'][] = 'wpforms-masked-input';
 
-			if ( wpforms_is_amp() ) {
-				list( $amp_mask, $placeholder ) = $this->convert_mask_to_amp_inputmask( $field['input_mask'] );
+		if ( wpforms_is_amp() ) {
+			return $this->get_amp_input_mask_properties( $properties, $field );
+		}
 
-				$properties['inputs']['primary']['attr']['mask'] = $amp_mask;
-				if ( empty( $properties['inputs']['primary']['attr']['placeholder'] ) ) {
-					$properties['inputs']['primary']['attr']['placeholder'] = $placeholder;
-				}
-			} elseif ( false !== strpos( $field['input_mask'], 'alias:' ) ) {
-				$mask = str_replace( 'alias:', '', $field['input_mask'] );
-				$properties['inputs']['primary']['data']['inputmask-alias'] = $mask;
-			} elseif ( false !== strpos( $field['input_mask'], 'regex:' ) ) {
-				$mask = str_replace( 'regex:', '', $field['input_mask'] );
-				$properties['inputs']['primary']['data']['inputmask-regex'] = $mask;
-			} elseif ( false !== strpos( $field['input_mask'], 'date:' ) ) {
-				$mask = str_replace( 'date:', '', $field['input_mask'] );
-				$properties['inputs']['primary']['data']['inputmask-alias']       = 'datetime';
-				$properties['inputs']['primary']['data']['inputmask-inputformat'] = $mask;
+		$properties['inputs']['primary']['data']['rule-inputmask-incomplete'] = true;
 
-			} else {
-				$properties['inputs']['primary']['data']['inputmask-mask']    = $field['input_mask'];
-				$properties['inputs']['primary']['data']['rule-empty-blanks'] = true;
-			}
+		if ( strpos( $field['input_mask'], 'alias:' ) !== false ) {
+			$mask = str_replace( 'alias:', '', $field['input_mask'] );
+			$properties['inputs']['primary']['data']['inputmask-alias'] = $mask;
+
+			return $properties;
+		}
+
+		if ( strpos( $field['input_mask'], 'regex:' ) !== false ) {
+			$mask = str_replace( 'regex:', '', $field['input_mask'] );
+			$properties['inputs']['primary']['data']['inputmask-regex'] = $mask;
+
+			return $properties;
+		}
+
+		if ( strpos( $field['input_mask'], 'date:' ) !== false ) {
+			$mask = str_replace( 'date:', '', $field['input_mask'] );
+			$properties['inputs']['primary']['data']['inputmask-alias']       = 'datetime';
+			$properties['inputs']['primary']['data']['inputmask-inputformat'] = $mask;
+
+			return $properties;
+		}
+
+		$properties['inputs']['primary']['data']['inputmask-mask'] = $field['input_mask'];
+
+		return $properties;
+	}
+
+	/**
+	 * Define additional field properties for the inputmask on AMP pages.
+	 *
+	 * @since 1.7.6
+	 *
+	 * @param array $properties Field properties.
+	 * @param array $field      Field settings.
+	 *
+	 * @return array
+	 */
+	private function get_amp_input_mask_properties( $properties, $field ) {
+
+		list( $amp_mask, $placeholder ) = $this->convert_mask_to_amp_inputmask( $field['input_mask'] );
+
+		$properties['inputs']['primary']['attr']['mask'] = $amp_mask;
+
+		if ( empty( $properties['inputs']['primary']['attr']['placeholder'] ) ) {
+			$properties['inputs']['primary']['attr']['placeholder'] = $placeholder;
 		}
 
 		return $properties;
@@ -189,9 +221,9 @@ class WPForms_Field_Text extends WPForms_Field {
 		$this->field_option(
 			'basic-options',
 			$field,
-			array(
+			[
 				'markup' => 'open',
-			)
+			]
 		);
 
 		// Label.
@@ -207,9 +239,9 @@ class WPForms_Field_Text extends WPForms_Field {
 		$this->field_option(
 			'basic-options',
 			$field,
-			array(
+			[
 				'markup' => 'close',
-			)
+			]
 		);
 
 		/*
@@ -220,9 +252,9 @@ class WPForms_Field_Text extends WPForms_Field {
 		$this->field_option(
 			'advanced-options',
 			$field,
-			array(
+			[
 				'markup' => 'open',
-			)
+			]
 		);
 
 		// Size.
@@ -298,7 +330,7 @@ class WPForms_Field_Text extends WPForms_Field {
 				'slug'          => 'input_mask',
 				'value'         => esc_html__( 'Input Mask', 'wpforms-lite' ),
 				'tooltip'       => esc_html__( 'Enter your custom input mask.', 'wpforms-lite' ),
-				'after_tooltip' => '<a href="https://wpforms.com/how-to-use-custom-input-masks/" class="after-label-description" target="_blank" rel="noopener noreferrer">' . esc_html__( 'See Examples & Docs', 'wpforms-lite' ) . '</a>',
+				'after_tooltip' => '<a href="' . esc_url( wpforms_utm_link( 'https://wpforms.com/docs/how-to-use-custom-input-masks/', 'Field Options', 'Input Mask Documentation' ) ) . '" class="after-label-description" target="_blank" rel="noopener noreferrer">' . esc_html__( 'See Examples & Docs', 'wpforms-lite' ) . '</a>',
 			],
 			false
 		);
@@ -347,13 +379,14 @@ class WPForms_Field_Text extends WPForms_Field {
 	public function field_preview( $field ) {
 
 		// Define data.
-		$placeholder = ! empty( $field['placeholder'] ) ? esc_attr( $field['placeholder'] ) : '';
+		$placeholder   = ! empty( $field['placeholder'] ) ? $field['placeholder'] : '';
+		$default_value = ! empty( $field['default_value'] ) ? $field['default_value'] : '';
 
 		// Label.
 		$this->field_preview_option( 'label', $field );
 
 		// Primary input.
-		echo '<input type="text" placeholder="' . esc_attr( $placeholder ) . '" class="primary-input" readonly>';
+		echo '<input type="text" placeholder="' . esc_attr( $placeholder ) . '" value="' . esc_attr( $default_value ) . '" class="primary-input" readonly>';
 
 		// Description.
 		$this->field_preview_option( 'description', $field );
@@ -410,7 +443,7 @@ class WPForms_Field_Text extends WPForms_Field {
 		// Get fields.
 		$fields = array_map(
 			function( $form ) {
-				return empty( $form['fields'] ) ? array() : $form['fields'];
+				return empty( $form['fields'] ) ? [] : $form['fields'];
 			},
 			(array) $forms
 		);
@@ -421,7 +454,7 @@ class WPForms_Field_Text extends WPForms_Field {
 			function( $accumulator, $current ) {
 				return array_merge( $accumulator, $current );
 			},
-			array()
+			[]
 		);
 
 		// Leave only fields with limit.
@@ -433,8 +466,15 @@ class WPForms_Field_Text extends WPForms_Field {
 		);
 
 		if ( count( $fields ) ) {
-			$min = \wpforms_get_min_suffix();
-			wp_enqueue_script( 'wpforms-text-limit', WPFORMS_PLUGIN_URL . "assets/js/text-limit{$min}.js", array(), WPFORMS_VERSION, true );
+			$min = wpforms_get_min_suffix();
+
+			wp_enqueue_script(
+				'wpforms-text-limit',
+				WPFORMS_PLUGIN_URL . "assets/js/text-limit.es5{$min}.js",
+				[],
+				WPFORMS_VERSION,
+				true
+			);
 		}
 	}
 
@@ -455,12 +495,12 @@ class WPForms_Field_Text extends WPForms_Field {
 		// Sanitize.
 		$value = sanitize_text_field( $field_submit );
 
-		wpforms()->process->fields[ $field_id ] = array(
+		wpforms()->process->fields[ $field_id ] = [
 			'name'  => $name,
 			'value' => $value,
 			'id'    => absint( $field_id ),
 			'type'  => $this->type,
-		);
+		];
 	}
 
 	/**

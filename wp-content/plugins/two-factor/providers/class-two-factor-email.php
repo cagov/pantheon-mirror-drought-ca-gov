@@ -187,7 +187,7 @@ class Two_Factor_Email extends Two_Factor_Provider {
 		$hashed_token = $this->get_user_token( $user_id );
 
 		// Bail if token is empty or it doesn't match.
-		if ( empty( $hashed_token ) || ( wp_hash( $token ) !== $hashed_token ) ) {
+		if ( empty( $hashed_token ) || ! hash_equals( wp_hash( $token ), $hashed_token ) ) {
 			return false;
 		}
 
@@ -224,7 +224,7 @@ class Two_Factor_Email extends Two_Factor_Provider {
 		$token = $this->generate_token( $user->ID );
 
 		/* translators: %s: site name */
-		$subject = wp_strip_all_tags( sprintf( __( 'Your login confirmation code for %s', 'two-factor' ), get_bloginfo( 'name' ) ) );
+		$subject = wp_strip_all_tags( sprintf( __( 'Your login confirmation code for %s', 'two-factor' ), wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES ) ) );
 		/* translators: %s: token */
 		$message = wp_strip_all_tags( sprintf( __( 'Enter %s to log in.', 'two-factor' ), $token ) );
 
@@ -245,7 +245,7 @@ class Two_Factor_Email extends Two_Factor_Provider {
 		 */
 		$message = apply_filters( 'two_factor_token_email_message', $message, $token, $user->ID );
 
-		return wp_mail( $user->user_email, $subject, $message );
+		return wp_mail( $user->user_email, $subject, $message ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.wp_mail_wp_mail
 	}
 
 	/**
@@ -266,10 +266,10 @@ class Two_Factor_Email extends Two_Factor_Provider {
 
 		require_once ABSPATH . '/wp-admin/includes/template.php';
 		?>
-		<p><?php esc_html_e( 'A verification code has been sent to the email address associated with your account.', 'two-factor' ); ?></p>
+		<p class="two-factor-prompt"><?php esc_html_e( 'A verification code has been sent to the email address associated with your account.', 'two-factor' ); ?></p>
 		<p>
 			<label for="authcode"><?php esc_html_e( 'Verification Code:', 'two-factor' ); ?></label>
-			<input type="tel" name="two-factor-email-code" id="authcode" class="input" value="" size="20" />
+			<input type="text" inputmode="numeric" name="two-factor-email-code" id="authcode" class="input authcode" value="" size="20" pattern="[0-9 ]*" placeholder="1234 5678" data-digits="8" />
 			<?php submit_button( __( 'Log In', 'two-factor' ) ); ?>
 		</p>
 		<p class="two-factor-email-resend">
@@ -313,12 +313,10 @@ class Two_Factor_Email extends Two_Factor_Provider {
 	 * @return boolean
 	 */
 	public function validate_authentication( $user ) {
-		if ( ! isset( $user->ID ) || ! isset( $_REQUEST['two-factor-email-code'] ) ) {
+		$code = $this->sanitize_code_from_request( 'two-factor-email-code' );
+		if ( ! isset( $user->ID ) || ! $code ) {
 			return false;
 		}
-
-		// Ensure there are no spaces or line breaks around the code.
-		$code = trim( sanitize_text_field( $_REQUEST['two-factor-email-code'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended, handled by the core method already.
 
 		return $this->validate_token( $user->ID, $code );
 	}

@@ -9,7 +9,7 @@ namespace The_SEO_Framework;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2018 - 2022 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2018 - 2023 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -71,23 +71,18 @@ function _init_tsf() {
 	 * @param bool $load
 	 */
 	if ( \apply_filters( 'the_seo_framework_load', true ) ) {
+		$tsf         = new Load();
+		$tsf->loaded = true;
+
+		$tsf->_load_early_compat_files();
+
 		if ( \is_admin() ) {
 			//! TODO: admin-only loader?
-			$tsf         = new Load();
-			$tsf->loaded = true;
-
-			$tsf->_load_early_compat_files();
-
 			/**
 			 * @since 3.1.0
 			 * Runs after TSF is loaded in the admin.
 			 */
 			\do_action( 'the_seo_framework_admin_loaded' );
-		} else {
-			$tsf         = new Load();
-			$tsf->loaded = true;
-
-			$tsf->_load_early_compat_files();
 		}
 
 		/**
@@ -148,7 +143,7 @@ function _autoload_classes( $class ) {
 	$_chunck_count = \count( $_chunks );
 
 	if ( $_chunck_count > 2 ) {
-		//? directory position = $_chunck_count - ( 2 = (The_SEO_Framework)\ + (Bridges/Builders/Interpreters)\ )
+		// directory position = $_chunck_count - ( 2 = (The_SEO_Framework)\ + (Bridges/Builders/Interpreters)\ )
 		$rel_dir = implode( DIRECTORY_SEPARATOR, array_splice( $_chunks, 1, $_chunck_count - 2 ) ) . DIRECTORY_SEPARATOR;
 	} else {
 		$rel_dir = '';

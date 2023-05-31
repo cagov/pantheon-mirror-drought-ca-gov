@@ -122,7 +122,6 @@ class Migration173Task extends Task {
 
 		// Init migration.
 		$this->init_migration( $tasks );
-
 	}
 
 	/**
@@ -183,8 +182,6 @@ class Migration173Task extends Task {
 	 * @since 1.7.3
 	 *
 	 * @param Tasks $tasks Tasks class instance.
-	 *
-	 * @return void
 	 */
 	private function init_migration( $tasks ) {
 
@@ -221,10 +218,6 @@ class Migration173Task extends Task {
 
 		global $wpdb;
 
-		if ( ! $this->entry_handler->table_exists() ) {
-			return [];
-		}
-
 		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$entries = $wpdb->get_results(
 			"
@@ -235,7 +228,7 @@ class Migration173Task extends Task {
                 e.status IN( 'partial', 'abandoned' ) AND
             	ef.entry_id IS NULL"
 		);
-		// phpcs:enable
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 		if ( ! $entries || ! is_array( $entries ) ) {
 			return [];

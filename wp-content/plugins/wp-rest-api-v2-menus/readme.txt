@@ -2,8 +2,8 @@
 Contributors: ClaudioLaBarbera, alebarbieri, joshuaslatedesign, raik, beltranrengifo, Trollhag, fifciuu
 Tags: api, json, json-rest-api, menu-routes, menus, REST, wp-api, wp-rest-api, v2
 Requires at least: 4.4
-Tested up to: 5.5.1
-Stable tag: 0.10
+Tested up to: 6.0.2
+Stable tag: 0.12.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -45,6 +45,10 @@ Of course! This is the GitHub Repository https://github.com/thebatclaudio/wp-res
 Nothing to show. This plugin has no settings or frontend, it just extends WP API with new routes.
 
 == Changelog ==
+
+0.12.1 - Bug fix: Fatal error when get_term() fails
+
+0.12 - Some bug fixes
 
 0.10 - Fix possible name colision caused by ACF field with existing name (example: if we have an ACF field named "title" it will overwrite the original post's title). Now ACF fields are grouped in a "acf" object.
 

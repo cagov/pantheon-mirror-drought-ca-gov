@@ -10,7 +10,7 @@ namespace The_SEO_Framework;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2015 - 2022 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2015 - 2023 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -192,7 +192,7 @@ class Generate_Url extends Generate_Title {
 	 * Builds canonical URL from input arguments.
 	 *
 	 * @since 3.0.0
-	 * @since 3.2.2 Now tests for the homepage as page prior getting custom field data.
+	 * @since 3.2.2 Now tests for the static frontpage metadata prior getting fallback data.
 	 * @since 4.0.0 Can now fetch custom canonical URL for terms.
 	 * @since 4.2.0 Now supports the `$args['pta']` index.
 	 * @see $this->get_canonical_url()
@@ -269,12 +269,12 @@ class Generate_Url extends Generate_Title {
 					?: $this->get_post_type_archive_canonical_url();
 			} elseif ( $this->is_author() ) {
 				$url = $this->get_author_canonical_url();
-			} elseif ( $this->is_date() ) {
-				if ( $this->is_day() ) {
+			} elseif ( \is_date() ) {
+				if ( \is_day() ) {
 					$url = $this->get_date_canonical_url( \get_query_var( 'year' ), \get_query_var( 'monthnum' ), \get_query_var( 'day' ) );
-				} elseif ( $this->is_month() ) {
+				} elseif ( \is_month() ) {
 					$url = $this->get_date_canonical_url( \get_query_var( 'year' ), \get_query_var( 'monthnum' ) );
-				} elseif ( $this->is_year() ) {
+				} elseif ( \is_year() ) {
 					$url = $this->get_date_canonical_url( \get_query_var( 'year' ) );
 				}
 			}
@@ -324,7 +324,7 @@ class Generate_Url extends Generate_Title {
 
 		if ( $this->has_page_on_front() ) {
 			if ( $this->is_static_frontpage( $query_id ) ) {
-				// Yes, use the pagination base for the homepage-as-page!
+				// Yes, we use the pagination base for the static frontpage.
 				$url = $this->add_pagination_to_url( $url, $this->page(), true );
 			}
 		} elseif ( (int) \get_option( 'page_for_posts' ) === $query_id ) {
@@ -380,14 +380,14 @@ class Generate_Url extends Generate_Title {
 
 		$url = \wp_get_canonical_url(
 			$post_id ?? $this->get_the_real_ID()
-		) ?: '';
+		);
 
 		if ( ! $url ) return '';
 
-		$_page = \get_query_var( 'page', 1 ) ?: 1;
+		$page = \get_query_var( 'page', 1 ) ?: 1;
 		// Remove undesired/fake pagination. See: <https://core.trac.wordpress.org/ticket/37505>
-		if ( $_page > 1 && $_page !== $this->page() )
-			$url = $this->remove_pagination_from_url( $url, $_page, false );
+		if ( $page > 1 && $page !== $this->page() )
+			$url = $this->remove_pagination_from_url( $url, $page, false );
 
 		// Singular archives, like blog pages and shop pages, use the pagination base with 'paged'.
 		// wp_get_canonical_url() only tests 'page'. Fix that:
@@ -866,7 +866,7 @@ class Generate_Url extends Generate_Title {
 				$url = \add_query_arg( [ 'cat' => $id ], $home );
 			} elseif ( $this->is_tag() ) {
 				$url = \add_query_arg( [ 'post_tag' => $id ], $home );
-			} elseif ( $this->is_date() && isset( $GLOBALS['wp_query']->query ) ) {
+			} elseif ( \is_date() && isset( $GLOBALS['wp_query']->query ) ) {
 				// FIXME: Core Report: WP doesn't accept paged parameters w/ date parameters. It'll lead to the homepage.
 				$_query = $GLOBALS['wp_query']->query;
 				$_date  = [
@@ -902,7 +902,7 @@ class Generate_Url extends Generate_Title {
 			$url  = \add_query_arg( [ 'page' => $page ], $url );
 		}
 
-		//? Append queries other plugins might've filtered.
+		// Append queries other plugins might've filtered.
 		if ( $this->is_singular() ) {
 			$url = $this->append_url_query(
 				$url,
@@ -956,7 +956,11 @@ class Generate_Url extends Generate_Title {
 
 		if ( $this->has_custom_canonical_url() ) goto end;
 
-		if ( $this->is_singular() && ! $this->is_singular_archive() && $this->is_multipage() ) {
+		if (
+			   $this->is_singular()
+			&& ! $this->is_singular_archive()
+			&& $this->is_multipage()
+		) {
 			$_run = $this->is_real_front_page()
 				  ? $this->get_option( 'prev_next_frontpage' )
 				  : $this->get_option( 'prev_next_posts' );
@@ -965,7 +969,12 @@ class Generate_Url extends Generate_Title {
 
 			$page      = $this->page();
 			$_numpages = $this->numpages();
-		} elseif ( $this->is_real_front_page() || $this->is_archive() || $this->is_singular_archive() || $this->is_search() ) {
+		} elseif (
+			   $this->is_real_front_page()
+			|| $this->is_archive()
+			|| $this->is_singular_archive()
+			|| $this->is_search()
+		) {
 			$_run = $this->is_real_front_page()
 				  ? $this->get_option( 'prev_next_frontpage' )
 				  : $this->get_option( 'prev_next_archives' );

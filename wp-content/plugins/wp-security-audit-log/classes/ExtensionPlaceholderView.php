@@ -43,18 +43,18 @@ abstract class WSAL_ExtensionPlaceholderView extends WSAL_AbstractView {
 		$extensions_file = '/css/extensions.css';
 		wp_enqueue_style(
 			'extensions',
-			$this->plugin->get_base_url() . $extensions_file,
+			WSAL_BASE_URL . $extensions_file,
 			array(),
-			filemtime( $this->plugin->get_base_dir() . $extensions_file )
+			WSAL_VERSION
 		);
 
 		// Simple lightbox CSS.
 		$simple_lightbox_file = '/css/dist/simple-lightbox.min.css';
 		wp_enqueue_style(
 			'wsal-simple-lightbox-css',
-			$this->plugin->get_base_url() . $simple_lightbox_file,
+			WSAL_BASE_URL . $simple_lightbox_file,
 			array(),
-			filemtime( $this->plugin->get_base_dir() . $simple_lightbox_file )
+			WSAL_VERSION
 		);
 	}
 
@@ -69,9 +69,9 @@ abstract class WSAL_ExtensionPlaceholderView extends WSAL_AbstractView {
 		$simple_lightbox_file = '/js/dist/simple-lightbox.jquery.min.js';
 		wp_register_script(
 			'wsal-simple-lightbox-js',
-			$this->plugin->get_base_url() . $simple_lightbox_file,
+			WSAL_BASE_URL . $simple_lightbox_file,
 			array( 'jquery' ),
-			filemtime( $this->plugin->get_base_dir() . $simple_lightbox_file ),
+			WSAL_VERSION,
 			false
 		);
 		wp_enqueue_script( 'wsal-simple-lightbox-js' );
@@ -80,9 +80,9 @@ abstract class WSAL_ExtensionPlaceholderView extends WSAL_AbstractView {
 		$extensions_file = '/js/extensions.js';
 		wp_register_script(
 			'wsal-extensions-js',
-			$this->plugin->get_base_url() . $extensions_file,
+			WSAL_BASE_URL . $extensions_file,
 			array( 'wsal-simple-lightbox-js' ),
-			filemtime( $this->plugin->get_base_dir() . $extensions_file ),
+			WSAL_VERSION,
 			false
 		);
 		wp_enqueue_script( 'wsal-extensions-js' );

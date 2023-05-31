@@ -62,7 +62,7 @@ switch ( $this->get_view_instance( 'schema', $instance ) ) :
 
 		$info = HTML::make_info(
 			__( 'Learn how this data is used.', 'autodescription' ),
-			'https://developers.google.com/search/docs/data-types/breadcrumb',
+			'https://developers.google.com/search/docs/advanced/structured-data/breadcrumb',
 			false
 		);
 		HTML::wrap_fields(
@@ -82,7 +82,7 @@ switch ( $this->get_view_instance( 'schema', $instance ) ) :
 
 		$info = HTML::make_info(
 			__( 'Learn how this data is used.', 'autodescription' ),
-			'https://developers.google.com/search/docs/data-types/sitelinks-searchbox',
+			'https://developers.google.com/search/docs/advanced/structured-data/sitelinks-searchbox',
 			false
 		);
 		HTML::wrap_fields(
@@ -101,7 +101,7 @@ switch ( $this->get_view_instance( 'schema', $instance ) ) :
 
 		$info = HTML::make_info(
 			__( 'Learn how this data is used.', 'autodescription' ),
-			'https://developers.google.com/search/docs/guides/enhance-site#add-your-sites-name-logo-and-social-links',
+			'https://developers.google.com/search/docs/beginner/establish-business-details',
 			false
 		);
 		HTML::wrap_fields(
@@ -127,9 +127,16 @@ switch ( $this->get_view_instance( 'schema', $instance ) ) :
 						'person'       => __( 'A Person', 'autodescription' ),
 					]
 				);
-				foreach ( $knowledge_type as $value => $name ) {
-					echo '<option value="' . esc_attr( $value ) . '"' . selected( $this->get_option( 'knowledge_type' ), esc_attr( $value ), false ) . '>' . esc_html( $name ) . '</option>' . "\n";
-				}
+				$_current       = $this->get_option( 'knowledge_type' );
+				foreach ( $knowledge_type as $value => $name )
+					vprintf(
+						'<option value="%s" %s>%s</option>',
+						[
+							esc_attr( $value ),
+							selected( $_current, esc_attr( $value ), false ),
+							esc_html( $name ),
+						]
+					);
 				?>
 			</select>
 		</p>
@@ -140,7 +147,7 @@ switch ( $this->get_view_instance( 'schema', $instance ) ) :
 			</label>
 		</p>
 		<p>
-			<input type="text" name="<?php Input::field_name( 'knowledge_name' ); ?>" class="large-text" id="<?php Input::field_id( 'knowledge_name' ); ?>" placeholder="<?= esc_attr( $this->get_blogname() ) ?>" value="<?= esc_attr( $this->get_option( 'knowledge_name' ) ) ?>" autocomplete=off />
+			<input type=text name="<?php Input::field_name( 'knowledge_name' ); ?>" class=large-text id="<?php Input::field_id( 'knowledge_name' ); ?>" placeholder="<?= esc_attr( $this->get_blogname() ) ?>" value="<?= esc_attr( $this->get_option( 'knowledge_name' ) ) ?>" autocomplete=off />
 		</p>
 		<hr>
 		<?php
@@ -148,7 +155,7 @@ switch ( $this->get_view_instance( 'schema', $instance ) ) :
 		HTML::description( esc_html__( 'These options are used when this site represents an organization. When no logo is outputted, search engine will look elsewhere.', 'autodescription' ) );
 		$info = HTML::make_info(
 			__( 'Learn how this data is used.', 'autodescription' ),
-			'https://developers.google.com/search/docs/data-types/logo',
+			'https://developers.google.com/search/docs/advanced/structured-data/logo',
 			false
 		);
 		HTML::wrap_fields(
@@ -162,26 +169,26 @@ switch ( $this->get_view_instance( 'schema', $instance ) ) :
 		$logo_placeholder = $this->get_knowledge_logo( false );
 		?>
 		<p>
-			<label for="knowledge_logo-url">
+			<label for=knowledge_logo-url>
 				<strong><?php esc_html_e( 'Logo URL', 'autodescription' ); ?></strong>
 			</label>
 		</p>
 		<p class="hide-if-tsf-js attention"><?php esc_html_e( 'Setting a logo requires JavaScript.', 'autodescription' ); ?></p>
 		<p>
-			<input class="large-text" type="url" readonly="readonly" data-readonly="1" name="<?php Input::field_name( 'knowledge_logo_url' ); ?>" id="knowledge_logo-url" placeholder="<?= esc_url( $logo_placeholder ) ?>" value="<?= esc_url( $this->get_option( 'knowledge_logo_url' ) ) ?>" />
-			<input type="hidden" name="<?php Input::field_name( 'knowledge_logo_id' ); ?>" id="knowledge_logo-id" value="<?= absint( $this->get_option( 'knowledge_logo_id' ) ) ?>" />
+			<input class=large-text type=url readonly data-readonly=1 name="<?php Input::field_name( 'knowledge_logo_url' ); ?>" id=knowledge_logo-url placeholder="<?= esc_url( $logo_placeholder ) ?>" value="<?= esc_url( $this->get_option( 'knowledge_logo_url' ) ) ?>" />
+			<input type=hidden name="<?php Input::field_name( 'knowledge_logo_id' ); ?>" id=knowledge_logo-id value="<?= absint( $this->get_option( 'knowledge_logo_id' ) ) ?>" />
 		</p>
-		<p class="hide-if-no-tsf-js">
+		<p class=hide-if-no-tsf-js>
 			<?php
 			// phpcs:ignore, WordPress.Security.EscapeOutput.OutputNotEscaped -- already escaped.
 			echo Form::get_image_uploader_form( [
 				'id'   => 'knowledge_logo',
 				'data' => [
 					'inputType' => 'logo',
-					'width'     => 512,
-					'height'    => 512,
-					'minWidth'  => 112,
-					'minHeight' => 112,
+					'width'     => 512, // Magic number -> Google requirement? "MAGIC::GOOGLE->LOGO_MAX"?
+					'height'    => 512, // Magic number
+					'minWidth'  => 112, // Magic number -> Google requirement? "MAGIC::GOOGLE->LOGO_MIN"?
+					'minHeight' => 112, // Magic number
 					'flex'      => true,
 				],
 				'i18n' => [
@@ -269,8 +276,8 @@ switch ( $this->get_view_instance( 'schema', $instance ) ) :
 
 		$output_social_presence = false;
 
-		foreach ( $socialsites as $key => $v ) {
-			if ( strlen( $this->get_option( $v['option'] ) ) ) {
+		foreach ( $socialsites as $sc ) {
+			if ( strlen( $this->get_option( $sc['option'] ) ) ) {
 				$output_social_presence = true;
 				break;
 			}
@@ -289,33 +296,33 @@ switch ( $this->get_view_instance( 'schema', $instance ) ) :
 					sprintf(
 						/* translators: %s = Learn more URL. Markdown! */
 						esc_html__( 'These settings are marked for removal. When you clear a field, it will be hidden forever. [Learn more](%s).', 'autodescription' ),
-						'https://developers.google.com/search/docs/data-types/social-profile'
+						'https://support.google.com/knowledgepanel/answer/7534842'
 					),
 					[ 'a' ],
 					[ 'a_internal' => false ]
 				)
 			);
 
-			foreach ( $socialsites as $key => $v ) {
+			foreach ( $socialsites as $sc ) {
 
-				if ( ! strlen( $this->get_option( $v['option'] ) ) ) continue;
+				if ( ! strlen( $this->get_option( $sc['option'] ) ) ) continue;
 
 				?>
 				<p>
-					<label for="<?php Input::field_id( $v['option'] ); ?>">
-						<strong><?= esc_html( $v['desc'] ) ?></strong>
+					<label for="<?php Input::field_id( $sc['option'] ); ?>">
+						<strong><?= esc_html( $sc['desc'] ) ?></strong>
 						<?php
-						if ( $v['examplelink'] ) {
+						if ( $sc['examplelink'] ) {
 							HTML::make_info(
 								__( 'View your profile.', 'autodescription' ),
-								$v['examplelink']
+								$sc['examplelink']
 							);
 						}
 						?>
 					</label>
 				</p>
 				<p>
-					<input type="url" name="<?php Input::field_name( $v['option'] ); ?>" class="large-text" id="<?php Input::field_id( $v['option'] ); ?>" placeholder="<?= esc_attr( $v['placeholder'] ) ?>" value="<?= esc_attr( $this->get_option( $v['option'] ) ) ?>" autocomplete=off />
+					<input type=url name="<?php Input::field_name( $sc['option'] ); ?>" class=large-text id="<?php Input::field_id( $sc['option'] ); ?>" placeholder="<?= esc_attr( $sc['placeholder'] ) ?>" value="<?= esc_attr( $this->get_option( $sc['option'] ) ) ?>" autocomplete=off />
 				</p>
 				<?php
 			}

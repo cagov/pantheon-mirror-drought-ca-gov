@@ -44,10 +44,11 @@ class WPForms_Builder_Panel_Providers extends WPForms_Builder_Panel {
 			'wpforms-builder-providers',
 			'wpforms_builder_providers',
 			[
-				'url'                => esc_url( add_query_arg( [ 'view' => 'providers' ] ) ),
+				'url'                => esc_url( remove_query_arg( 'newform', add_query_arg( [ 'view' => 'providers' ] ) ) ),
 				'confirm_save'       => esc_html__( 'We need to save your progress to continue to the Marketing panel. Is that OK?', 'wpforms-lite' ),
 				'confirm_connection' => esc_html__( 'Are you sure you want to delete this connection?', 'wpforms-lite' ),
-				'prompt_connection'  => esc_html__( 'Enter a %type% nickname', 'wpforms-lite' ),
+				/* translators: %s - connection type. */
+				'prompt_connection'  => esc_html( sprintf( __( 'Enter a %s nickname', 'wpforms-lite' ), '%type%' ) ),
 				'prompt_placeholder' => esc_html__( 'Eg: Newsletter Optin', 'wpforms-lite' ),
 				'error_name'         => esc_html__( 'You must provide a connection nickname.', 'wpforms-lite' ),
 				'required_field'     => esc_html__( 'Field required', 'wpforms-lite' ),
@@ -86,13 +87,13 @@ class WPForms_Builder_Panel_Providers extends WPForms_Builder_Panel {
 			echo '<div class="wpforms-alert wpforms-alert-info">';
 			echo wp_kses(
 				__( 'You need to <a href="#" class="wpforms-panel-switch" data-panel="setup">setup your form</a> before you can manage these settings.', 'wpforms-lite' ),
-				array(
-					'a' => array(
-						'href'       => array(),
-						'class'      => array(),
-						'data-panel' => array(),
-					),
-				)
+				[
+					'a' => [
+						'href'       => [],
+						'class'      => [],
+						'data-panel' => [],
+					],
+				]
 			);
 			echo '</div>';
 
@@ -114,11 +115,11 @@ class WPForms_Builder_Panel_Providers extends WPForms_Builder_Panel {
 					wp_kses(
 						/* translators: %s - plugin admin area Addons page. */
 						__( 'It seems you do not have any marketing addons activated. You can head over to the <a href="%s">Addons page</a> to install and activate the addon for your provider.', 'wpforms-lite' ),
-						array(
-							'a' => array(
-								'href' => array(),
-							),
-						)
+						[
+							'a' => [
+								'href' => [],
+							],
+						]
 					),
 					esc_url( admin_url( 'admin.php?page=wpforms-addons' ) )
 				) .

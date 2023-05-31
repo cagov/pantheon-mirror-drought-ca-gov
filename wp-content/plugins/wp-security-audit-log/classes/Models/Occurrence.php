@@ -8,6 +8,9 @@
  * @package wsal
  */
 
+use WSAL\Controllers\Alert_Manager;
+use WSAL\Entities\Metadata_Entity;
+
 // Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -188,7 +191,7 @@ class WSAL_Models_Occurrence extends WSAL_Models_ActiveRecord {
 	 * @see WSAL_AlertManager::get_alert()
 	 */
 	public function get_alert() {
-		return WpSecurityAuditLog::get_instance()->alerts->get_alert(
+		return Alert_Manager::get_alert(
 			$this->alert_id,
 			(object) array(
 				'mesg' => esc_html__( 'Alert message not found.', 'wp-security-audit-log' ),
@@ -257,12 +260,14 @@ class WSAL_Models_Occurrence extends WSAL_Models_ActiveRecord {
 					}
 				}
 			} else {
+
+				Metadata_Entity::save(['occurrence_id'=>$this->get_id(),'name'=>$name,'value'=>maybe_serialize( $value )]);
 				// Get meta adapter.
-				$model                = new WSAL_Models_Meta();
-				$model->occurrence_id = $this->get_id();
-				$model->name          = $name;
-				$model->value         = maybe_serialize( $value );
-				$model->save_meta();
+				// $model                = new WSAL_Models_Meta();
+				// $model->occurrence_id = $this->get_id();
+				// $model->name          = $name;
+				// $model->value         = maybe_serialize( $value );
+				// $model->save_meta();
 			}
 		}
 	}
@@ -336,7 +341,7 @@ class WSAL_Models_Occurrence extends WSAL_Models_ActiveRecord {
 				$this->_cached_message = $alert_object->get_message( $meta_array, $this->_cached_message, $this->get_id(), $context );
 			} else {
 				// Filter to allow items to be added elsewhere.
-				$addon_event_codes = apply_filters( 'wsal_addon_event_codes', $addon_event_codes );
+				$addon_event_codes = apply_filters( 'wsal_addon_event_codes', array() );
 
 				$installer_nonce = wp_create_nonce( 'wsal-install-addon' );
 				foreach ( $addon_event_codes as $key => $addon ) {
@@ -362,6 +367,59 @@ class WSAL_Models_Occurrence extends WSAL_Models_ActiveRecord {
 			}
 		}
 		return $this->_cached_message;
+	}
+
+	/**
+	 * Gets alert message.
+	 *
+	 * @param array  $item    - Occurrence meta array.
+	 * @param string $context Message context.
+	 *
+	 * @return string Full-formatted message.
+	 * @see WSAL_Alert::get_message()
+	 */
+	public static function get_alert_message( $item = null, $context = false ) {
+		$alert = Alert_Manager::get_alert(
+			$item['alert_id'],
+			(object) array(
+				'mesg' => esc_html__( 'Alert message not found.', 'wp-security-audit-log' ),
+				'desc' => esc_html__( 'Alert description not found.', 'wp-security-audit-log' ),
+			)
+		);
+		$cached_message = $alert->mesg;
+
+		// Fill variables in message.
+		$meta_array   = $item['meta_values'];
+		$alert_object = $alert;
+		if ( null !== $alert_object && method_exists( $alert_object, 'get_message' ) ) {
+			$cached_message = $alert_object->get_message( $meta_array, $cached_message, $item['id'], $context );
+		} else {
+			// Filter to allow items to be added elsewhere.
+			$addon_event_codes = apply_filters( 'wsal_addon_event_codes', array() );
+
+			$installer_nonce = wp_create_nonce( 'wsal-install-addon' );
+			foreach ( $addon_event_codes as $key => $addon ) {
+				if ( in_array( $item['alert_id'], $addon['event_ids'], true ) ) {
+					// check key and update message here.
+					$message = sprintf(
+						'To view this event you need to install the activity log extension for %1$s. %2$s%3$sInstall and activate extension %4$s',
+						esc_html( $addon['name'] ),
+						'<br />',
+						'<button type="button" class="button-primary wsal-addon-install-trigger" data-nonce="' . esc_attr( $installer_nonce ) . '" data-addon-name="' . esc_attr( $key ) . '">',
+						'</button>'
+					);
+					// return this message early.
+					return $message;
+				}
+			}
+			$cached_message = isset( $cached_message ) ? $cached_message : sprintf(
+				/* Translators: 1: html that opens a link, 2: html that closes a link. */
+				__( 'This type of activity / change is no longer monitored. You can create your own custom event IDs to keep a log of such change. Read more about custom events %1$shere%2$s.', 'wp-security-audit-log' ),
+				'<a href="https://wpactivitylog.com/support/kb/create-custom-events-wordpress-activity-log/" rel="noopener noreferrer" target="_blank">',
+				'</a>'
+			);
+		}
+		return $cached_message;
 	}
 
 	/**

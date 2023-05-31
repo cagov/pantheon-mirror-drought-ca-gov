@@ -9,7 +9,7 @@ namespace The_SEO_Framework;
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2015 - 2022 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2015 - 2023 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -195,7 +195,7 @@ class Query extends Core {
 			 */
 			$id = \apply_filters(
 				'the_seo_framework_real_id',
-				$this->is_feed() ? \get_the_ID() : 0
+				\is_feed() ? \get_the_ID() : 0
 			);
 		}
 
@@ -309,6 +309,8 @@ class Query extends Core {
 	 * Detects 404.
 	 *
 	 * @since 2.6.0
+	 * @ignore unused.
+	 * @todo deprecate
 	 *
 	 * @return bool
 	 */
@@ -320,6 +322,8 @@ class Query extends Core {
 	 * Detects admin screen.
 	 *
 	 * @since 2.6.0
+	 * @ignore unused.
+	 * @todo deprecate
 	 *
 	 * @return bool
 	 */
@@ -444,7 +448,14 @@ class Query extends Core {
 	 * @return bool Post Type is archive
 	 */
 	public function is_archive_admin() {
-		return \in_array( $GLOBALS['current_screen']->base ?? '', [ 'edit-tags', 'term' ], true );
+
+		switch ( $GLOBALS['current_screen']->base ?? '' ) {
+			case 'edit-tags':
+			case 'term':
+				return true;
+		}
+
+		return false;
 	}
 
 	/**
@@ -480,7 +491,14 @@ class Query extends Core {
 	 * @return bool We're on the edit screen.
 	 */
 	public function is_wp_lists_edit() {
-		return \in_array( $GLOBALS['current_screen']->base ?? '', [ 'edit-tags', 'edit' ], true );
+
+		switch ( $GLOBALS['current_screen']->base ?? '' ) {
+			case 'edit-tags':
+			case 'edit':
+				return true;
+		}
+
+		return false;
 	}
 
 	/**
@@ -492,7 +510,14 @@ class Query extends Core {
 	 * @return bool True if on Profile Edit screen. False otherwise.
 	 */
 	public function is_profile_edit() {
-		return \in_array( $GLOBALS['current_screen']->base ?? '', [ 'profile', 'user-edit' ], true );
+
+		switch ( $GLOBALS['current_screen']->base ?? '' ) {
+			case 'profile':
+			case 'user-edit':
+				return true;
+		}
+
+		return false;
 	}
 
 	/**
@@ -530,12 +555,10 @@ class Query extends Core {
 				? $post
 				: ( \get_post( $post )->ID ?? 0 );
 
-			$is_pfp = (int) \get_option( 'page_for_posts' ) === $id;
-		} else {
-			$is_pfp = \is_home();
+			return (int) \get_option( 'page_for_posts' ) === $id;
 		}
 
-		return $is_pfp;
+		return \is_home();
 	}
 
 	/**
@@ -590,6 +613,8 @@ class Query extends Core {
 	 * in `\WP_Customize_Manager::setup_theme()`.
 	 *
 	 * @since 4.0.0
+	 * @ignore unused.
+	 * @todo deprecate
 	 *
 	 * @return bool
 	 */
@@ -601,6 +626,8 @@ class Query extends Core {
 	 * Detects date archives.
 	 *
 	 * @since 2.6.0
+	 * @ignore unused.
+	 * @todo deprecate
 	 *
 	 * @return bool
 	 */
@@ -612,7 +639,8 @@ class Query extends Core {
 	 * Detects day archives.
 	 *
 	 * @since 2.6.0
-	 * @uses $this->is_date()
+	 * @ignore unused.
+	 * @todo deprecate
 	 *
 	 * @return bool
 	 */
@@ -624,6 +652,8 @@ class Query extends Core {
 	 * Detects feed.
 	 *
 	 * @since 2.6.0
+	 * @ignore unused.
+	 * @todo deprecate
 	 *
 	 * @param string|array $feeds Optional feed types to check.
 	 * @return bool
@@ -679,6 +709,8 @@ class Query extends Core {
 	 * Detects month archives.
 	 *
 	 * @since 2.6.0
+	 * @ignore unused.
+	 * @todo deprecate
 	 *
 	 * @return bool
 	 */
@@ -815,17 +847,13 @@ class Query extends Core {
 	 * @since 2.5.2
 	 * @since 3.1.0 Now passes $post_types parameter in admin screens, only when it's an integer.
 	 * @since 4.0.0 No longer processes integers as input.
+	 * @since 4.2.4 No longer tests type of $post_types.
 	 * @uses $this->is_singular_admin()
 	 *
-	 * @param string|array $post_types Optional. Post type or array of post types. Default empty string.
+	 * @param string|string[] $post_types Optional. Post type or array of post types. Default empty string.
 	 * @return bool Post Type is singular
 	 */
 	public function is_singular( $post_types = '' ) {
-
-		if ( \is_int( $post_types ) ) {
-			// Integers are no longer accepted.
-			$post_types = '';
-		}
 
 		// WP_Query functions require loop, do alternative check.
 		if ( \is_admin() )
@@ -849,7 +877,14 @@ class Query extends Core {
 	 * @return bool Post Type is singular
 	 */
 	public function is_singular_admin() {
-		return \in_array( $GLOBALS['current_screen']->base ?? '', [ 'edit', 'post' ], true );
+
+		switch ( $GLOBALS['current_screen']->base ?? '' ) {
+			case 'edit':
+			case 'post':
+				return true;
+		}
+
+		return false;
 	}
 
 	/**
@@ -863,6 +898,7 @@ class Query extends Core {
 	 */
 	public function is_static_frontpage( $id = 0 ) {
 
+		// Memo this slow part seperately; memo_query() would cache the whole method, which isn't necessary.
 		$front_id = umemo( __METHOD__ )
 			?? umemo(
 				__METHOD__,
@@ -993,6 +1029,8 @@ class Query extends Core {
 	 * Detects year archives.
 	 *
 	 * @since 2.6.0
+	 * @ignore unused.
+	 * @todo deprecate
 	 *
 	 * @return bool
 	 */
@@ -1080,8 +1118,8 @@ class Query extends Core {
 	 * @since 2.6.0
 	 * @since 3.2.4 1. Added overflow protection.
 	 *              2. Now always returns 1 on the admin screens.
-	 * @TODO Add better protection? This can get filled by users when is_paged() is true.
-	 *       WordPress has no protection/test for this, either.
+	 * @since 4.2.8 Now returns the last page on pagination overflow,
+	 *              but only when we're on a paginated static frontpage.
 	 *
 	 * @return int (R>0) $page Always a positive number.
 	 */
@@ -1092,17 +1130,23 @@ class Query extends Core {
 			return $memo;
 
 		if ( $this->is_multipage() ) {
-			$page = (int) \get_query_var( 'page' );
+			$page = ( (int) \get_query_var( 'page' ) ) ?: 1;
+			$max  = $this->numpages();
 
-			if ( $page > $this->numpages() ) {
+			if ( $page > $max ) {
 				// On overflow, WP returns the first page.
-				$page = 1;
+				// Exception: When we are on a paginated static frontpage, WP returns the last page...
+				if ( $this->is_static_frontpage() ) {
+					$page = $max;
+				} else {
+					$page = 1;
+				}
 			}
 		} else {
 			$page = 1;
 		}
 
-		return $this->memo_query( $page ?: 1 );
+		return $this->memo_query( $page );
 	}
 
 	/**
@@ -1122,7 +1166,7 @@ class Query extends Core {
 			return $memo;
 
 		if ( $this->is_multipage() ) {
-			$paged = (int) \get_query_var( 'paged' );
+			$paged = ( (int) \get_query_var( 'paged' ) ) ?: 1;
 			$max   = $this->numpages();
 
 			if ( $paged > $max ) {
@@ -1133,7 +1177,7 @@ class Query extends Core {
 			$paged = 1;
 		}
 
-		return $this->memo_query( $paged ?: 1 );
+		return $this->memo_query( $paged );
 	}
 
 	/**
@@ -1164,8 +1208,9 @@ class Query extends Core {
 		if ( $this->is_singular() && ! $this->is_singular_archive() )
 			$post = \get_post( $this->get_the_real_ID() );
 
-		if ( isset( $post ) && $post instanceof \WP_Post ) {
-			$content = $post->post_content;
+		if ( ( $post ?? null ) instanceof \WP_Post ) {
+			$content = $this->get_post_content( $post );
+
 			if ( false !== strpos( $content, '<!--nextpage-->' ) ) {
 				$content = str_replace( "\n<!--nextpage-->", '<!--nextpage-->', $content );
 
@@ -1173,9 +1218,9 @@ class Query extends Core {
 				if ( 0 === strpos( $content, '<!--nextpage-->' ) )
 					$content = substr( $content, 15 );
 
-				$_pages = explode( '<!--nextpage-->', $content );
+				$pages = explode( '<!--nextpage-->', $content );
 			} else {
-				$_pages = [ $content ];
+				$pages = [ $content ];
 			}
 
 			/**
@@ -1186,13 +1231,13 @@ class Query extends Core {
 			 *
 			 * @since 4.4.0 WordPress core
 			 *
-			 * @param array $_pages Array of "pages" derived from the post content.
-			 *              of `<!-- nextpage -->` tags..
-			 * @param WP_Post $post  Current post object.
+			 * @param array    $pages Array of "pages" derived from the post content.
+			 *                 of `<!-- nextpage -->` tags..
+			 * @param \WP_Post $post  Current post object.
 			 */
-			$_pages = \apply_filters( 'content_pagination', $_pages, $post );
+			$pages = \apply_filters( 'content_pagination', $pages, $post );
 
-			$numpages = \count( $_pages );
+			$numpages = \count( $pages );
 		} elseif ( isset( $wp_query->max_num_pages ) ) {
 			$numpages = (int) $wp_query->max_num_pages;
 		} else {
@@ -1235,6 +1280,8 @@ class Query extends Core {
 	 * Determines whether we're on the robots.txt file output.
 	 *
 	 * @since 2.9.2
+	 * @ignore unused.
+	 * @todo deprecate
 	 *
 	 * @return bool
 	 */

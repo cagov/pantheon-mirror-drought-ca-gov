@@ -8,7 +8,7 @@
 
 /**
  * The SEO Framework plugin
- * Copyright (C) 2019 - 2022 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
+ * Copyright (C) 2019 - 2023 Sybre Waaijer, CyberWire B.V. (https://cyberwire.nl/)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published
@@ -154,16 +154,6 @@ window.tsfSettings = function( $ ) {
 			} );
 		}
 		document.body.addEventListener( 'tsf-post-type-support-changed', validateTaxonomyState );
-
-		const validateTaxonomiesCache    = new Map(),
-			  getValidateTaxonomiesCache = key => validateTaxonomiesCache.get( key ) || ( new Set() );
-		const validateTaxonomies = event => {
-			// Create new pointers in the memory by shadowcloning the object.
-			validateTaxonomiesCache.set( 'excludedTaxonomiesAll', new Set( excludedTaxonomiesAll ) );
-			validateTaxonomiesCache.set( 'excludedTaxonomies', new Set( excludedTaxonomies ) );
-			validateTaxonomiesCache.set( 'excludedPtTaxonomies', new Set( excludedPtTaxonomies ) );
-		}
-		document.body.addEventListener( 'tsf-taxonomy-support-changed', validateTaxonomies );
 
 		const refreshTaxonomies = () => {
 			// Refresh and concatenate.
@@ -453,8 +443,8 @@ window.tsfSettings = function( $ ) {
 			el.addEventListener( 'click', addNoFocusClass );
 		} );
 
-		const homeTitleId    = _getSettingsId( 'homepage_title' ),
-			  siteTitleInput = document.getElementById( _getSettingsId( 'site_title' ) );
+		const homeTitleId        = _getSettingsId( 'homepage_title' ),
+			  siteTitleInput     = document.getElementById( _getSettingsId( 'site_title' ) );
 		/**
 		 * Adjusts homepage left/right title example part.
 		 *
@@ -465,9 +455,12 @@ window.tsfSettings = function( $ ) {
 			let examples = document.querySelectorAll( '.tsf-site-title-js' ),
 				newVal   = tsf.decodeEntities( tsf.sDoubleSpace( event.target.value.trim() ) );
 
-			newVal = newVal || tsf.decodeEntities( event.target.placeholder );
+			newVal ||= tsf.decodeEntities( event.target.placeholder );
 
-	   		tsfTitle.updateStateOf( homeTitleId, 'defaultTitle', newVal );
+			// If the home-as-page has a title, don't overwrite.
+			if ( ! tsfTitle.getStateOf( homeTitleId, '_defaultTitleLocked' ) )
+				tsfTitle.updateStateOf( homeTitleId, 'defaultTitle', newVal );
+
 			tsfTitle.updateStateAll( 'additionValue', newVal, homeTitleId );
 
 			let htmlVal = tsf.escapeString( newVal );
@@ -483,6 +476,7 @@ window.tsfSettings = function( $ ) {
 	 * Initializes Homepage's meta title input.
 	 *
 	 * @since 4.0.0
+	 * @since 4.2.8 Now parses custom state _defaultTitleLocked.
 	 * @access private
 	 *
 	 * @function
@@ -494,6 +488,8 @@ window.tsfSettings = function( $ ) {
 		const titleInput    = document.getElementById( _titleId ),
 			  taglineInput  = document.getElementById( _getSettingsId( 'homepage_title_tagline' ) ),
 			  taglineToggle = document.getElementById( _getSettingsId( 'homepage_tagline' ) );
+
+		if ( ! titleInput ) return;
 
 		tsfTitle.setInputElement( titleInput );
 
@@ -508,6 +504,7 @@ window.tsfSettings = function( $ ) {
 		tsfTitle.updateStateOf( _titleId, 'additionValue', state.additionValue );
 		tsfTitle.updateStateOf( _titleId, 'additionPlacement', state.additionPlacement );
 		tsfTitle.updateStateOf( _titleId, 'hasLegacy', !! ( state.hasLegacy || false ) );
+		tsfTitle.updateStateOf( _titleId, '_defaultTitleLocked', !! ( state._defaultTitleLocked || false ) );
 
 		tsfTitle.enqueueUnregisteredInputTrigger( _titleId );
 
@@ -519,12 +516,16 @@ window.tsfSettings = function( $ ) {
 		 * @function
 		 */
 		const toggleHoverAdditionsPlacement = event => {
-			let newPlacement = 'left' === event.target.value ? 'before' : 'after';
-			tsfTitle.updateStateOf( _titleId, 'additionPlacement', newPlacement );
+			tsfTitle.updateStateOf(
+				_titleId,
+				'additionPlacement',
+				'left' === event.target.value ? 'before' : 'after'
+			);
 		}
 		document.querySelectorAll( '#tsf-home-title-location input' ).forEach( el => {
 			el.addEventListener( 'change', toggleHoverAdditionsPlacement );
-			_dispatchAtInteractive( el, 'change' );
+			if ( el.checked )
+				_dispatchAtInteractive( el, 'change' );
 		} );
 
 		/**
@@ -803,7 +804,7 @@ window.tsfSettings = function( $ ) {
 	 * @access private
 	 *
 	 * @param {string|undefined} postType
-	 * @return {Object<string,{label:string,url:string,hasPosts:boolean}>}
+	 * @return {{label:string,url:string,hasPosts:boolean}}
 	 */
 	const _getPtaData = () => _cachedPtaData ||= JSON.parse(
 		document.getElementById( 'tsf-post-type-archive-data' )?.dataset.postTypes || 0
@@ -960,10 +961,12 @@ window.tsfSettings = function( $ ) {
 	 */
 	 const _initPtaTitleSettings = postType => {
 
-		const _titleId = _getPtaInputId( postType, 'doctitle' ),
-			  _inputEl = document.getElementById( _titleId );
+		const _titleId   = _getPtaInputId( postType, 'doctitle' ),
+			  titleInput = document.getElementById( _titleId );
 
-		tsfTitle.setInputElement( _inputEl );
+		if ( ! titleInput ) return;
+
+		tsfTitle.setInputElement( titleInput );
 
 		const state = JSON.parse(
 			document.getElementById( `tsf-title-data_${_titleId}` )?.dataset.state || 0
@@ -993,7 +996,7 @@ window.tsfSettings = function( $ ) {
 
 			tsfTitle.updateStateOf( _titleId, 'showPrefix', showPrefix );
 		}
-		_inputEl.addEventListener( 'input', updateTitlePrefix );
+		titleInput.addEventListener( 'input', updateTitlePrefix );
 
 		/**
 		 * Updates title additions, based on singular settings change.
@@ -1048,9 +1051,12 @@ window.tsfSettings = function( $ ) {
 	 */
 	const _initPtaDescriptionSettings = postType => {
 
-		const _descId = _getPtaInputId( postType, 'description' );
+		const _descId   = _getPtaInputId( postType, 'description' ),
+			  descInput = document.getElementById( _descId );
 
-		tsfDescription.setInputElement( document.getElementById( _descId ) );
+		if ( ! descInput ) return;
+
+		tsfDescription.setInputElement( descInput );
 
 		const state = JSON.parse(
 			document.getElementById( `tsf-description-data_${_descId}` )?.dataset.state || 0
@@ -1687,10 +1693,10 @@ window.tsfSettings = function( $ ) {
 
 			if ( val ) {
 				// Extrude tag paste's content value and set that as a value.
-				let match = /<meta[^>]+content=(\"|\')?([^\"\'>\s]+)\1?.*?>/i.exec( val );
+				let match = /<meta\b[^>]+?\bcontent=(["'])?([^"'>\s]+)\1?[^>]*?>/i.exec( val );
 				if ( match?.[2]?.length ) {
 					event.stopPropagation();
-					event.preventDefault(); // Prevents save listener
+					event.preventDefault(); // Prevents save listener.. TODO why?
 					event.target.value = match[2];
 					// Tell change:
 					tsfAys.registerChange();

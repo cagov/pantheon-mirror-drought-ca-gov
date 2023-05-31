@@ -12,6 +12,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+use WSAL\Helpers\Settings_Helper;
+use WSAL\Controllers\Alert_Manager;
+use WSAL\Adapter\WSAL_Adapters_MySQL_Meta;
+use WSAL\Adapter\WSAL_Adapters_MySQL_Occurrence;
 /**
  * Handler for MainWP API endpoints.
  *
@@ -71,8 +75,8 @@ class WSAL_MainWpApi {
 					// Set the return object.
 					if ( isset( $event[0] ) ) {
 						$info             = new stdClass();
-						$info->alert_id   = $event[0]->alert_id;
-						$info->created_on = $event[0]->created_on;
+						$info->alert_id   = $event[0]['alert_id'];
+						$info->created_on = $event[0]['created_on'];
 					} else {
 						$info = false;
 					}
@@ -152,16 +156,16 @@ class WSAL_MainWpApi {
 		if ( ! empty( $events ) && is_array( $events ) ) {
 			foreach ( $events as $event ) {
 				// Get event meta.
-				$meta_data                                    = $event->get_meta_array();
-				$meta_data['UserData']                        = $this->plugin->alerts->get_event_user_data( WSAL_Utilities_UsersUtils::get_username( $meta_data ) );
-				$mwp_events->events[ $event->id ]             = new stdClass();
-				$mwp_events->events[ $event->id ]->id         = $event->id;
-				$mwp_events->events[ $event->id ]->alert_id   = $event->alert_id;
-				$mwp_events->events[ $event->id ]->created_on = $event->created_on;
-				$mwp_events->events[ $event->id ]->meta_data  = $meta_data;
+				$meta_data                                    = $event['meta_values'];
+				$meta_data['UserData']                        = Alert_Manager::get_event_user_data( WSAL_Utilities_UsersUtils::get_username( $meta_data ) );
+				$mwp_events->events[ $event['id'] ]             = new stdClass();
+				$mwp_events->events[ $event['id'] ]->id         = $event['id'];
+				$mwp_events->events[ $event['id'] ]->alert_id   = $event['alert_id'];
+				$mwp_events->events[ $event['id'] ]->created_on = $event['created_on'];
+				$mwp_events->events[ $event['id'] ]->meta_data  = $meta_data;
 			}
 
-			$mwp_events->users = $this->plugin->alerts->get_wp_users();
+			$mwp_events->users = Alert_Manager::get_wp_users();
 		}
 
 		return $mwp_events;
@@ -216,7 +220,7 @@ class WSAL_MainWpApi {
 			);
 		}
 
-		$subaction = filter_var( $post_data['subaction'], FILTER_SANITIZE_STRING );
+		$subaction = \sanitize_text_field( \wp_unslash( $post_data['subaction'] ) );
 		if ( ! in_array( $subaction, array( 'update', 'remove' ), true ) ) {
 			return array(
 				'success' => 'no',
@@ -232,16 +236,18 @@ class WSAL_MainWpApi {
 
 			// Change the existing settings.
 			if ( array_key_exists( 'pruning_enabled', $settings_to_enforce ) ) {
-				$this->plugin->settings()->set_pruning_date_enabled( $settings_to_enforce['pruning_enabled'] );
+				$pruning_date = '';
+				$pruning_unit = '';
 				if ( array_key_exists( 'pruning_date', $settings_to_enforce ) && array_key_exists( 'pruning_unit', $settings_to_enforce ) ) {
-					$this->plugin->settings()->set_pruning_date( $settings_to_enforce['pruning_date'] . ' ' . $settings_to_enforce['pruning_unit'] );
-					$this->plugin->settings()->set_pruning_unit( $settings_to_enforce['pruning_unit'] );
+					$pruning_date = $settings_to_enforce['pruning_date'] . ' ' . $settings_to_enforce['pruning_unit'];
+					$pruning_unit = $settings_to_enforce['pruning_unit'];
 				}
+				$this->plugin->settings()->set_pruning_date_settings( $settings_to_enforce['pruning_enabled'], $pruning_date, $pruning_unit );
 			}
 
 			if ( array_key_exists( 'disabled_events', $settings_to_enforce ) ) {
 				$disabled_event_ids = array_map( 'intval', explode( ',', $settings_to_enforce['disabled_events'] ) );
-				$this->plugin->settings()->set_disabled_alerts( $disabled_event_ids );
+				Settings_Helper::set_disabled_alerts( $disabled_event_ids );
 			}
 
 			if ( array_key_exists( 'incognito_mode_enabled', $settings_to_enforce ) ) {
@@ -259,7 +265,7 @@ class WSAL_MainWpApi {
 			$this->plugin->settings()->delete_mainwp_enforced_settings();
 		}
 
-		$this->plugin->alerts->trigger_event( 6043 );
+		Alert_Manager::trigger_event( 6043 );
 
 		return array(
 			'success' => 'yes',
@@ -310,7 +316,7 @@ class WSAL_MainWpApi {
 				continue;
 			}
 
-			array_push( $data, $this->plugin->alerts->get_alert_details( $entry, 'report-' . $report_format ) );
+			array_push( $data, Alert_Manager::get_alert_details( $entry, 'report-' . $report_format ) );
 		}
 
 		if ( empty( $data ) ) {
@@ -333,12 +339,11 @@ class WSAL_MainWpApi {
 	 * @since 4.4.0
 	 */
 	private function get_event_definitions() {
-		$alert_manager = $this->plugin->alerts;
 
 		return array(
-			'events'  => $alert_manager->get_alerts(),
-			'objects' => $alert_manager->get_event_objects_data(),
-			'types'   => $alert_manager->get_event_type_data(),
+			'events'  => Alert_Manager::get_alerts(),
+			'objects' => Alert_Manager::get_event_objects_data(),
+			'types'   => Alert_Manager::get_event_type_data(),
 		);
 	}
 }

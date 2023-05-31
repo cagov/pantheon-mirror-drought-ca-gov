@@ -46,7 +46,6 @@ window.wp = window.wp || {};
 
 			// Make sure to load the original toolbar
 			curAttachmentsBrowser.prototype.createToolbar.call(this);
-			//curAttachmentsBrowser.prototype.createToolbar.apply(this,arguments);
 
 			var that = this,
 			i = 1;
