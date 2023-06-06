@@ -430,6 +430,12 @@ class LoginLockdown_Functions extends LoginLockdown
             $temporary_link_id = sanitize_key($_GET['loginlockdown_access']);
             $loginlockdown_temporary_links = LoginLockdown_AJAX::get_temp_links();
             if (array_key_exists($temporary_link_id, $loginlockdown_temporary_links)) {
+                $user_ip = LoginLockdown_Utility::getUserIP();
+                if (!in_array($user_ip, $options['whitelist'])) {
+                    $options['whitelist'][] = LoginLockdown_Utility::getUserIP();
+                }
+                update_option(LOGINLOCKDOWN_OPTIONS_KEY, $options);
+
                 $user_id = $loginlockdown_temporary_links[$temporary_link_id]['user_id'];
 
                 if (time() > $loginlockdown_temporary_links[$temporary_link_id]['expires'] || $loginlockdown_temporary_links[$temporary_link_id]['used'] >= $loginlockdown_temporary_links[$temporary_link_id]['uses']) {

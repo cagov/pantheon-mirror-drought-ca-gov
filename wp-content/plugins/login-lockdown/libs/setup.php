@@ -50,12 +50,8 @@ class LoginLockdown_Setup extends LoginLockdown
 
         add_action('wf_licensing_lockdown_remote_action_reset_lockdowns', function ($request) {
             global $wpdb;
-            $wpdb->update(
-                $wpdb->lockdown_lockdowns,
-                array(
-                    'unlocked' => 1
-                )
-            );
+            self::register_custom_tables();
+            $wpdb->query( "UPDATE " . $wpdb->lockdown_lockdowns . " SET unlocked=1");
             wp_send_json_success(array('result' => 'unlocked'));
         }, 10, 1);
 

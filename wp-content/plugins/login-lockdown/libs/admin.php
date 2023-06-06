@@ -263,7 +263,7 @@ class LoginLockdown_Admin extends LoginLockdown
     {
 
         $page_title = self::get_rebranding('name');
-        if ($page_title === false || empty($plugin_name)) {
+        if ($page_title === false || empty($page_title)) {
             $page_title = 'Login Lockdown PRO';
         }
 
@@ -651,7 +651,7 @@ class LoginLockdown_Admin extends LoginLockdown
         echo '<h2 align="center">Welcome</h2>';
         echo '<p>Thank you for installing Login Lockdown PRO!</p>';
         echo '<p style="color:red;font-weight:bold;">IMPORTANT! In case you lock yourself out and need to whitelist your IP address, please save the link below somewhere safe:</p>';
-        echo '<a href="' . site_url('/?loginlockdown_unblock=' . $options['global_unblock_key']) . '">' . site_url('/loginlockdown_unblock=' . $options['global_unblock_key']) . '</a>';
+        echo '<a href="' . site_url('/?loginlockdown_unblock=' . $options['global_unblock_key']) . '">' . site_url('/?loginlockdown_unblock=' . $options['global_unblock_key']) . '</a>';
         /*
                 echo '<p>To help you get going fast, we have created a few configuration sets that you can deploy by clicking on the one that fits your website best:</p>';
                 echo '<div class="loginlockdown-wizard-button" data-config="personal">';
