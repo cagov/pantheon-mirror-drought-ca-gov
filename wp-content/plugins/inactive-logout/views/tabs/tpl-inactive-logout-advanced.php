@@ -8,8 +8,6 @@
 ?>
 <div class="ina-settings-admin-wrap">
 	<?php $result_roles = \Codemanas\InactiveLogout\Helpers::getAllRoles(); ?>
-    <div id="message" class="updated notice is-dismissible" style="display: none;"></div>
-
     <form method="post" class="ina-form" action="?page=inactive-logout&tab=ina-advanced">
 		<?php wp_nonce_field( '_nonce_action_save_timeout_adv_settings', '_save_timeout_adv_settings' ); ?>
         <table class="ina-form-tbl form-table">
@@ -129,12 +127,12 @@
 
 		<?php do_action( 'ina__after_advanced_form_elements' ); ?>
 
-        <p class="ina_adv_submit">
-            <input type="submit" name="adv_submit" id="submit" class="button button-primary"
+        <div class="ina-adv-submit-wrapper">
+            <input type="submit" name="adv_submit" id="submit" class="ina-button ina-button-primary"
                    value="<?php esc_html_e( 'Save Changes', 'inactive-logout' ); ?>">
-            <a id="ina-reset-adv-data" class="button button-primary button-reset-ina"
+            <a id="ina-reset-adv-data" class="ina-button button-reset-ina"
                data-msg="<?php esc_html_e( 'Are you sure you want to erase all advanced settings? This cannot be undone.', 'inactive-logout' ); ?>"><?php esc_html_e( 'Reset Role Based Settings', 'inactive-logout' ); ?></a>
-        </p>
+        </div>
     </form>
 </div>
 <script>

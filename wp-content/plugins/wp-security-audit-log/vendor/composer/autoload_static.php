@@ -4,7 +4,7 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInita2507426f604506cb47388e3fa33b5f5
+class ComposerStaticInit044151a9a14b6e089c398c934d01d44c
 {
     public static $files = array (
         '2007ccaa29a9efd0493ee82176c977d1' => __DIR__ . '/..' . '/wpwhitesecurity/import-export-plugin-settings/SettingsImportExport.php',
@@ -178,9 +178,9 @@ class ComposerStaticInita2507426f604506cb47388e3fa33b5f5
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInita2507426f604506cb47388e3fa33b5f5::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInita2507426f604506cb47388e3fa33b5f5::$prefixDirsPsr4;
-            $loader->classMap = ComposerStaticInita2507426f604506cb47388e3fa33b5f5::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInit044151a9a14b6e089c398c934d01d44c::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInit044151a9a14b6e089c398c934d01d44c::$prefixDirsPsr4;
+            $loader->classMap = ComposerStaticInit044151a9a14b6e089c398c934d01d44c::$classMap;
 
         }, null, ClassLoader::class);
     }

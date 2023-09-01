@@ -9,6 +9,8 @@ namespace Codemanas\InactiveLogout;
  */
 class Helpers {
 
+	public static $message;
+
 	/**
 	 * Convert seconds to minutes.
 	 *
@@ -103,17 +105,19 @@ class Helpers {
 		$concurrent_login       = Helpers::get_option( '__ina_concurrent_login' );
 		$ina_enable_redirect    = Helpers::get_option( '__ina_enable_redirect' );
 		$ina_redirect_page_link = Helpers::get_option( '__ina_redirect_page_link' );
+		$automatic_redirect     = Helpers::get_option( '__ina_disable_automatic_redirect_on_logout' );
 		$debugger               = Helpers::get_option( '__ina_enable_debugger' );
 
 		$settings                         = new \stdClass();
 		$settings->logout_time            = ! empty( $logout_time ) ? $logout_time : 15 * 60;
 		$settings->prompt_countdown_timer = ! empty( $countdown_time ) ? $countdown_time : 10;
-		$settings->disable_prompt_timer   = ! empty( $disable_countdown ) ? $disable_countdown : false;
-		$settings->warn_only_enable       = ! empty( $warn_only ) ? $warn_only : false;
-		$settings->concurrent_enabled     = ! empty( $concurrent_login ) ? $concurrent_login : false;
-		$settings->enabled_redirect       = ! empty( $ina_enable_redirect ) ? $ina_enable_redirect : false;
+		$settings->disable_prompt_timer   = ! empty( $disable_countdown );
+		$settings->warn_only_enable       = ! empty( $warn_only );
+		$settings->concurrent_enabled     = ! empty( $concurrent_login );
+		$settings->enabled_redirect       = ! empty( $ina_enable_redirect );
 		$settings->redirect_page_link     = ! empty( $ina_redirect_page_link ) ? $ina_redirect_page_link : false;
-		$settings->debugger               = ! empty( $debugger ) ? $debugger : false;
+		$settings->automatic_redirect     = ! empty( $automatic_redirect );
+		$settings->debugger               = ! empty( $debugger );
 
 		$enabledMultiUser = Helpers::get_option( '__ina_enable_timeout_multiusers' );
 		if ( $enabledMultiUser ) {
@@ -190,13 +194,13 @@ class Helpers {
 
 	/**
 	 * Get Overridden multisite setting - Just here for backwards compatibility.
-     *
-     * Will be removed in next major release.
 	 *
-     * @deprecated since 3.1.1
+	 * Will be removed in next major release.
+	 *
 	 * @param $key
 	 *
 	 * @return mixed|void
+	 * @deprecated since 3.1.1
 	 */
 	public static function get_overrided_option( $key ) {
 		if ( is_multisite() ) {
@@ -255,5 +259,32 @@ class Helpers {
 		}
 
 		return ! empty( $redirect_link ) ? $redirect_link : false;
+	}
+
+	/**
+	 * Get the admin notice message
+	 *
+	 * @return mixed|null
+	 */
+	public static function getMessage() {
+		$session_message = Helpers::get_option( '__ina_saved_options' );
+		if ( $session_message ) {
+			Helpers::update_option( '__ina_saved_options', '' );
+
+			return $session_message;
+		}
+
+		return apply_filters( 'ina_admin_get_message', self::$message );
+	}
+
+	/**
+	 * Set admin notice message
+	 *
+	 * @param $message
+	 *
+	 * @return void
+	 */
+	public static function set_message( $message ) {
+		self::$message = $message;
 	}
 }

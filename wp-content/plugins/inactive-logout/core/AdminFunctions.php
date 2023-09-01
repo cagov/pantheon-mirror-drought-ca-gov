@@ -96,6 +96,7 @@ class AdminFunctions {
 			$ina_enable_debugger               = Helpers::get_option( '__ina_enable_debugger' );
 			$ina_popup_modal                   = Helpers::get_option( '__ina_logout_popup_localizations' );
 			$ina_close_without_reload          = Helpers::get_option( '__ina_disable_close_without_reload' );
+			$ina_disable_automatic_redirect    = Helpers::get_option( '__ina_disable_automatic_redirect_on_logout' );
 
 			// IF redirect is custom page link.
 			if ( 'custom-page-redirect' === $ina_redirect_page_link ) {
@@ -138,6 +139,7 @@ class AdminFunctions {
 		$ina_redirect_page                    = filter_input( INPUT_POST, 'ina_redirect_page' );
 		$ina_enable_debugger                  = filter_input( INPUT_POST, 'ina_enable_debugger' );
 		$ina_disable_close_without_reload_btn = filter_input( INPUT_POST, 'popup_modal_close_without_reload_hide' );
+		$ina_disable_automatic_redirect       = filter_input( INPUT_POST, 'ina_disable_automatic_redirect' );
 
 		//localization settings
 		$ina_popup_localizations = [
@@ -173,6 +175,7 @@ class AdminFunctions {
 			Helpers::update_option( '__ina_redirect_page_link', $ina_redirect_page );
 			Helpers::update_option( '__ina_enable_debugger', $ina_enable_debugger );
 			Helpers::update_option( '__ina_disable_close_without_reload', $ina_disable_close_without_reload_btn );
+			Helpers::update_option( '__ina_disable_automatic_redirect_on_logout', $ina_disable_automatic_redirect );
 
 			if ( 'custom-page-redirect' === $ina_redirect_page ) {
 				Helpers::update_option( '__ina_custom_redirect_text_field', $ina_custom_redirect_text_field );
@@ -181,9 +184,9 @@ class AdminFunctions {
 
 		do_action( 'ina_after_update_basic_settings' );
 
-		Helpers::update_option( '__ina_saved_options', true );
+		Helpers::update_option( '__ina_saved_options', __( 'General Settings saved.', 'inactive-logout' ) );
 
-		wp_send_json_success( __( 'Settings saved. Page will now reload 2 seconds.', 'inactive-logout' ) );
+		wp_send_json_success();
 	}
 
 	/**
@@ -239,7 +242,7 @@ class AdminFunctions {
 
 		do_action( 'ina_after_update_adv_settings', $container_multi_user_arr );
 
-		self::set_message( 'updated', __( 'Settings saved.', 'inactive-logout' ) );
+		Helpers::set_message( __( 'Role based settings saved.', 'inactive-logout' ) );
 	}
 
 	/**
@@ -254,14 +257,6 @@ class AdminFunctions {
 	 */
 	public function ina_after_settings_wrap() {
 		echo '</div>';
-	}
-
-	static function get_message() {
-		return self::$message;
-	}
-
-	static function set_message( $class, $message ) {
-		self::$message = '<div class=' . $class . '><p>' . $message . '</p></div>';
 	}
 
 	private static $_instance = null;

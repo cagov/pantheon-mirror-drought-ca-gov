@@ -104,7 +104,7 @@ class Bootstrap {
 	 */
 	public function loadDependencies() {
 		$disable_feature = ! empty( $this->settings->advanced['disabled_feature'] ) ? $this->settings->advanced['disabled_feature'] : false;
-		if ( ! $disable_feature ) {
+		if ( ! $disable_feature && is_user_logged_in() ) {
 			Modal::instance();
 		}
 
@@ -132,14 +132,21 @@ class Bootstrap {
 	public function scripts( $hook ) {
 		if ( is_user_logged_in() ) {
 			if ( $hook == "settings_page_inactive-logout" || $hook == "plugins.php" || $hook == "toplevel_page_inactive-logout" ) {
-				wp_enqueue_style( 'inactive-logout-admin', INACTIVE_LOGOUT_DIR_URI . 'public/admin.css', false, INACTIVE_LOGOUT_VERSION );
+				wp_enqueue_style( 'inactive-logout-admin', INACTIVE_LOGOUT_DIR_URI . 'public/scripts/admin.css', false, INACTIVE_LOGOUT_VERSION );
 			}
 
 			if ( $hook == "settings_page_inactive-logout" || $hook == "toplevel_page_inactive-logout" ) {
+				//Remove all admin notices from inactive settings screen page.
+				remove_all_actions( 'admin_notices' );
+
 				//Vendor scripts
 				wp_enqueue_script( 'inactive-logout-select2', INACTIVE_LOGOUT_DIR_URI . 'public/vendor/select2/js/select2.full.min.js', [ 'jquery' ], INACTIVE_LOGOUT_VERSION, true );
 				wp_enqueue_style( 'inactive-logout-select2', INACTIVE_LOGOUT_DIR_URI . 'public/vendor/select2/css/select2.min.css', false, INACTIVE_LOGOUT_VERSION );
-				wp_enqueue_script( 'inactive-logout-admin', INACTIVE_LOGOUT_DIR_URI . 'public/admin.js', [], INACTIVE_LOGOUT_VERSION, true );
+				wp_enqueue_script( 'inactive-logout-admin', INACTIVE_LOGOUT_DIR_URI . 'public/scripts/admin.js', [], INACTIVE_LOGOUT_VERSION, true );
+				wp_localize_script( 'inactive-logout-admin', 'inactive_logout', [
+					'wp_version'  => get_bloginfo( 'version' ),
+					'ina_version' => INACTIVE_LOGOUT_VERSION
+				] );
 			}
 
 			$disable_feature = false;
@@ -188,10 +195,11 @@ class Bootstrap {
 						'disableCloseWithoutReloadBtn' => ! empty( Helpers::get_option( '__ina_disable_close_without_reload' ) ) ? Helpers::get_option( '__ina_disable_close_without_reload' ) : ''
 					] ),
 					'settings' => [
-						'timeout'              => ! empty( $ina_logout_time ) ? absint( $ina_logout_time ) : 15 * 60,
-						'disable_countdown'    => ! empty( $this->settings->disable_prompt_timer ) ? $this->settings->disable_prompt_timer : false,
-						'warn_message_enabled' => ! empty( $this->settings->warn_only_enable ) ? $this->settings->warn_only_enable : false,
-						'countdown_timeout'    => ! empty( $this->settings->prompt_countdown_timer ) ? absint( $this->settings->prompt_countdown_timer ) : 10,
+						'timeout'                    => ! empty( $ina_logout_time ) ? absint( $ina_logout_time ) : 15 * 60,
+						'disable_countdown'          => ! empty( $this->settings->disable_prompt_timer ),
+						'warn_message_enabled'       => ! empty( $this->settings->warn_only_enable ),
+						'countdown_timeout'          => ! empty( $this->settings->prompt_countdown_timer ) ? absint( $this->settings->prompt_countdown_timer ) : 10,
+						'disable_automatic_redirect' => ! empty( $this->settings->enabled_redirect ) && ! empty( $this->settings->automatic_redirect )
 					],
 					'security' => wp_create_nonce( '_inaajax' ),
 				];

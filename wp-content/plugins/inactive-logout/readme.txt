@@ -4,7 +4,7 @@ Tags: logout, inactive user, idle, idle logout, idle user, auto logout, autologo
 Donate link: https://www.paypal.com/donate?hosted_button_id=2UCQKR868M9WE
 Requires at least: 5.8
 Tested up to: 6.2
-Stable tag: 3.1.6
+Stable tag: 3.2.1
 License: GPLv2 or later
 Requires PHP: 7.1
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -43,10 +43,13 @@ Few of the key features to **[Inactive Logout Pro](https://inactive-logout.com/b
 
 * Fully functional multi-tab support.
 * Auto browser close logout after 2 minute of active session.
+* Force Logout All Users
+* Logout Specific User(s)
+* Bulk Logout Users
+* Last Login Activity
 * Override Multiple Login priority
 * User Lock whenever certain limit login has been reached.
 * Track user login sessions.
-* Logout all Sessions.
 * Logout redirects.
 * Login redirects.
 * Disable inactive logout for specified pages according to your need. Check this **[Documentation](https://gist.github.com/techies23/6d2852eedd6ae56c486056e021e4ee48 "documentation")** for additional post type support.
@@ -94,13 +97,28 @@ Slim Stat Analytics: Users using "Slimstat Analytics" plugin version upto 4.6.2 
 
 == Changelog ==
 
+= 3.2.1 - July 31st, 2023 =
+* Translations Updated
+* Added: Setting to disable automatic redirection after logout.
+* Minor Fix on Autoloader
+
+= 3.2.0 - June 29th, 2023 =
+* Refactored Scripts.
+* Design Changes.
+* Bug Fixes.
+
+= 3.1.7 - June 6th, 2023 =
+* Updated: Scripts
+
 = 3.1.6 - May 31st, 2023 =
+* UI Changes.
 * Corrected: Go Pro tab to open in external link.
 
 = 3.1.5 - May 25th, 2023 =
 * Fixed: Concurrent login option was not working.
 
 = 3.1.4 - May 16th, 2023 =
+* UI Changes.
 * Fixed: Role based timeout options not working correctly.
 
 = 3.1.3 - May 16th, 2023 =

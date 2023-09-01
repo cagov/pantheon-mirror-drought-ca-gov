@@ -68,6 +68,8 @@ class Ajax {
 			delete_site_option( '__ina_multiusers_settings' );
 		}
 
+		Helpers::update_option( '__ina_saved_options', __( 'Role based settings reset.', 'inactive-logout' ) );
+
 		wp_send_json( array(
 			'code' => 1,
 			'msg'  => esc_html__( 'Reset advanced settings successful.', 'inactive-logout' ),
